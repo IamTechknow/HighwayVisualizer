@@ -33,6 +33,7 @@
     "babel-loader": "^8.0.4",
     "css-loader": "^1.0.1",
     "cssnano": "^4.1.7",
+    "file-loader": "^2.0.0",
     "postcss-loader": "^3.0.0",
     "shapefile": "^0.6.6",
     "style-loader": "^0.23.1",
