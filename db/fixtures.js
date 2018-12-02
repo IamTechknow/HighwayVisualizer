@@ -7,17 +7,15 @@ const CA_DATA = 'db/ca.shp', CA_DB = 'db/ca.dbf';
 const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
 
 const seedData = async (db) => {
-  let routes = [];
-  let features = await shapefile.read(CA_DATA, CA_DB)
-    .then(collection => collection.features);
+  let features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
 
   for (let feature of features) {
-    let num = Number.parseInt(feature.properties.ROUTE, 10);
-    routes.push({
-      num,
+    let route = {
+      num: `'${feature.properties.ROUTE}'`,
       dir: `'${feature.properties.DIR}'`
-    });
+    };
 
+    let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, direction, state_key) VALUES (${route.num}, ${route.dir}, 1);`).then(res => res[0].insertId);
     let isSingleCurve = feature.geometry.type === 'LineString';
 
     // The curve is either in a single array or multiple arrays
@@ -38,16 +36,12 @@ const seedData = async (db) => {
 
     newPoints = newPoints.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
 
+    // Insert all rows by using commas
     await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
     console.log(`Seeded ${newPoints.length} points`);
   }
 
-  // Convert the JSON to parenthesis for all elements
-  routes = routes.map(obj => `(${obj.num}, ${obj.dir}, 1)`);
-
-  // Insert all rows by using commas
-  return db.queryAsync(`INSERT INTO ${ROUTES} (route, direction, state_key) VALUES ${routes.join()};`)
-    .then(() => db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("California", "CA")`));
+  return db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("California", "CA")`);
 };
 
 // Check if the database is empty before populating it with mock data.
