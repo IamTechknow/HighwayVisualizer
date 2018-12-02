@@ -14,6 +14,7 @@ const connection = mysql.createConnection({
 const db = Promise.promisifyAll(connection, { multiArgs: true });
 
 // Almost the same as the index script, except no exports and will exit when it finishes.
+// TODO: Use Indexing and compare performance changes
 db.connectAsync()
   .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}, seeding database...`))
   .then(() => db.queryAsync(`DROP DATABASE IF EXISTS ${database}`))
