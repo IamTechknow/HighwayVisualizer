@@ -16,6 +16,23 @@ export default class App extends React.Component {
     this.onRouteClick = this.onRouteClick.bind(this);
   }
 
+  static getZoomForRouteLen(len) {
+    if (len <= 50) {
+      return 13;
+    } else if (len <= 100) {
+      return 12;
+    } else if (len <= 300) {
+      return 11;
+    } else if (len <= 600) {
+      return 10;
+    } else if(len <= 1000) {
+      return 9;
+    } else if(len <= 2000) {
+      return 8;
+    }
+    return 7;
+  }
+
   static getStates() {
     return fetch(`/api/states`)
       .then(res => res.json());
@@ -42,13 +59,7 @@ export default class App extends React.Component {
         this.setState({ routes });
         return App.getRoute(1);
       })
-      .then(route => {
-        this.setState({
-          route,
-          lat: route[0][0],
-          lon: route[0][1]
-        });
-      });
+      .then(route => this.routePromiseDone(route));
   }
 
   onStateClick(stateId) {
@@ -60,13 +71,16 @@ export default class App extends React.Component {
 
   onRouteClick(routeId) {
     App.getRoute(routeId)
-      .then(route => {
-        this.setState({
-          route,
-          lat: route[0][0],
-          lon: route[0][1]
-        });
-      });
+      .then(route => this.routePromiseDone(route));
+  }
+
+  routePromiseDone(route) {
+    this.setState({
+      route,
+      lat: route[0][0],
+      lon: route[0][1],
+      zoom: App.getZoomForRouteLen(route.length)
+    });
   }
 
   render() {
