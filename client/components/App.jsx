@@ -36,6 +36,16 @@ export default class App extends React.Component {
     return 6;
   }
 
+  static buildCache() {
+    let cache = {};
+    ['5', '8', '10', '15', '40', '80', '105', '110', '205', '210', '215', '238', '280', '380', '405',
+    '505', '580', '605', '680', '710', '780', '805', '880', '980'].forEach(ele => { cache[ele] = "Interstate"; });
+
+    ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { cache[ele] = "US Highway"; });
+
+    return cache;
+  }
+
   static getStates() {
     return fetch(`/api/states`)
       .then(res => res.json());
@@ -78,6 +88,7 @@ export default class App extends React.Component {
 
   // Load all data from API endpoints
   componentDidMount() {
+    this.cache = App.buildCache();
     App.getStates()
       .then(states => {
         this.setState({ states });
@@ -88,6 +99,10 @@ export default class App extends React.Component {
         return App.getRoute(1);
       })
       .then(segments => this.routePromiseDone(segments));
+  }
+
+  getNameForRoute(route) {
+    return this.cache[route] ? this.cache[route] : "State Route";
   }
 
   onStateClick(stateId) {
@@ -131,7 +146,7 @@ export default class App extends React.Component {
             {/* List each route and all route segments */}
             { routes && routes.map(obj => (
               <li key={`${obj[0].route}${obj[0].dir}`} onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].dir, 'true')}>
-                {`Route ${obj[0].route} ${obj[0].dir}`}
+                {`${this.getNameForRoute(obj[0].route)} ${obj[0].route} ${obj[0].dir}`}
                 { obj.length > 1 && (
                   <ul>
                     {obj.map((seg, i) => (
