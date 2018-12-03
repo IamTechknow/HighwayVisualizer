@@ -1,5 +1,7 @@
+/* Allow map to fit whole screen */
 .leaflet-container {
-  height: 400px;
-  width: 100%;
+  width: 99%;
+  height: 99%;
+  position: fixed;
 }
 

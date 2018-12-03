@@ -13,8 +13,9 @@ class Models {
   }
 
   static getPointsBy(db, routeId) {
-    return db.queryAsync('SELECT * FROM points WHERE route_key = ?;', [routeId])
+    return db.queryAsync('SELECT lat, lon FROM points WHERE route_key = ?;', [routeId])
       .then((result) => result[0])
+      .then((result => result.map(point => [point.lat, point.lon])))
       .catch((err) => { console.error(err); });
   }
 }
