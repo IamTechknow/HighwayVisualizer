@@ -13,7 +13,15 @@ export default class App extends React.Component {
       zoom: 7,
     };
 
+    this.onStateClick = this.onStateClick.bind(this);
     this.onRouteClick = this.onRouteClick.bind(this);
+    this.onSegmentClick = this.onSegmentClick.bind(this);
+    this.onResetSegments = this.onResetSegments.bind(this);
+
+    this.mapRef = React.createRef();
+
+    this.currClicked = undefined;
+    this.userSegments = [];
   }
 
   // Determine a good zoom level based on route complexity
@@ -105,6 +113,13 @@ export default class App extends React.Component {
     return this.cache[route] ? this.cache[route] : "State Route";
   }
 
+  onResetSegments() {
+    this.userSegments = [];
+    this.setState({
+      userSegments: this.userSegments
+    });
+  }
+
   onStateClick(stateId) {
     App.getRoutes(stateId)
       .then(routes => {
@@ -119,6 +134,21 @@ export default class App extends React.Component {
       .then(segments => this.routePromiseDone(segments));
   }
 
+  // Keep track of clicked points
+  onSegmentClick(i, event) {
+    const segPoint = event.target.closestLayerPoint(event.layerPoint);
+    const segLatLng = this.mapRef.current.leafletElement.layerPointToLatLng(segPoint);
+    if (!this.currClicked) {
+      this.currClicked = [segLatLng.lat, segLatLng.lng];
+    } else {
+      this.userSegments.push([this.currClicked, [segLatLng.lat, segLatLng.lng]]);
+      this.currClicked = undefined;
+      this.setState({ 
+        userSegments: this.userSegments
+      });
+    }
+  }
+
   // Process array of route segments. There will always be at least one
   routePromiseDone(segments) {
     this.setState({
@@ -130,10 +160,12 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, segments } = this.state;
+    const { lat, lon, zoom, states, routes, segments, userSegments } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
+          <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
+
           <h3>States</h3>
           <ul>
             { states && states.map(obj => (
@@ -150,7 +182,7 @@ export default class App extends React.Component {
                 { obj.length > 1 && (
                   <ul>
                     {obj.map((seg, i) => (
-                      <li onClick={this.onRouteClick.bind(this, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
+                      <li key={`segment-${i}`} onClick={this.onRouteClick.bind(this, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
                     ))}
                   </ul>
                 )}
@@ -158,13 +190,16 @@ export default class App extends React.Component {
             ))}
           </ul>
         </div>
-        <Map center={[lat, lon]} zoom={zoom}>
+        <Map ref={this.mapRef} center={[lat, lon]} zoom={zoom}>
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
           />
           { segments &&
-            segments.map(seg => <Polyline positions={seg} /> )
+            segments.map((seg, i) => <Polyline key={`seg-${i}`} onClick={this.onSegmentClick.bind(this, i)} positions={seg} /> )
+          }
+          { userSegments &&
+            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg} color="lime" /> )
           }
         </Map>
       </div>
