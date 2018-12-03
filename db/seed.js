@@ -32,8 +32,8 @@ db.connectAsync()
    .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${POINTS} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     route_key INTEGER NOT NULL,
-    lat FLOAT NOT NULL,
-    lon FLOAT NOT NULL)`))
+    lat DOUBLE NOT NULL,
+    lon DOUBLE NOT NULL)`))
   .then(() => seedData(db))
   .then(() => process.exit(0))
   .catch(err => {console.error(err); db.end();});

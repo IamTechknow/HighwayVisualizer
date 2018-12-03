@@ -40,10 +40,14 @@ export default class App extends React.Component {
       })
       .then(routes => {
         this.setState({ routes });
-        return App.getRoute(3);
+        return App.getRoute(1);
       })
       .then(route => {
-        this.setState({ route });
+        this.setState({
+          route,
+          lat: route[0][0],
+          lon: route[0][1]
+        });
       });
   }
 
@@ -57,7 +61,11 @@ export default class App extends React.Component {
   onRouteClick(routeId) {
     App.getRoute(routeId)
       .then(route => {
-        this.setState({ route });
+        this.setState({
+          route,
+          lat: route[0][0],
+          lon: route[0][1]
+        });
       });
   }
 

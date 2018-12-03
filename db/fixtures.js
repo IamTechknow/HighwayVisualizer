@@ -8,6 +8,7 @@ const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
 
 const seedData = async (db) => {
   let features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
+  let stateKey = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("California", "CA")`).then(res => res[0].insertId);
 
   for (let feature of features) {
     let route = {
@@ -15,7 +16,7 @@ const seedData = async (db) => {
       dir: `'${feature.properties.DIR}'`
     };
 
-    let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, direction, state_key) VALUES (${route.num}, ${route.dir}, 1);`).then(res => res[0].insertId);
+    let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, direction, state_key) VALUES (${route.num}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
     let isSingleCurve = feature.geometry.type === 'LineString';
 
     // The curve is either in a single array or multiple arrays
@@ -40,8 +41,6 @@ const seedData = async (db) => {
     await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
     console.log(`Seeded ${newPoints.length} points`);
   }
-
-  return db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("California", "CA")`);
 };
 
 // Check if the database is empty before populating it with mock data.
