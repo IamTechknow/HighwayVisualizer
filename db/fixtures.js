@@ -13,33 +13,38 @@ const seedData = async (db) => {
   for (let feature of features) {
     let route = {
       num: `'${feature.properties.ROUTE}'`,
-      dir: `'${feature.properties.DIR}'`
+      dir: `'${feature.properties.DIR}'`,
+      seg: 0
     };
 
-    let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, direction, state_key) VALUES (${route.num}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
+    // The curve is either in a single array or multiple arrays
     let isSingleCurve = feature.geometry.type === 'LineString';
 
-    // The curve is either in a single array or multiple arrays
-    let newPoints = isSingleCurve ? feature.geometry.coordinates.map(tup => { 
-      return { route: num, lat: tup[1], lon: tup[0] };
-    }) : [];
-
-    // Spread multiple arrays into one
+    // Insert each array as its own route
     if (!isSingleCurve) {
-      let temp = feature.geometry.coordinates.map(lineArr => lineArr.map(tup => { 
-        return { route: num, lat: tup[1], lon: tup[0] };
-      }));
+      for (let i = 0; i < feature.geometry.coordinates.length; i++) {
+        let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
 
-      for (let i = 0; i < temp.length; i++) {
-        newPoints.push(...temp[i]);
+        let temp = feature.geometry.coordinates[i].map(tup => {
+          return { route: num, lat: tup[1], lon: tup[0] };
+        });
+        temp = temp.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
+
+        await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${temp.join()};`);
+        route.seg += 1;
+        console.log(`Seeded ${temp.length} points`);
       }
+    } else {
+      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
+      let newPoints = feature.geometry.coordinates.map(tup => {
+        return { route: num, lat: tup[1], lon: tup[0] };
+      });
+      newPoints = newPoints.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
+
+      // Insert all rows by using commas
+      await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
+      console.log(`Seeded ${newPoints.length} points`);
     }
-
-    newPoints = newPoints.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
-
-    // Insert all rows by using commas
-    await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
-    console.log(`Seeded ${newPoints.length} points`);
   }
 };
 

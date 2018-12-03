@@ -43,9 +43,11 @@ app.get('/api/routes/:stateId', (req, res) => {
   });
 });
 
+// Expects route segment and direction
 app.get('/api/points/:routeId', (req, res) => {
   allowCORS(res);
-  Models.getPointsBy(db, req.params.routeId)
+  const getAll = req.query.getAll === "true";
+  Models.getPointsBy(db, req.params.routeId, req.query.dir, getAll)
   .then((result) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));

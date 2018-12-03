@@ -27,6 +27,7 @@ db.connectAsync()
    .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${ROUTES} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     route TEXT NOT NULL,
+    segment INTEGER NOT NULL,
     direction TEXT NOT NULL,
     state_key INTEGER NOT NULL)`))
    .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${POINTS} (

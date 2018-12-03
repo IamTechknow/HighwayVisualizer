@@ -16,6 +16,7 @@ export default class App extends React.Component {
     this.onRouteClick = this.onRouteClick.bind(this);
   }
 
+  // Determine a good zoom level based on route complexity
   static getZoomForRouteLen(len) {
     if (len <= 50) {
       return 13;
@@ -29,8 +30,10 @@ export default class App extends React.Component {
       return 9;
     } else if(len <= 2000) {
       return 8;
+    } else if(len <= 5000) {
+      return 7;
     }
-    return 7;
+    return 6;
   }
 
   static getStates() {
@@ -38,14 +41,39 @@ export default class App extends React.Component {
       .then(res => res.json());
   }
 
+  // Get the routes then organize them by route numbers
+  // Use a set to maintain whether or not the route number and direction
+  // is repeated. If it is, push to array, otherwise add to new array
   static getRoutes(stateId) {
     return fetch(`/api/routes/${stateId}`)
+      .then(res => res.json())
+      .then(routes => App.parseRoutes(routes));
+  }
+
+  static getRoute(routeId, dir, getAll) {
+    const query = dir ? `?dir=${dir}&getAll=${getAll}` : '';
+    return fetch(`/api/points/${routeId}${query}`)
       .then(res => res.json());
   }
 
-  static getRoute(routeId) {
-    return fetch(`/api/points/${routeId}`)
-      .then(res => res.json());
+  static parseRoutes(routes) {
+    let set = new Set();
+    let organized = [];
+    let count = -1;
+
+    for (let seg of routes) {
+      const key = `${seg.route}${seg.dir}`;
+
+      if (set.has(key)) {
+        organized[count].push(seg);
+      } else {
+        set.add(key);
+        organized.push([seg]);
+        count += 1;
+      }
+    }
+
+    return organized;
   }
 
   // Load all data from API endpoints
@@ -59,7 +87,7 @@ export default class App extends React.Component {
         this.setState({ routes });
         return App.getRoute(1);
       })
-      .then(route => this.routePromiseDone(route));
+      .then(segments => this.routePromiseDone(segments));
   }
 
   onStateClick(stateId) {
@@ -69,38 +97,50 @@ export default class App extends React.Component {
       });
   }
 
-  onRouteClick(routeId) {
-    App.getRoute(routeId)
-      .then(route => this.routePromiseDone(route));
+  // Prevent events occurring twice
+  onRouteClick(routeId, dir, getAll, event) {
+    event.stopPropagation();
+    App.getRoute(routeId, dir, getAll)
+      .then(segments => this.routePromiseDone(segments));
   }
 
-  routePromiseDone(route) {
+  // Process array of route segments. There will always be at least one
+  routePromiseDone(segments) {
     this.setState({
-      route,
-      lat: route[0][0],
-      lon: route[0][1],
-      zoom: App.getZoomForRouteLen(route.length)
+      segments,
+      lat: segments[0][0][0],
+      lon: segments[0][0][1],
+      zoom: App.getZoomForRouteLen(segments.reduce((curr, arr) => curr += arr.length, 0))
     });
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, route } = this.state;
+    const { lat, lon, zoom, states, routes, segments } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
           <h3>States</h3>
           <ul>
             { states && states.map(obj => (
-                <li onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
+                <li key={obj.initials} onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
               ))
             }
           </ul>
           <h3>Routes</h3>
           <ul>
+            {/* List each route and all route segments */}
             { routes && routes.map(obj => (
-                <li onClick={this.onRouteClick.bind(this, obj.id)}>{`${obj.route} ${obj.dir}`}</li>
-              ))
-            }
+              <li key={`${obj[0].route}${obj[0].dir}`} onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].dir, 'true')}>
+                {`Route ${obj[0].route} ${obj[0].dir}`}
+                { obj.length > 1 && (
+                  <ul>
+                    {obj.map((seg, i) => (
+                      <li onClick={this.onRouteClick.bind(this, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
           </ul>
         </div>
         <Map center={[lat, lon]} zoom={zoom}>
@@ -108,8 +148,8 @@ export default class App extends React.Component {
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
           />
-          { route &&
-            <Polyline positions={route} />
+          { segments &&
+            segments.map(seg => <Polyline positions={seg} /> )
           }
         </Map>
       </div>
