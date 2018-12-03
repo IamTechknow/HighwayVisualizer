@@ -6,8 +6,9 @@ class Models {
       .catch((err) => { console.error(err); });
   }
 
+  // Select by sorting the routes, casting them as integers
   static getRoutesBy(db, stateId) {
-    return db.queryAsync('SELECT * FROM routes WHERE state_key = ?;', [stateId])
+    return db.queryAsync('SELECT id, route, direction AS dir FROM routes WHERE state_key = ? ORDER BY CAST(route as unsigned);', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }

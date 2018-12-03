@@ -1,7 +1,26 @@
 /* Allow map to fit whole screen */
 .leaflet-container {
-  width: 99%;
-  height: 99%;
-  position: fixed;
+  grid-column: span 6;
 }
 
+/* Grid classes */
+#mapGrid {
+  display: grid;
+  grid-template-columns: repeat(8, 1fr);
+}
+
+@media (min-height:400px) {
+  #mapGrid { grid-auto-rows: 400px; }
+}
+
+@media (min-height:700px) {
+  #mapGrid { grid-auto-rows: 600px; }
+}
+
+@media (min-height:900px) {
+  #mapGrid { grid-auto-rows: 900px; }
+}
+
+#routeUi {
+  grid-column: span 2;
+}
