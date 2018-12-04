@@ -22,6 +22,7 @@ export default class App extends React.Component {
     this.onSendSegments = this.onSendSegments.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
+    this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
 
     this.mapRef = React.createRef();
 
@@ -126,6 +127,13 @@ export default class App extends React.Component {
   getNameForRoute(route) {
     return this.cache[route] ? this.cache[route] : "State Route";
   }
+  
+  onClinchToggleFor(i) {
+    this.userSegments[i].clinched = !this.userSegments[i].clinched;
+    this.setState({
+      userSegments: this.userSegments
+    });
+  }
 
   onFormSubmit(event) {
     event.preventDefault();
@@ -228,7 +236,7 @@ export default class App extends React.Component {
       <div id="mapGrid">
         <div id="routeUi">
           <h3>Users</h3>
-          <select onChange={this.onUserChange}>
+          <select onChange={this.onUserChange} className="nameFormElement">
             <option value="-1">Select or create a user</option>
             {
               users.map((user, i) => (
@@ -238,9 +246,9 @@ export default class App extends React.Component {
           </select>
 
           <form onSubmit={this.onFormSubmit}>
-            <label htmlFor="userName">
+            <label htmlFor="userName" className="nameFormElement">
               Username
-              <input type="text" id="userName" name="userName" />
+              <input type="text" id="userName" name="userName" className="nameFormElement" />
             </label>
             <br />
             <button type="submit">Create User</button>
@@ -251,7 +259,12 @@ export default class App extends React.Component {
             {
               userSegments &&
               userSegments.map((seg, i) => (
-                <li>{`${this.getNameForRoute(seg.route)} ${seg.route}`}</li>
+                <div className="segRow">
+                  <li>
+                    {`${this.getNameForRoute(seg.route)} ${seg.route}`}
+                    <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
+                  </li>
+                </div>
               ))
             }
           </ul>
@@ -271,7 +284,7 @@ export default class App extends React.Component {
           <h3>States</h3>
           <ul>
             { states && states.map(obj => (
-                <li key={obj.initials} onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
+                <li key={obj.initials} className="clickable" onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
               ))
             }
           </ul>
@@ -279,12 +292,12 @@ export default class App extends React.Component {
           <ul>
             {/* List each route and all route segments */}
             { routes && routes.map(obj => (
-              <li key={`${obj[0].route}${obj[0].dir}`} onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, 'true')}>
+              <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, 'true')}>
                 {`${this.getNameForRoute(obj[0].route)} ${obj[0].route} ${obj[0].dir}`}
                 { obj.length > 1 && (
                   <ul>
                     {obj.map((seg, i) => (
-                      <li key={`segment-${i}`} onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
+                      <li key={`segment-${i}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
                     ))}
                   </ul>
                 )}
@@ -301,7 +314,7 @@ export default class App extends React.Component {
             segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
           { userSegments &&
-            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color="lime" /> )
+            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
           }
         </Map>
       </div>

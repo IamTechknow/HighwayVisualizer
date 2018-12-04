@@ -11,15 +11,27 @@ html {
   font-family: roboto;
 }
 
+.nameFormElement {
+  margin-bottom: 8px;
+}
+
+#userName {
+  margin-left: 8px;
+}
+
+.clickable {
+  color: #3388ff;
+}
+
 /* Allow map to fit whole screen */
 .leaflet-container {
-  grid-column: span 6;
+  grid-column: span 7;
 }
 
 /* Grid classes */
 #mapGrid {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
+  grid-template-columns: repeat(9, 1fr);
 }
 
 @media (min-height:400px) {
@@ -41,4 +53,9 @@ html {
 #routeUi {
   grid-column: span 2;
   overflow-y: auto; /* allows scroll bar */
+}
+
+.segRow {
+  display: flex;
+  flex-direction: row;
 }
