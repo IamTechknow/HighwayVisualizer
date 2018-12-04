@@ -22,17 +22,30 @@ class Models {
       keys = await db.queryAsync('SELECT id FROM routes WHERE route = ? AND direction = ?;', [route, dir]).then((result) => result[0]);
     }
 
-    // TODO: What does multiple queries do? Does promises account for that?
-    let result = [];
+    // Use multiple queries to grab all the data at once!
+    let combinedQuery = [], segments = [];
     for (let key of keys) { // Each Key is an object with our desired field
-      let segment = {id: key.id};
-      segment.points = await db.queryAsync('SELECT lat, lon FROM points WHERE route_key = ?;', [key.id])
-        .then((result) => result[0])
-        .then((result) => result.map(point => [point.lat, point.lon]))
-        .catch((err) => { console.error(err); });
-      result.push(segment);
+      segments.push({id: key.id});
+      combinedQuery.push('SELECT lat, lon FROM points WHERE route_key = ' + key.id);
     }
-    return result;
+    combinedQuery.push('');
+
+    let result = await db.queryAsync(combinedQuery.join('; '))
+      .then((result) => result[0])
+      .then((result) => {
+        if (Array.isArray(result[0])) { // Data Packet or array?
+          return result.map(arr => arr.map(point => [point.lat, point.lon]));
+        } else {
+          return [result.map(point => [point.lat, point.lon])]; // Always treat result as 2D array
+        }
+      })
+      .catch((err) => { console.error(err); });
+
+    for (var i = 0; i < result.length; i++) {
+      segments[i].points = result[i];
+    }
+
+    return segments;
   }
 
   static getUsers(db) {

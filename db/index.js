@@ -8,6 +8,7 @@ const connection = mysql.createConnection({
   host: 'localhost',
   user: 'root',
   password: '',
+  multipleStatements: true
 });
 
 // Use promisification on the MySQL database connection
