@@ -32,6 +32,17 @@ app.get('/api/states', (req, res) => {
   });
 });
 
+app.get('/api/users', (req, res) => {
+  allowCORS(res);
+  Models.getStates(db)
+  .then((result) => {
+    res.status(200).type('application/json');
+    res.send(JSON.stringify(result));
+  }).catch((err) => {
+    res.status(500).type('Sorry, an error occurred!');
+  });
+});
+
 app.get('/api/routes/:stateId', (req, res) => {
   allowCORS(res);
   Models.getRoutesBy(db, req.params.stateId)
@@ -56,6 +67,27 @@ app.get('/api/points/:routeId', (req, res) => {
   });
 });
 
-app.listen(PORT, () => { console.log(`Listening at Port ${PORT}`); });
+// C endpoints
+app.post('/api/newUser', (req, res) => {
+  allowCORS(res);
+  Models.createUser(db, req.body.user)
+  .then((result) => {
+    res.status(201).type('application/json');
+    res.send(JSON.stringify(result));
+  }).catch((err) => {
+    res.status(500).type('Sorry, an error occurred!');
+  });
+});
 
-// TODO: C endpoints to create user entries
+app.post('/api/newUserSegment', (req, res) => {
+  allowCORS(res);
+  Models.createUserSegment(db, req.body.userId, req.body.clinched, req.body.routeId, req.body.coords)
+  .then((result) => {
+    res.status(201).type('application/json');
+    res.send(JSON.stringify(result));
+  }).catch((err) => {
+    res.status(500).type('Sorry, an error occurred!');
+  });
+});
+
+app.listen(PORT, () => { console.log(`Listening at Port ${PORT}`); });

@@ -24,13 +24,32 @@ class Models {
 
     let result = [];
     for (let key of keys) { // Each Key is an object with our desired field
-      result.push(await db.queryAsync('SELECT lat, lon FROM points WHERE route_key = ?;', [key.id])
+      let segment = {id: key.id};
+      segment.points = await db.queryAsync('SELECT lat, lon FROM points WHERE route_key = ?;', [key.id])
         .then((result) => result[0])
         .then((result) => result.map(point => [point.lat, point.lon]))
-        .catch((err) => { console.error(err); })
-      );
+        .catch((err) => { console.error(err); });
+      result.push(segment);
     }
     return result;
+  }
+
+  static getUsers() {
+    return db.queryAsync('SELECT * FROM users;')
+      .then((result) => result[0])
+      .catch((err) => { console.error(err); });
+  }
+
+  static createUser(username) {
+    return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])
+      .then((result) => result[0])
+      .catch((err) => { console.error(err); });
+  }
+
+  static createUserSegment(db, userId, routeId, clinched, coords) {
+    return db.queryAsync('INSERT INTO segments (user_id, route_id, clinched, start_lat, start_long, end_lat, end_long) VALUES (?, ?, ?, ?, ?, ?);', [userId, routeId, clinched, ...coords])
+      .then((result) => result[0])
+      .catch((err) => { console.error(err); });
   }
 }
 

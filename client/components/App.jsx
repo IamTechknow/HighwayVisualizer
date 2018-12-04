@@ -106,7 +106,7 @@ export default class App extends React.Component {
         this.setState({ routes });
         return App.getRoute(1);
       })
-      .then(segments => this.routePromiseDone(segments));
+      .then(segments => this.routePromiseDone(segments, "101"));
   }
 
   getNameForRoute(route) {
@@ -128,34 +128,41 @@ export default class App extends React.Component {
   }
 
   // Prevent events occurring twice
-  onRouteClick(routeId, dir, getAll, event) {
+  onRouteClick(route, routeId, dir, getAll, event) {
     event.stopPropagation();
     App.getRoute(routeId, dir, getAll)
-      .then(segments => this.routePromiseDone(segments));
+      .then(segments => this.routePromiseDone(segments, route));
   }
 
   // Keep track of clicked points
-  onSegmentClick(i, event) {
+  onSegmentClick(i, routeId, event) {
     const segPoint = event.target.closestLayerPoint(event.layerPoint);
     const segLatLng = this.mapRef.current.leafletElement.layerPointToLatLng(segPoint);
     if (!this.currClicked) {
       this.currClicked = [segLatLng.lat, segLatLng.lng];
     } else {
-      this.userSegments.push([this.currClicked, [segLatLng.lat, segLatLng.lng]]);
+      this.userSegments.push({
+        route: this.state.route,
+        routeId,
+        clinched: false,
+        points: [this.currClicked, [segLatLng.lat, segLatLng.lng]]
+      });
       this.currClicked = undefined;
-      this.setState({ 
+      this.setState({
         userSegments: this.userSegments
       });
     }
   }
 
   // Process array of route segments. There will always be at least one
-  routePromiseDone(segments) {
+  routePromiseDone(segments, route) {
+    const tup = segments[0].points[0];
     this.setState({
+      route,
       segments,
-      lat: segments[0][0][0],
-      lon: segments[0][0][1],
-      zoom: App.getZoomForRouteLen(segments.reduce((curr, arr) => curr += arr.length, 0))
+      lat: tup[0],
+      lon: tup[1],
+      zoom: App.getZoomForRouteLen(segments.reduce((curr, obj) => curr += obj.points.length, 0))
     });
   }
 
@@ -165,7 +172,16 @@ export default class App extends React.Component {
       <div id="mapGrid">
         <div id="routeUi">
           <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
-
+          <h3>Segments</h3>
+          <ul>
+            {
+              userSegments &&
+              userSegments.map((seg, i) => (
+                <li>{`${this.getNameForRoute(seg.route)} ${seg.route}`}</li>
+              ))
+            }
+          </ul>
+          
           <h3>States</h3>
           <ul>
             { states && states.map(obj => (
@@ -177,12 +193,12 @@ export default class App extends React.Component {
           <ul>
             {/* List each route and all route segments */}
             { routes && routes.map(obj => (
-              <li key={`${obj[0].route}${obj[0].dir}`} onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].dir, 'true')}>
+              <li key={`${obj[0].route}${obj[0].dir}`} onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, 'true')}>
                 {`${this.getNameForRoute(obj[0].route)} ${obj[0].route} ${obj[0].dir}`}
                 { obj.length > 1 && (
                   <ul>
                     {obj.map((seg, i) => (
-                      <li key={`segment-${i}`} onClick={this.onRouteClick.bind(this, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
+                      <li key={`segment-${i}`} onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
                     ))}
                   </ul>
                 )}
@@ -196,10 +212,10 @@ export default class App extends React.Component {
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
           />
           { segments &&
-            segments.map((seg, i) => <Polyline key={`seg-${i}`} onClick={this.onSegmentClick.bind(this, i)} positions={seg} /> )
+            segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
           { userSegments &&
-            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg} color="lime" /> )
+            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color="lime" /> )
           }
         </Map>
       </div>
