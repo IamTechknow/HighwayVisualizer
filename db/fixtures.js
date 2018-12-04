@@ -46,6 +46,9 @@ const seedData = async (db) => {
       console.log(`Seeded ${newPoints.length} points`);
     }
   }
+
+  console.log('Creating indices...');
+  return db.queryAsync('CREATE INDEX POINT_IDX ON points (route_key); CREATE INDEX ROUTE_IDX on routes (route(4), direction(1));');
 };
 
 // Check if the database is empty before populating it with mock data.
