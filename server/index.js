@@ -34,7 +34,7 @@ app.get('/api/states', (req, res) => {
 
 app.get('/api/users', (req, res) => {
   allowCORS(res);
-  Models.getStates(db)
+  Models.getUsers(db)
   .then((result) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
@@ -79,12 +79,12 @@ app.post('/api/newUser', (req, res) => {
   });
 });
 
-app.post('/api/newUserSegment', (req, res) => {
+app.post('/api/newUserSegments', (req, res) => {
   allowCORS(res);
-  Models.createUserSegment(db, req.body.userId, req.body.clinched, req.body.routeId, req.body.coords)
+  Models.createUserSegment(db, req.body.userId, req.body.segments)
   .then((result) => {
     res.status(201).type('application/json');
-    res.send(JSON.stringify(result));
+    res.send(JSON.stringify({ success: true, entries: req.body.segments.length }));
   }).catch((err) => {
     res.status(500).type('Sorry, an error occurred!');
   });

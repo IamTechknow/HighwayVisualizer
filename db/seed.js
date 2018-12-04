@@ -45,9 +45,9 @@ db.connectAsync()
     route_id INTEGER NOT NULL,
     clinched INTEGER NOT NULL,
     start_lat DOUBLE NOT NULL,
-    start_long DOUBLE NOT NULL,
+    start_lon DOUBLE NOT NULL,
     end_lat DOUBLE NOT NULL,
-    end_long DOUBLE NOT NULL);`))
+    end_lon DOUBLE NOT NULL);`))
   .then(() => seedData(db))
   .then(() => process.exit(0))
   .catch(err => {console.error(err); db.end();});

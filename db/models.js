@@ -22,6 +22,7 @@ class Models {
       keys = await db.queryAsync('SELECT id FROM routes WHERE route = ? AND direction = ?;', [route, dir]).then((result) => result[0]);
     }
 
+    // TODO: What does multiple queries do? Does promises account for that?
     let result = [];
     for (let key of keys) { // Each Key is an object with our desired field
       let segment = {id: key.id};
@@ -34,20 +35,21 @@ class Models {
     return result;
   }
 
-  static getUsers() {
+  static getUsers(db) {
     return db.queryAsync('SELECT * FROM users;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
-  static createUser(username) {
+  static createUser(db, username) {
     return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
-  static createUserSegment(db, userId, routeId, clinched, coords) {
-    return db.queryAsync('INSERT INTO segments (user_id, route_id, clinched, start_lat, start_long, end_lat, end_long) VALUES (?, ?, ?, ?, ?, ?);', [userId, routeId, clinched, ...coords])
+  static createUserSegment(db, userId, segments) {
+    segments = segments.map(obj => `(${userId}, ${obj.routeId}, ${obj.clinched ? 1 : 0}, ${obj.points[0]}, ${obj.points[1]})`);
+    return db.queryAsync(`INSERT INTO segments (user_id, route_id, clinched, start_lat, start_lon, end_lat, end_lon) VALUES ${segments.join()};`)
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }

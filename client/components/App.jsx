@@ -11,12 +11,17 @@ export default class App extends React.Component {
       lat: 37.5904827,
       lon: -122.9585187,
       zoom: 7,
+      users: [],
+      currUserIdx: -1
     };
 
     this.onStateClick = this.onStateClick.bind(this);
     this.onRouteClick = this.onRouteClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
     this.onResetSegments = this.onResetSegments.bind(this);
+    this.onSendSegments = this.onSendSegments.bind(this);
+    this.onFormSubmit = this.onFormSubmit.bind(this);
+    this.onUserChange = this.onUserChange.bind(this);
 
     this.mapRef = React.createRef();
 
@@ -52,6 +57,11 @@ export default class App extends React.Component {
     ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { cache[ele] = "US Highway"; });
 
     return cache;
+  }
+
+  static getUsers() {
+    return fetch(`/api/users`)
+      .then(res => res.json());
   }
 
   static getStates() {
@@ -106,11 +116,51 @@ export default class App extends React.Component {
         this.setState({ routes });
         return App.getRoute(1);
       })
-      .then(segments => this.routePromiseDone(segments, "101"));
+      .then(segments => {
+        this.routePromiseDone(segments, "101");
+        return App.getUsers();
+      })
+      .then(users => { this.setState({ users }); });
   }
 
   getNameForRoute(route) {
     return this.cache[route] ? this.cache[route] : "State Route";
+  }
+
+  onFormSubmit(event) {
+    event.preventDefault();
+    const user = new FormData(event.target).get('userName');
+
+    fetch('/api/newUser', {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({user})
+    }).then(res => res.json())
+      .then(res => App.getUsers())
+      .then(users => { this.setState({ users }); });
+  }
+
+  onSendSegments() {
+    fetch('/api/newUserSegments', {
+      method: "POST",
+      mode: "cors",
+      headers: {
+        "Content-Type": "application/json; charset=utf-8"
+      },
+      body: JSON.stringify({
+        userId: this.state.users[this.state.currUserIdx].id,
+        segments: this.userSegments
+      })
+    }).then(res => res.json())
+    .then(res => {
+      this.setState({
+        success: true,
+        entries: res.entries
+      });
+    });
   }
 
   onResetSegments() {
@@ -154,6 +204,12 @@ export default class App extends React.Component {
     }
   }
 
+  onUserChange(event) {
+    this.setState({
+      currUserIdx: Number.parseInt(event.target.value, 10)
+    });
+  }
+
   // Process array of route segments. There will always be at least one
   routePromiseDone(segments, route) {
     const tup = segments[0].points[0];
@@ -167,11 +223,29 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, segments, userSegments } = this.state;
+    const { lat, lon, zoom, states, routes, segments, userSegments, success, entries, users, currUserIdx } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
-          <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
+          <h3>Users</h3>
+          <select onChange={this.onUserChange}>
+            <option value="-1">Select or create a user</option>
+            {
+              users.map((user, i) => (
+                <option key={user.id} value={i}>{user.user}</option>
+              ))
+            }
+          </select>
+
+          <form onSubmit={this.onFormSubmit}>
+            <label htmlFor="userName">
+              Username
+              <input type="text" id="userName" name="userName" />
+            </label>
+            <br />
+            <button type="submit">Create User</button>
+          </form>
+
           <h3>Segments</h3>
           <ul>
             {
@@ -182,6 +256,18 @@ export default class App extends React.Component {
             }
           </ul>
           
+          { currUserIdx >= 0 &&
+            <div>
+              <button type="button" onClick={this.onSendSegments}>Send Segments</button>
+              <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
+            </div>
+          }
+
+          {
+            success &&
+            <p>{`Successfully created ${entries} entries`}</p>
+          }
+
           <h3>States</h3>
           <ul>
             { states && states.map(obj => (
