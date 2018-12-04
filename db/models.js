@@ -53,6 +53,12 @@ class Models {
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
+  
+  static getUserSegmentsBy(db, userId) {
+    return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [userId])
+      .then((result) => result[0])
+      .catch((err) => { console.error(err); });
+  }
 
   static createUser(db, username) {
     return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])

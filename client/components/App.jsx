@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { Map, TileLayer, Polyline } from 'react-leaflet';
+import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
 
 export default class App extends React.Component {
   constructor(props) {
@@ -12,7 +12,7 @@ export default class App extends React.Component {
       lon: -122.9585187,
       zoom: 7,
       users: [],
-      currUserIdx: -1
+      currUserId: -1
     };
 
     this.onStateClick = this.onStateClick.bind(this);
@@ -83,6 +83,15 @@ export default class App extends React.Component {
     const query = dir ? `?dir=${dir}&getAll=${getAll}` : '';
     return fetch(`/api/points/${routeId}${query}`)
       .then(res => res.json());
+  }
+
+  static getSegmentsFor(userId) {
+    return fetch(`/api/segments/${userId}`)
+      .then(res => res.json())
+      .then(res => res.map(obj => {
+        obj.points = [[obj.start_lat, obj.start_lon], [obj.end_lat, obj.end_lon]];
+        return obj;
+      }));
   }
 
   static parseRoutes(routes) {
@@ -159,7 +168,7 @@ export default class App extends React.Component {
         "Content-Type": "application/json; charset=utf-8"
       },
       body: JSON.stringify({
-        userId: this.state.users[this.state.currUserIdx].id,
+        userId: this.state.currUserId,
         segments: this.userSegments
       })
     }).then(res => res.json())
@@ -167,6 +176,13 @@ export default class App extends React.Component {
       this.setState({
         success: true,
         entries: res.entries
+      });
+      return App.getSegmentsFor(this.state.currUserId);
+    })
+    .then(apiUserSegments => { //Reload segments, clear current segments to avoid duplicate submissions
+      this.setState({
+        userSegments: [],
+        apiUserSegments
       });
     });
   }
@@ -198,6 +214,9 @@ export default class App extends React.Component {
     const segLatLng = this.mapRef.current.leafletElement.layerPointToLatLng(segPoint);
     if (!this.currClicked) {
       this.currClicked = [segLatLng.lat, segLatLng.lng];
+      this.setState({
+        currClicked: this.currClicked
+      });
     } else {
       this.userSegments.push({
         route: this.state.route,
@@ -207,15 +226,27 @@ export default class App extends React.Component {
       });
       this.currClicked = undefined;
       this.setState({
+        currClicked: this.currClicked,
         userSegments: this.userSegments
       });
     }
   }
 
+  // Change user and load user's segments if any
   onUserChange(event) {
+    const currUserId = Number.parseInt(event.target.value, 10);
     this.setState({
-      currUserIdx: Number.parseInt(event.target.value, 10)
+      currUserId
     });
+
+    if (currUserId >= 0) {
+      App.getSegmentsFor(currUserId)
+        .then(apiUserSegments => {
+          this.setState({
+            apiUserSegments
+          });
+        });
+    }
   }
 
   // Process array of route segments. There will always be at least one
@@ -231,7 +262,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, segments, userSegments, success, entries, users, currUserIdx } = this.state;
+    const { lat, lon, zoom, states, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, currClicked } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
@@ -239,8 +270,8 @@ export default class App extends React.Component {
           <select onChange={this.onUserChange} className="nameFormElement">
             <option value="-1">Select or create a user</option>
             {
-              users.map((user, i) => (
-                <option key={user.id} value={i}>{user.user}</option>
+              users.map((user) => (
+                <option key={user.id} value={user.id}>{user.user}</option>
               ))
             }
           </select>
@@ -269,7 +300,7 @@ export default class App extends React.Component {
             }
           </ul>
           
-          { currUserIdx >= 0 &&
+          { currUserId >= 0 &&
             <div>
               <button type="button" onClick={this.onSendSegments}>Send Segments</button>
               <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
@@ -315,6 +346,12 @@ export default class App extends React.Component {
           }
           { userSegments &&
             userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
+          }
+          { apiUserSegments &&
+            apiUserSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
+          }
+          { currClicked &&
+            <Marker position={currClicked} />
           }
         </Map>
       </div>

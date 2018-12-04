@@ -67,6 +67,17 @@ app.get('/api/points/:routeId', (req, res) => {
   });
 });
 
+app.get('/api/segments/:userId', (req, res) => {
+  allowCORS(res);
+  Models.getUserSegmentsBy(db, req.params.userId)
+  .then((result) => {
+    res.status(200).type('application/json');
+    res.send(JSON.stringify(result));
+  }).catch((err) => {
+    res.status(500).type('Sorry, an error occurred!');
+  });
+});
+
 // C endpoints
 app.post('/api/newUser', (req, res) => {
   allowCORS(res);
