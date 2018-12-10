@@ -87,11 +87,7 @@ export default class App extends React.Component {
 
   static getSegmentsFor(userId) {
     return fetch(`/api/segments/${userId}`)
-      .then(res => res.json())
-      .then(res => res.map(obj => {
-        obj.points = [[obj.start_lat, obj.start_lon], [obj.end_lat, obj.end_lon]];
-        return obj;
-      }));
+      .then(res => res.json());
   }
 
   static parseRoutes(routes) {

@@ -12,25 +12,9 @@ class Models {
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
-
-  // Select all points for a route. Returns a promise for a 2D array of segment arrays
-  // due to async keyword
-  static async getPointsBy(db, route, dir, getAll) {
-    // Get all route keys. For each key, get the polyline.
-    let keys = [{id: route}];
-    if (getAll) { // route is route number, not a segment ID
-      keys = await db.queryAsync('SELECT id FROM routes WHERE route = ? AND direction = ?;', [route, dir]).then((result) => result[0]);
-    }
-
-    // Use multiple queries to grab all the data at once!
-    let combinedQuery = [], segments = [];
-    for (let key of keys) { // Each Key is an object with our desired field
-      segments.push({id: key.id});
-      combinedQuery.push('SELECT lat, lon FROM points WHERE route_key = ' + key.id);
-    }
-    combinedQuery.push('');
-
-    let result = await db.queryAsync(combinedQuery.join('; '))
+  
+  static async processPointQueries(db, queries, segments) {
+    let result = await db.queryAsync(queries.join('; '))
       .then((result) => result[0])
       .then((result) => {
         if (Array.isArray(result[0])) { // Data Packet or array?
@@ -48,6 +32,39 @@ class Models {
     return segments;
   }
 
+  // Select all points for a route. Returns a promise for a 2D array of segment arrays
+  // due to async keyword
+  static async getPointsBy(db, route, dir, getAll) {
+    // Get all route keys. For each key, get the polyline.
+    let keys = [{id: route}];
+    if (getAll) { // route is route number, not a segment ID
+      keys = await db.queryAsync('SELECT id FROM routes WHERE route = ? AND direction = ?;', [route, dir]).then((result) => result[0]);
+    }
+
+    // Use multiple queries to grab all the data at once!
+    let combinedQuery = [], segments = [];
+    for (let key of keys) { // Each Key is an object with our desired field
+      segments.push({id: key.id});
+      combinedQuery.push('SELECT lat, lon FROM points WHERE route_key = ' + key.id);
+    }
+    combinedQuery.push(''); // Allow last semicolon to be added
+    return Models.processPointQueries(db, combinedQuery, segments);
+  }
+
+  // Helper function to get point data from user segments
+  static async getPointsByUser(db, userSegs) {
+    const queries = [];
+
+    for (let obj of userSegs) {
+      const queryBase = 'SELECT lat, lon FROM points WHERE route_key = ' + obj.route_id;
+      const minLat = Math.min(obj.start_lat, obj.end_lat), maxLat = Math.max(obj.start_lat, obj.end_lat);
+      const minLon = Math.max(obj.start_lon, obj.end_lon), maxLon = Math.min(obj.start_lon, obj.start_lon);
+      queries.push(queryBase + ` AND lat > ${minLat} AND lat < ${maxLat} AND lon < ${minLon} AND lon > ${maxLon}`);
+    }
+    queries.push('');
+    return Models.processPointQueries(db, queries, userSegs);
+  }
+
   static getUsers(db) {
     return db.queryAsync('SELECT * FROM users;')
       .then((result) => result[0])
@@ -56,7 +73,7 @@ class Models {
   
   static getUserSegmentsBy(db, userId) {
     return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [userId])
-      .then((result) => result[0])
+      .then((result) => Models.getPointsByUser(db, result[0]))
       .catch((err) => { console.error(err); });
   }
 
