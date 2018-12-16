@@ -17,5 +17,9 @@ const db = Promise.promisifyAll(connection, { multiArgs: true });
 db.connectAsync()
   .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}`))
   .then(() => db.queryAsync(`USE ${database}`))
+  .catch(() => {
+    console.error('Failed to connect. Has mysqld --console been run yet?');
+    process.exit(0);
+  });
 
 module.exports = db;

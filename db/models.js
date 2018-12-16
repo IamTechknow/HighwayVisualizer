@@ -57,9 +57,7 @@ class Models {
 
     for (let obj of userSegs) {
       const queryBase = 'SELECT lat, lon FROM points WHERE route_key = ' + obj.route_id;
-      const minLat = Math.min(obj.start_lat, obj.end_lat), maxLat = Math.max(obj.start_lat, obj.end_lat);
-      const minLon = Math.max(obj.start_lon, obj.end_lon), maxLon = Math.min(obj.start_lon, obj.start_lon);
-      queries.push(queryBase + ` AND lat > ${minLat} AND lat < ${maxLat} AND lon < ${minLon} AND lon > ${maxLon}`);
+      queries.push(queryBase + ` AND id >= ${obj.start_id} AND id <= ${obj.end_id}`);
     }
     queries.push('');
     return Models.processPointQueries(db, queries, userSegs);
@@ -73,7 +71,7 @@ class Models {
   
   static getUserSegmentsBy(db, userId) {
     return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [userId])
-      .then((result) => Models.getPointsByUser(db, result[0]))
+      .then((result) => result[0].length ? Models.getPointsByUser(db, result[0]) : [])
       .catch((err) => { console.error(err); });
   }
 
@@ -84,8 +82,8 @@ class Models {
   }
 
   static createUserSegment(db, userId, segments) {
-    segments = segments.map(obj => `(${userId}, ${obj.routeId}, ${obj.clinched ? 1 : 0}, ${obj.points[0]}, ${obj.points[1]})`);
-    return db.queryAsync(`INSERT INTO segments (user_id, route_id, clinched, start_lat, start_lon, end_lat, end_lon) VALUES ${segments.join()};`)
+    segments = segments.map(obj => `(${userId}, ${obj.routeId}, ${obj.clinched ? 1 : 0}, ${obj.startId}, ${obj.endId})`);
+    return db.queryAsync(`INSERT INTO segments (user_id, route_id, clinched, start_id, end_id) VALUES ${segments.join()};`)
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }

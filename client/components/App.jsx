@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom';
 
 import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
 
+const R = 6371e3; // Mean radius of Earth
+
 export default class App extends React.Component {
   constructor(props) {
     super(props);
@@ -26,7 +28,8 @@ export default class App extends React.Component {
 
     this.mapRef = React.createRef();
 
-    this.currClicked = undefined;
+    this.startMarker = undefined;
+    this.endMarker = undefined;
     this.userSegments = [];
   }
 
@@ -58,6 +61,43 @@ export default class App extends React.Component {
     ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { cache[ele] = "US Highway"; });
 
     return cache;
+  }
+  
+  static toRadians (angle) {
+    return angle * (Math.PI / 180);
+  }
+
+  static findSegmentPoint(polyline, clicked) {
+    // Brute force: iterate through all points, calc distance between coordinate to clicked coordinate. Return closest coordinate
+    // Optimized way: Using nearest neighbour algorithm for a 2D space, or a KD tree/quadtree?
+    let points = polyline.getLatLngs();
+    let shortestDistance = Number.MAX_VALUE;
+    let closest;
+
+    // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
+    for (let i = 0; i < points.length; i++) {
+      let {lat, lng} = points[i];
+      let clickedLat = clicked.lat, clickedLng = clicked.lng;
+
+      var lat1 = App.toRadians(lat);
+      var lat2 = App.toRadians(clickedLat);
+      var deltaLat = App.toRadians(clickedLat) - App.toRadians(lat);
+      var deltaLng = App.toRadians(clickedLng) - App.toRadians(lng);
+
+      var a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+        Math.cos(lat1) * Math.cos(lat2) *
+        Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+      var d = R * c;
+
+      if (d < shortestDistance) {
+        shortestDistance = d;
+        closest = i;
+      }
+    }
+
+    return Object.assign(points[closest], {idx: closest});
   }
 
   static getUsers() {
@@ -206,23 +246,25 @@ export default class App extends React.Component {
 
   // Keep track of clicked points
   onSegmentClick(i, routeId, event) {
-    const segPoint = event.target.closestLayerPoint(event.layerPoint);
-    const segLatLng = this.mapRef.current.leafletElement.layerPointToLatLng(segPoint);
-    if (!this.currClicked) {
-      this.currClicked = [segLatLng.lat, segLatLng.lng];
+    const segLatLng = App.findSegmentPoint(event.target, event.latlng);
+
+    if (!this.startMarker) {
+      this.startMarker = segLatLng;
       this.setState({
-        currClicked: this.currClicked
+        startMarker: this.startMarker,
       });
     } else {
       this.userSegments.push({
         route: this.state.route,
         routeId,
+        startId: this.startMarker.idx,
+        endId: segLatLng.idx,
         clinched: false,
-        points: [this.currClicked, [segLatLng.lat, segLatLng.lng]]
+        points: [[this.startMarker.lat, this.startMarker.lng], [segLatLng.lat, segLatLng.lng]]
       });
-      this.currClicked = undefined;
+      this.startMarker = undefined;
       this.setState({
-        currClicked: this.currClicked,
+        startMarker: this.startMarker,
         userSegments: this.userSegments
       });
     }
@@ -258,7 +300,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, currClicked } = this.state;
+    const { lat, lon, zoom, states, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, startMarker } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
@@ -346,8 +388,8 @@ export default class App extends React.Component {
           { apiUserSegments &&
             apiUserSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
           }
-          { currClicked &&
-            <Marker position={currClicked} />
+          { startMarker &&
+            <Marker position={startMarker} />
           }
         </Map>
       </div>
