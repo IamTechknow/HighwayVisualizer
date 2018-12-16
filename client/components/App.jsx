@@ -163,14 +163,14 @@ export default class App extends React.Component {
         return App.getRoute(1);
       })
       .then(segments => {
-        this.routePromiseDone(segments, "101");
+        this.routePromiseDone(segments, '101', 1);
         return App.getUsers();
       })
       .then(users => { this.setState({ users }); });
   }
 
   getNameForRoute(route) {
-    return this.cache[route] ? this.cache[route] : "State Route";
+    return this.cache[route] ? this.cache[route] : 'State Route';
   }
   
   onClinchToggleFor(i) {
@@ -185,10 +185,10 @@ export default class App extends React.Component {
     const user = new FormData(event.target).get('userName');
 
     fetch('/api/newUser', {
-      method: "POST",
-      mode: "cors",
+      method: 'POST',
+      mode: 'cors',
       headers: {
-        "Content-Type": "application/json; charset=utf-8"
+        'Content-Type': 'application/json; charset=utf-8'
       },
       body: JSON.stringify({user})
     }).then(res => res.json())
@@ -198,10 +198,10 @@ export default class App extends React.Component {
 
   onSendSegments() {
     fetch('/api/newUserSegments', {
-      method: "POST",
-      mode: "cors",
+      method: 'POST',
+      mode: 'cors',
       headers: {
-        "Content-Type": "application/json; charset=utf-8"
+        'Content-Type': 'application/json; charset=utf-8'
       },
       body: JSON.stringify({
         userId: this.state.currUserId,
@@ -241,7 +241,7 @@ export default class App extends React.Component {
   onRouteClick(route, routeId, dir, getAll, event) {
     event.stopPropagation();
     App.getRoute(routeId, dir, getAll)
-      .then(segments => this.routePromiseDone(segments, route));
+      .then(segments => this.routePromiseDone(segments, route, routeId));
   }
 
   // Keep track of clicked points
@@ -260,7 +260,6 @@ export default class App extends React.Component {
         startId: this.startMarker.idx,
         endId: segLatLng.idx,
         clinched: false,
-        points: [[this.startMarker.lat, this.startMarker.lng], [segLatLng.lat, segLatLng.lng]]
       });
       this.startMarker = undefined;
       this.setState({
@@ -288,10 +287,11 @@ export default class App extends React.Component {
   }
 
   // Process array of route segments. There will always be at least one
-  routePromiseDone(segments, route) {
+  routePromiseDone(segments, route, routeId) {
     const tup = segments[0].points[0];
     this.setState({
       route,
+      routeId,
       segments,
       lat: tup[0],
       lon: tup[1],
@@ -300,7 +300,7 @@ export default class App extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, startMarker } = this.state;
+    const { lat, lon, zoom, states, route, routeId, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, startMarker } = this.state;
     return (
       <div id="mapGrid">
         <div id="routeUi">
@@ -382,11 +382,16 @@ export default class App extends React.Component {
           { segments &&
             segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
+          {/* Show unsubmitted user segments if selected route and segment is the same */}
           { userSegments &&
-            userSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
+            userSegments.map((seg, i) => 
+                seg.routeId === routeId && 
+                <Polyline key={`userSeg-${i}`} positions={segments[0].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
+              
+            )
           }
           { apiUserSegments &&
-            apiUserSegments.map((seg, i) => <Polyline key={`userSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
+            apiUserSegments.map((seg, i) => <Polyline key={`apiSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
           }
           { startMarker &&
             <Marker position={startMarker} />

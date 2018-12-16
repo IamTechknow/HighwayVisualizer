@@ -58,7 +58,7 @@ app.get('/api/routes/:stateId', (req, res) => {
 app.get('/api/points/:routeId', (req, res) => {
   allowCORS(res);
   const getAll = req.query.getAll === "true";
-  Models.getPointsBy(db, req.params.routeId, req.query.dir, getAll)
+  Models.getPointsBy(db, Number.parseInt(req.params.routeId, 10), req.query.dir, getAll)
   .then((result) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
