@@ -12,7 +12,7 @@ class Models {
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
-  
+
   static async processPointQueries(db, queries, segments) {
     let result = await db.queryAsync(queries.join('; '))
       .then((result) => result[0])
@@ -68,16 +68,24 @@ class Models {
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
-  
+
   static getUserSegmentsBy(db, userId) {
     return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [userId])
       .then((result) => result[0].length ? Models.getPointsByUser(db, result[0]) : [])
       .catch((err) => { console.error(err); });
   }
 
+  // Check if the user already exists
   static createUser(db, username) {
-    return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])
-      .then((result) => result[0])
+    return db.queryAsync('SELECT * FROM users WHERE user = ?;', [username])
+      .then((result) => {
+        if (result[0].length) {
+          return { success: false, userId: result[0][0].id };
+        }
+
+        return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])
+          .then((result) => { return { success: true, userId: result[0].insertId }; });
+      })
       .catch((err) => { console.error(err); });
   }
 

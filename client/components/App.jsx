@@ -183,6 +183,7 @@ export default class App extends React.Component {
   onFormSubmit(event) {
     event.preventDefault();
     const user = new FormData(event.target).get('userName');
+    event.target.reset(); // clear input fields
 
     fetch('/api/newUser', {
       method: 'POST',
@@ -192,8 +193,14 @@ export default class App extends React.Component {
       },
       body: JSON.stringify({user})
     }).then(res => res.json())
-      .then(res => App.getUsers())
-      .then(users => { this.setState({ users }); });
+      .then(res => {
+        // If new user created, add to end of list. Otherwise just update selected user
+        const users = this.state.users;
+        if (res.success) {
+          users.push({ id: res.userId , user });
+        }
+        this.setState({ users, currUserId: res.userId });
+      });
   }
 
   onSendSegments() {
@@ -305,7 +312,7 @@ export default class App extends React.Component {
       <div id="mapGrid">
         <div id="routeUi">
           <h3>Users</h3>
-          <select onChange={this.onUserChange} className="nameFormElement">
+          <select value={currUserId} onChange={this.onUserChange} className="nameFormElement">
             <option value="-1">Select or create a user</option>
             {
               users.map((user) => (
@@ -340,7 +347,7 @@ export default class App extends React.Component {
           
           { currUserId >= 0 &&
             <div>
-              <button type="button" onClick={this.onSendSegments}>Send Segments</button>
+              <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
               <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
             </div>
           }
