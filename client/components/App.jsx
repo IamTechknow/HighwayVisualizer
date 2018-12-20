@@ -62,7 +62,7 @@ export default class App extends React.Component {
 
     return cache;
   }
-  
+
   static toRadians (angle) {
     return angle * (Math.PI / 180);
   }
@@ -256,6 +256,7 @@ export default class App extends React.Component {
   }
 
   // Keep track of clicked points
+  // TODO: If a segment of multiple routes are being added, add user segment for each one
   onSegmentClick(i, routeId, event) {
     const segLatLng = App.findSegmentPoint(event.target, event.latlng);
 
@@ -294,6 +295,8 @@ export default class App extends React.Component {
             apiUserSegments
           });
         });
+    } else {
+      this.setState({ apiUserSegments: [] });
     }
   }
 
@@ -336,12 +339,12 @@ export default class App extends React.Component {
             <button type="submit">Create User</button>
           </form>
 
-          <h3>Segments</h3>
+          <h3>User Segments</h3>
           <ul>
             {
               userSegments &&
               userSegments.map((seg, i) => (
-                <div className="segRow">
+                <div key={`userSegItem-${i}`} className="segRow">
                   <li>
                     {`${this.getNameForRoute(seg.route)} ${seg.route}`}
                     <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
@@ -350,13 +353,12 @@ export default class App extends React.Component {
               ))
             }
           </ul>
-          
+
           { currUserId >= 0 &&
-            <div>
-              <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
-              <button type="button" onClick={this.onResetSegments}>Clear Segments</button>
-            </div>
+            <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
           }
+
+          <button type="button" onClick={this.onResetSegments}>Clear User Segments</button>
 
           {
             success &&
@@ -374,12 +376,12 @@ export default class App extends React.Component {
           <ul>
             {/* List each route and all route segments */}
             { routes && routes.map(obj => (
-              <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, 'true')}>
+              <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, true)}>
                 {`${this.getNameForRoute(obj[0].route)} ${obj[0].route} ${obj[0].dir}`}
                 { obj.length > 1 && (
                   <ul>
                     {obj.map((seg, i) => (
-                      <li key={`segment-${i}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", "false")}>{`Segment ${i + 1}`}</li>
+                      <li key={`segment-${seg.id}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", false)}>{`Segment ${i + 1}`}</li>
                     ))}
                   </ul>
                 )}
