@@ -54,11 +54,16 @@ app.get('/api/routes/:stateId', (req, res) => {
   });
 });
 
-// Expects route segment and direction
+// Expects route segment and direction. Distinguish between U (unrelinquished) and S routes
 app.get('/api/points/:routeId', (req, res) => {
   allowCORS(res);
   const getAll = req.query.getAll === "true";
-  Models.getPointsBy(db, Number.parseInt(req.params.routeId, 10), req.query.dir, getAll)
+  let routeInteger = req.params.routeId;
+  if (/^\d+$/.test(routeInteger)) {
+    routeInteger = Number.parseInt(routeInteger, 10);
+  }
+
+  Models.getPointsBy(db, routeInteger, req.query.dir, getAll)
   .then((result) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
