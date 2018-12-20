@@ -130,6 +130,10 @@ export default class App extends React.Component {
       .then(res => res.json());
   }
 
+  static getMapForLiveIds(segments) {
+    return new Map(segments.map((seg, i) => [seg.id, i]));
+  }
+
   static parseRoutes(routes) {
     let set = new Set();
     let organized = [];
@@ -172,7 +176,7 @@ export default class App extends React.Component {
   getNameForRoute(route) {
     return this.cache[route] ? this.cache[route] : 'State Route';
   }
-  
+
   onClinchToggleFor(i) {
     this.userSegments[i].clinched = !this.userSegments[i].clinched;
     this.setState({
@@ -308,6 +312,8 @@ export default class App extends React.Component {
 
   render() {
     const { lat, lon, zoom, states, route, routeId, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, startMarker } = this.state;
+    const liveSegs = segments ? App.getMapForLiveIds(segments) : undefined;
+
     return (
       <div id="mapGrid">
         <div id="routeUi">
@@ -391,10 +397,9 @@ export default class App extends React.Component {
           }
           {/* Show unsubmitted user segments if selected route and segment is the same */}
           { userSegments &&
-            userSegments.map((seg, i) => 
-                seg.routeId === routeId && 
-                <Polyline key={`userSeg-${i}`} positions={segments[0].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
-              
+            userSegments.map((seg, i) =>
+              liveSegs && liveSegs.has(seg.routeId) &&
+              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
             )
           }
           { apiUserSegments &&
