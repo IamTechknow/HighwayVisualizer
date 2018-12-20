@@ -266,11 +266,13 @@ export default class App extends React.Component {
         startMarker: this.startMarker,
       });
     } else {
+      const start = Math.min(this.startMarker.idx, segLatLng.idx),
+            end = Math.max(this.startMarker.idx, segLatLng.idx);
       this.userSegments.push({
         route: this.state.route,
         routeId,
-        startId: this.startMarker.idx,
-        endId: segLatLng.idx,
+        startId: start,
+        endId: end,
         clinched: false,
       });
       this.startMarker = undefined;
