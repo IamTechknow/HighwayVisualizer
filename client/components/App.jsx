@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 
-import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
+import { Map as LeafletMap, TileLayer, Polyline, Marker } from 'react-leaflet';
 
 const R = 6371e3; // Mean radius of Earth
 
@@ -381,7 +381,7 @@ export default class App extends React.Component {
             ))}
           </ul>
         </div>
-        <Map ref={this.mapRef} center={[lat, lon]} zoom={zoom}>
+        <LeafletMap ref={this.mapRef} center={[lat, lon]} zoom={zoom}>
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
@@ -403,7 +403,7 @@ export default class App extends React.Component {
           { startMarker &&
             <Marker position={startMarker} />
           }
-        </Map>
+        </LeafletMap>
       </div>
     );
   }
