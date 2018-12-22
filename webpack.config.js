@@ -51,9 +51,10 @@ module.exports = (env, argv) => ({
       },
       {
         test: /\.(png)$/,
-        use: [
-          'file-loader'
-        ]
+        loader: 'file-loader',
+        options: {
+          outputPath: '..' // Put output files next to index.html
+        },
       }
     ]
   }
