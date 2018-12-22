@@ -56,8 +56,11 @@ class Models {
     const queries = [];
 
     for (let obj of userSegs) {
+      // Get the base ID for the route, then calculate the start and end IDs
+      const base = await db.queryAsync('SELECT base FROM routes WHERE id = ?;', [obj.route_id]).then((result) => result[0][0].base);
+      const start_id = base + obj.start_id, end_id = base + obj.end_id;
       const queryBase = 'SELECT lat, lon FROM points WHERE route_key = ' + obj.route_id;
-      queries.push(queryBase + ` AND id >= ${obj.start_id} AND id <= ${obj.end_id}`);
+      queries.push(queryBase + ` AND id >= ${start_id} AND id <= ${end_id}`);
     }
     queries.push('');
     return Models.processPointQueries(db, queries, userSegs);

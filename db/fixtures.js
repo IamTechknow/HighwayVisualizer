@@ -9,6 +9,7 @@ const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
 const seedData = async (db) => {
   let features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
   let stateKey = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("California", "CA")`).then(res => res[0].insertId);
+  let base = 0;
 
   for (let feature of features) {
     let route = {
@@ -23,7 +24,7 @@ const seedData = async (db) => {
     // Insert each array as its own route
     if (!isSingleCurve) {
       for (let i = 0; i < feature.geometry.coordinates.length; i++) {
-        let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
+        let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${base});`).then(res => res[0].insertId);
 
         let temp = feature.geometry.coordinates[i].map(tup => {
           return { route: num, lat: tup[1], lon: tup[0] };
@@ -31,11 +32,13 @@ const seedData = async (db) => {
         temp = temp.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
 
         await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${temp.join()};`);
-        route.seg += 1;
+
         console.log(`Seeded ${temp.length} points`);
+        route.seg += 1;
+        base += temp.length;
       }
     } else {
-      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey});`).then(res => res[0].insertId);
+      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${base});`).then(res => res[0].insertId);
       let newPoints = feature.geometry.coordinates.map(tup => {
         return { route: num, lat: tup[1], lon: tup[0] };
       });
@@ -43,7 +46,9 @@ const seedData = async (db) => {
 
       // Insert all rows by using commas
       await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
+
       console.log(`Seeded ${newPoints.length} points`);
+      base += newPoints.length;
     }
   }
 
