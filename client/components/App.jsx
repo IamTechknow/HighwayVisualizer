@@ -67,7 +67,7 @@ export default class App extends React.Component {
     return angle * (Math.PI / 180);
   }
 
-  static findSegmentPoint(polyline, clicked) {
+  static findSegmentPoint(polyline, clicked, routeId) {
     // Brute force: iterate through all points, calc distance between coordinate to clicked coordinate. Return closest coordinate
     // Optimized way: Using nearest neighbour algorithm for a 2D space, or a KD tree/quadtree?
     let points = polyline.getLatLngs();
@@ -97,7 +97,7 @@ export default class App extends React.Component {
       }
     }
 
-    return Object.assign(points[closest], {idx: closest});
+    return Object.assign(points[closest], {idx: closest, routeId});
   }
 
   static getUsers() {
@@ -189,6 +189,10 @@ export default class App extends React.Component {
     const user = new FormData(event.target).get('userName');
     event.target.reset(); // clear input fields
 
+    if (!user) { // Do not allow '' as a user
+      return;
+    }
+
     fetch('/api/newUser', {
       method: 'POST',
       mode: 'cors',
@@ -256,25 +260,63 @@ export default class App extends React.Component {
   }
 
   // Keep track of clicked points
-  // TODO: If a segment of multiple routes are being added, add user segment for each one
   onSegmentClick(i, routeId, event) {
-    const segLatLng = App.findSegmentPoint(event.target, event.latlng);
+    const segLatLng = App.findSegmentPoint(event.target, event.latlng, routeId);
 
     if (!this.startMarker) {
       this.startMarker = segLatLng;
       this.setState({
-        startMarker: this.startMarker,
+        startMarker: this.startMarker
       });
     } else {
-      const start = Math.min(this.startMarker.idx, segLatLng.idx),
-            end = Math.max(this.startMarker.idx, segLatLng.idx);
-      this.userSegments.push({
-        route: this.state.route,
-        routeId,
-        startId: start,
-        endId: end,
-        clinched: false,
-      });
+      // Check whether both points have the same route ID
+      if (this.startMarker.routeId === routeId) {
+        const startId = Math.min(this.startMarker.idx, segLatLng.idx),
+          endId = Math.max(this.startMarker.idx, segLatLng.idx);
+        this.userSegments.push({
+          route: this.state.route,
+          routeId,
+          startId,
+          endId,
+          clinched: false
+        });
+      } else {
+        // Figure out higher and lower points
+        const start = this.startMarker.routeId > routeId ? segLatLng : this.startMarker;
+        const end = this.startMarker.routeId < routeId ? segLatLng : this.startMarker;
+        const idMap = App.getMapForLiveIds(this.state.segments);
+
+        // Add entire user segments if needed
+        if (end.routeId - start.routeId > 1) {
+          for (let i = start.routeId + 1; i < end.routeId; i += 1) {
+            this.userSegments.push({
+              route: this.state.route,
+              routeId: i,
+              startId: 0,
+              endId: this.state.segments[idMap.get(i)].points.length,
+              clinched: false
+            });
+          }
+        }
+
+        // Add user segments from the two route segments
+        this.userSegments.push({
+          route: this.state.route,
+          routeId: start.routeId,
+          startId: start.idx,
+          endId: this.state.segments[idMap.get(start.routeId)].points.length,
+          clinched: false
+        });
+
+        this.userSegments.push({
+          route: this.state.route,
+          routeId: end.routeId,
+          startId: 0,
+          endId: end.idx,
+          clinched: false
+        });
+      }
+
       this.startMarker = undefined;
       this.setState({
         startMarker: this.startMarker,
