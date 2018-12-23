@@ -6,7 +6,7 @@ import Collapsible from './Collapsible';
 
 const R = 6371e3; // Mean radius of Earth
 
-export default class App extends React.Component {
+export default class CreateApp extends React.Component {
   constructor(props) {
     super(props);
 
@@ -26,8 +26,6 @@ export default class App extends React.Component {
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
     this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
-
-    this.mapRef = React.createRef();
 
     this.startMarker = undefined;
     this.endMarker = undefined;
@@ -80,10 +78,10 @@ export default class App extends React.Component {
       let {lat, lng} = points[i];
       let clickedLat = clicked.lat, clickedLng = clicked.lng;
 
-      var lat1 = App.toRadians(lat);
-      var lat2 = App.toRadians(clickedLat);
-      var deltaLat = App.toRadians(clickedLat) - App.toRadians(lat);
-      var deltaLng = App.toRadians(clickedLng) - App.toRadians(lng);
+      var lat1 = CreateApp.toRadians(lat);
+      var lat2 = CreateApp.toRadians(clickedLat);
+      var deltaLat = CreateApp.toRadians(clickedLat) - CreateApp.toRadians(lat);
+      var deltaLng = CreateApp.toRadians(clickedLng) - CreateApp.toRadians(lng);
 
       var a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
         Math.cos(lat1) * Math.cos(lat2) *
@@ -117,17 +115,12 @@ export default class App extends React.Component {
   static getRoutes(stateId) {
     return fetch(`/api/routes/${stateId}`)
       .then(res => res.json())
-      .then(routes => App.parseRoutes(routes));
+      .then(routes => CreateApp.parseRoutes(routes));
   }
 
   static getRoute(routeId, dir, getAll) {
     const query = dir ? `?dir=${dir}&getAll=${getAll}` : '';
     return fetch(`/api/points/${routeId}${query}`)
-      .then(res => res.json());
-  }
-
-  static getSegmentsFor(userId) {
-    return fetch(`/api/segments/${userId}`)
       .then(res => res.json());
   }
 
@@ -157,19 +150,19 @@ export default class App extends React.Component {
 
   // Load all data from API endpoints
   componentDidMount() {
-    this.cache = App.buildCache();
-    App.getStates()
+    this.cache = CreateApp.buildCache();
+    CreateApp.getStates()
       .then(states => {
         this.setState({ states });
-        return App.getRoutes(states[0].id);
+        return CreateApp.getRoutes(states[0].id);
       })
       .then(routes => {
         this.setState({ routes });
-        return App.getRoute(1);
+        return CreateApp.getRoute(1);
       })
       .then(segments => {
         this.routePromiseDone(segments, '101', 1);
-        return App.getUsers();
+        return CreateApp.getUsers();
       })
       .then(users => { this.setState({ users }); });
   }
@@ -198,7 +191,7 @@ export default class App extends React.Component {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8'
+        'Content-Type': 'CreateApplication/json; charset=utf-8'
       },
       body: JSON.stringify({user})
     }).then(res => res.json())
@@ -217,7 +210,7 @@ export default class App extends React.Component {
       method: 'POST',
       mode: 'cors',
       headers: {
-        'Content-Type': 'application/json; charset=utf-8'
+        'Content-Type': 'CreateApplication/json; charset=utf-8'
       },
       body: JSON.stringify({
         userId: this.state.currUserId,
@@ -227,14 +220,8 @@ export default class App extends React.Component {
     .then(res => {
       this.setState({
         success: true,
-        entries: res.entries
-      });
-      return App.getSegmentsFor(this.state.currUserId);
-    })
-    .then(apiUserSegments => { //Reload segments, clear current segments to avoid duplicate submissions
-      this.setState({
-        userSegments: [],
-        apiUserSegments
+        entries: res.entries,
+        userSegments: []
       });
     });
   }
@@ -247,7 +234,7 @@ export default class App extends React.Component {
   }
 
   onStateClick(stateId) {
-    App.getRoutes(stateId)
+    CreateApp.getRoutes(stateId)
       .then(routes => {
         this.setState({ routes });
       });
@@ -257,13 +244,13 @@ export default class App extends React.Component {
   onRouteClick(route, routeId, dir, getAll, event) {
     event.stopPropagation();
     
-    App.getRoute(routeId, dir, getAll)
+    CreateApp.getRoute(routeId, dir, getAll)
       .then(segments => this.routePromiseDone(segments, route, routeId));
   }
 
   // Keep track of clicked points
   onSegmentClick(i, routeId, event) {
-    const segLatLng = App.findSegmentPoint(event.target, event.latlng, routeId);
+    const segLatLng = CreateApp.findSegmentPoint(event.target, event.latlng, routeId);
 
     if (!this.startMarker) {
       this.startMarker = segLatLng;
@@ -286,7 +273,7 @@ export default class App extends React.Component {
         // Figure out higher and lower points
         const start = this.startMarker.routeId > routeId ? segLatLng : this.startMarker;
         const end = this.startMarker.routeId < routeId ? segLatLng : this.startMarker;
-        const idMap = App.getMapForLiveIds(this.state.segments);
+        const idMap = CreateApp.getMapForLiveIds(this.state.segments);
 
         // Add entire user segments if needed
         if (end.routeId - start.routeId > 1) {
@@ -333,17 +320,6 @@ export default class App extends React.Component {
     this.setState({
       currUserId
     });
-
-    if (currUserId >= 0) {
-      App.getSegmentsFor(currUserId)
-        .then(apiUserSegments => {
-          this.setState({
-            apiUserSegments
-          });
-        });
-    } else {
-      this.setState({ apiUserSegments: [] });
-    }
   }
 
   // Process array of route segments. There will always be at least one
@@ -358,13 +334,13 @@ export default class App extends React.Component {
       startMarker: this.startMarker,
       lat: tup[0],
       lon: tup[1],
-      zoom: App.getZoomForRouteLen(segments.reduce((curr, obj) => curr += obj.points.length, 0))
+      zoom: CreateApp.getZoomForRouteLen(segments.reduce((curr, obj) => curr += obj.points.length, 0))
     });
   }
 
   render() {
-    const { lat, lon, zoom, states, route, routeId, routes, segments, userSegments, apiUserSegments, success, entries, users, currUserId, startMarker } = this.state;
-    const liveSegs = segments ? App.getMapForLiveIds(segments) : undefined;
+    const { lat, lon, zoom, states, route, routeId, routes, segments, userSegments, success, entries, users, currUserId, startMarker } = this.state;
+    const liveSegs = segments ? CreateApp.getMapForLiveIds(segments) : undefined;
 
     return (
       <div id="mapGrid">
@@ -444,7 +420,7 @@ export default class App extends React.Component {
           </Collapsible>
         </div>
 
-        <LeafletMap ref={this.mapRef} center={[lat, lon]} zoom={zoom}>
+        <LeafletMap center={[lat, lon]} zoom={zoom}>
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
@@ -458,9 +434,6 @@ export default class App extends React.Component {
               liveSegs && liveSegs.has(seg.routeId) &&
               <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
             )
-          }
-          { apiUserSegments &&
-            apiUserSegments.map((seg, i) => <Polyline key={`apiSeg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
           }
           { startMarker &&
             <Marker position={startMarker} />
