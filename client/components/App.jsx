@@ -15,6 +15,7 @@ export default class CreateApp extends React.Component {
       lon: -122.9585187,
       zoom: 7,
       users: [],
+      searchResults: [],
       currUserId: -1
     };
 
@@ -22,6 +23,7 @@ export default class CreateApp extends React.Component {
     this.onRouteClick = this.onRouteClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
     this.onResetSegments = this.onResetSegments.bind(this);
+    this.onSearchRoutes = this.onSearchRoutes.bind(this);
     this.onSendSegments = this.onSendSegments.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
@@ -87,7 +89,6 @@ export default class CreateApp extends React.Component {
         Math.cos(lat1) * Math.cos(lat2) *
         Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
       var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
       var d = R * c;
 
       if (d < shortestDistance) {
@@ -153,7 +154,7 @@ export default class CreateApp extends React.Component {
     this.cache = CreateApp.buildCache();
     CreateApp.getStates()
       .then(states => {
-        this.setState({ states });
+        this.setState({ states, currState: states[0] });
         return CreateApp.getRoutes(states[0].id);
       })
       .then(routes => {
@@ -203,6 +204,13 @@ export default class CreateApp extends React.Component {
         }
         this.setState({ users, currUserId: res.userId });
       });
+  }
+  
+  // Filter query based on state routes, which is a 2-D array so use reduce
+  onSearchRoutes(event) {
+    const results = this.state.routes.reduce((accum, curr) => accum.concat(curr.filter(obj => obj.route.indexOf(event.target.value) >= 0 && obj.seg === 0)), []);
+
+    this.setState({ searchResults: event.target.value ? results.slice(0, 10) : [] });
   }
 
   onSendSegments() {
@@ -339,7 +347,9 @@ export default class CreateApp extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, route, routeId, routes, segments, userSegments, success, entries, users, currUserId, startMarker } = this.state;
+    const { lat, lon, zoom, states, route, routeId, 
+      routes, segments, userSegments, success, entries, users, 
+      currUserId, currState = '', startMarker, searchResults } = this.state;
     const liveSegs = segments ? CreateApp.getMapForLiveIds(segments) : undefined;
 
     return (
@@ -416,6 +426,19 @@ export default class CreateApp extends React.Component {
                   )}
                 </li>
               ))}
+            </ul>
+          </Collapsible>
+
+          <Collapsible title="Search" open="true">
+            <input type="text" size="25" className="nameFormElement" placeholder={`Search ${currState.name} routes...`} onChange={this.onSearchRoutes} />
+            <ul>
+              {
+                searchResults.map(obj => (
+                  <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
+                    {`${this.getNameForRoute(obj.route)} ${obj.route} ${obj.dir}`}
+                  </li>
+                ))
+              }
             </ul>
           </Collapsible>
         </div>
