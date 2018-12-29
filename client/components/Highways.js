@@ -5,6 +5,7 @@ export default class Highways {
   constructor() {
     this.titleCache = undefined;
     this.routeData = undefined;
+    this.idCache = undefined;
     this.userSegments = [];
   }
 
@@ -37,13 +38,26 @@ export default class Highways {
     ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { this.titleCache[ele] = "US Highway"; });
   }
 
+  // Build caches to access segment IDs for a state route and data for each segment ID
   buildStateRoutesData(raw) {
-    const reducer = (accum, curr) => {
+    const routeReducer = (accum, curr) => {
       accum[curr.id] = curr;
       return accum;
     };
 
-    this.routeData = raw.reduce(reducer, {});
+    const idReducer = (accum, curr) => {
+      const key = curr.route + curr.dir;
+      if (accum[key]) {
+        accum[key].push(curr.id);
+      } else {
+        accum[key] = [curr.id];
+      }
+
+      return accum;
+    }
+
+    this.routeData = raw.reduce(routeReducer, {});
+    this.idCache = raw.reduce(idReducer, {});
   }
 
   getNameForRoute(route) {
@@ -98,63 +112,42 @@ export default class Highways {
     this.userSegments[idx].clinched = !this.userSegments[idx].clinched;
   }
 
+  addSegment(route, routeId, startId, endId, clinched) {
+    this.userSegments.push({ route, routeId, startId, endId, clinched, seg: this.routeData[routeId].seg + 1 });
+  }
+
   addNewUserSegments(startMarker, endMarker, route, routeId, segments) {
     // Check whether both points have the same route ID
     if (startMarker.routeId === routeId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.userSegments.push({
-        route,
-        routeId,
-        startId,
-        endId,
-        clinched: false
-      });
+      this.addSegment(route, routeId, startId, endId, false);
     } else {
       // Figure out higher and lower points
       const start = startMarker.routeId > routeId ? endMarker : startMarker;
       const end = startMarker.routeId < routeId ? endMarker : startMarker;
       const idMap = this.getMapForLiveIds(segments);
 
+      // Add first segment
+      this.addSegment(route, start.routeId, start.idx, segments[idMap.get(start.routeId)].points.length, false);
       // Add entire user segments if needed
       if (end.routeId - start.routeId > 1) {
         for (let i = start.routeId + 1; i < end.routeId; i += 1) {
-          this.userSegments.push({
-            route,
-            routeId: i,
-            startId: 0,
-            endId: segments[idMap.get(i)].points.length,
-            clinched: false
-          });
+          this.addSegment(route, i, 0, segments[idMap.get(i)].points.length, false);
         }
       }
 
-      // Add user segments from the two route segments
-      this.userSegments.push({
-        route,
-        routeId: start.routeId,
-        startId: start.idx,
-        endId: segments[idMap.get(start.routeId)].points.length,
-        clinched: false
-      });
-
-      this.userSegments.push({
-        route,
-        routeId: end.routeId,
-        startId: 0,
-        endId: end.idx,
-        clinched: false
-      });
+      this.addSegment(route, end.routeId, 0, end.idx, false); // Add last segment
     }
   }
 
   addFullSegment(route, routeId) {
-    this.userSegments.push({
-      route,
-      routeId,
-      startId: 0,
-      endId: this.routeData[routeId].len,
-      clinched: false
-    });
+    this.addSegment(route, routeId, 0, this.routeData[routeId].len, false);
+  }
+
+  addAllSegments(route, dir) {
+    for (let routeId of this.idCache[route + dir]) {
+      this.addSegment(route, routeId, 0, this.routeData[routeId].len, false);
+    }
   }
 }

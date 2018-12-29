@@ -187,13 +187,18 @@ export default class CreateApp extends React.Component {
   // Prevent events occurring twice
   onRouteClick(route, routeId, dir, getAll, event) {
     event.stopPropagation();
-    
+
     CreateApp.getRoute(routeId, dir, getAll)
       .then(segments => this.routePromiseDone(segments, route, routeId));
-      
+
     // Create segment if clicked and clinch mode is set
-    if (this.currMode === CLINCH && !getAll) {
-      this.highwayData.addFullSegment(route, routeId);
+    if (this.currMode === CLINCH) {
+      if (!getAll) {
+        this.highwayData.addFullSegment(route, routeId);
+      } else {
+        this.highwayData.addAllSegments(route, dir);
+      }
+
       this.setState({
         userSegments: this.highwayData.userSegments
       });
@@ -286,7 +291,7 @@ export default class CreateApp extends React.Component {
                 userSegments.map((seg, i) => (
                   <div key={`userSegItem-${i}`} className="segRow">
                     <li>
-                      {`${this.highwayData.getNameForRoute(seg.route)} ${seg.route}`}
+                      {`${this.highwayData.getNameForRoute(seg.route)} ${seg.route} Segment ${seg.seg}`}
                       <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
                     </li>
                   </div>
