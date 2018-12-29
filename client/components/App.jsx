@@ -5,6 +5,8 @@ import { Map as LeafletMap, TileLayer, Polyline, Marker } from 'react-leaflet';
 import Collapsible from './Collapsible';
 import Highways from './Highways';
 
+const MANUAL = 0, CLINCH = 1;
+
 export default class CreateApp extends React.Component {
   constructor(props) {
     super(props);
@@ -13,7 +15,6 @@ export default class CreateApp extends React.Component {
       lat: 37.5904827,
       lon: -122.9585187,
       zoom: 7,
-      users: [],
       searchResults: [],
       currUserId: -1
     };
@@ -27,10 +28,12 @@ export default class CreateApp extends React.Component {
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
     this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
+    this.onModeClick = this.onModeClick.bind(this);
 
     this.startMarker = undefined;
     this.endMarker = undefined;
     this.highwayData = new Highways();
+    this.currMode = MANUAL;
   }
 
   static getUsers() {
@@ -48,8 +51,7 @@ export default class CreateApp extends React.Component {
   // is repeated. If it is, push to array, otherwise add to new array
   static getRoutes(stateId) {
     return fetch(`/api/routes/${stateId}`)
-      .then(res => res.json())
-      .then(routes => CreateApp.parseRoutes(routes));
+      .then(res => res.json());
   }
 
   static getRoute(routeId, dir, getAll) {
@@ -87,14 +89,18 @@ export default class CreateApp extends React.Component {
         return CreateApp.getRoutes(states[0].id);
       })
       .then(routes => {
-        this.setState({ routes });
+        this.highwayData.buildStateRoutesData(routes);
+        this.setState({ routes: CreateApp.parseRoutes(routes) });
         return CreateApp.getRoute(1);
       })
       .then(segments => {
         this.routePromiseDone(segments, '101', 1);
         return CreateApp.getUsers();
       })
-      .then(users => { this.setState({ users }); });
+      .then(users => {
+        users.unshift();
+        this.setState({ users });
+      });
   }
 
   onClinchToggleFor(i) {
@@ -129,6 +135,10 @@ export default class CreateApp extends React.Component {
         }
         this.setState({ users, currUserId: res.userId });
       });
+  }
+
+  onModeClick(mode) {
+    this.currMode = mode;
   }
 
   // Filter query based on state routes, which is a 2-D array so use reduce
@@ -170,7 +180,7 @@ export default class CreateApp extends React.Component {
   onStateClick(stateId) {
     CreateApp.getRoutes(stateId)
       .then(routes => {
-        this.setState({ routes });
+        this.setState({ routes: CreateApp.parseRoutes(routes) });
       });
   }
 
@@ -180,6 +190,14 @@ export default class CreateApp extends React.Component {
     
     CreateApp.getRoute(routeId, dir, getAll)
       .then(segments => this.routePromiseDone(segments, route, routeId));
+      
+    // Create segment if clicked and clinch mode is set
+    if (this.currMode === CLINCH && !getAll) {
+      this.highwayData.addFullSegment(route, routeId);
+      this.setState({
+        userSegments: this.highwayData.userSegments
+      });
+    }
   }
 
   // Keep track of clicked points
@@ -235,13 +253,19 @@ export default class CreateApp extends React.Component {
     return (
       <div id="mapGrid">
         <div id="routeUi">
+          <h3>
+            Create Mode
+            <span className="segRow">
+              <button type="button" onClick={this.onModeClick.bind(this, MANUAL)}>Manual</button>
+              <button type="button" onClick={this.onModeClick.bind(this, CLINCH)}>Clinch</button>
+            </span>
+          </h3>
+          
           <Collapsible title="Users" open="true">
             <select value={currUserId} onChange={this.onUserChange} className="nameFormElement">
-              <option value="-1">Select or create a user</option>
-              {
-                users.map((user) => (
-                  <option key={user.id} value={user.id}>{user.user}</option>
-                ))
+              <option key={-1} value={-1}>Select or create User</option>
+              { users &&
+                users.map((user) => (<option key={user.id} value={user.id}>{user.user}</option>)) 
               }
             </select>
 
@@ -273,7 +297,6 @@ export default class CreateApp extends React.Component {
             { currUserId >= 0 &&
               <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
             }
-
             <button type="button" onClick={this.onResetSegments}>Clear User Segments</button>
 
             {

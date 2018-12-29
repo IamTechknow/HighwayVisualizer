@@ -24,7 +24,8 @@ const seedData = async (db) => {
     // Insert each array as its own route
     if (!isSingleCurve) {
       for (let i = 0; i < feature.geometry.coordinates.length; i++) {
-        let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${base});`).then(res => res[0].insertId);
+        const len = feature.geometry.coordinates[i].length;
+        let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${len}, ${base});`).then(res => res[0].insertId);
 
         let temp = feature.geometry.coordinates[i].map(tup => {
           return { route: num, lat: tup[1], lon: tup[0] };
@@ -38,7 +39,8 @@ const seedData = async (db) => {
         base += temp.length;
       }
     } else {
-      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${base});`).then(res => res[0].insertId);
+      const len = feature.geometry.coordinates.length;
+      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${route.num}, ${route.seg}, ${route.dir}, ${stateKey}, ${len}, ${base});`).then(res => res[0].insertId);
       let newPoints = feature.geometry.coordinates.map(tup => {
         return { route: num, lat: tup[1], lon: tup[0] };
       });

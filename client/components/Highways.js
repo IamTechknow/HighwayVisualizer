@@ -1,8 +1,10 @@
 const R = 6371e3; // Mean radius of Earth
 
+// Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
   constructor() {
     this.titleCache = undefined;
+    this.routeData = undefined;
     this.userSegments = [];
   }
 
@@ -33,6 +35,15 @@ export default class Highways {
     '505', '580', '605', '680', '710', '780', '805', '880', '980'].forEach(ele => { this.titleCache[ele] = "Interstate"; });
 
     ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { this.titleCache[ele] = "US Highway"; });
+  }
+
+  buildStateRoutesData(raw) {
+    const reducer = (accum, curr) => {
+      accum[curr.id] = curr;
+      return accum;
+    };
+
+    this.routeData = raw.reduce(reducer, {});
   }
 
   getNameForRoute(route) {
@@ -109,7 +120,7 @@ export default class Highways {
       if (end.routeId - start.routeId > 1) {
         for (let i = start.routeId + 1; i < end.routeId; i += 1) {
           this.userSegments.push({
-            route: route,
+            route,
             routeId: i,
             startId: 0,
             endId: segments[idMap.get(i)].points.length,
@@ -120,7 +131,7 @@ export default class Highways {
 
       // Add user segments from the two route segments
       this.userSegments.push({
-        route: route,
+        route,
         routeId: start.routeId,
         startId: start.idx,
         endId: segments[idMap.get(start.routeId)].points.length,
@@ -128,12 +139,22 @@ export default class Highways {
       });
 
       this.userSegments.push({
-        route: route,
+        route,
         routeId: end.routeId,
         startId: 0,
         endId: end.idx,
         clinched: false
       });
     }
+  }
+
+  addFullSegment(route, routeId) {
+    this.userSegments.push({
+      route,
+      routeId,
+      startId: 0,
+      endId: this.routeData[routeId].len,
+      clinched: false
+    });
   }
 }
