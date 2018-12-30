@@ -20,6 +20,10 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
+app.get('/users/:user', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
 // R endpoints
 app.get('/api/states', (req, res) => {
   allowCORS(res);
@@ -72,12 +76,12 @@ app.get('/api/points/:routeId', (req, res) => {
   });
 });
 
-app.get('/api/segments/:userId', (req, res) => {
+app.get('/api/segments/:user', (req, res) => {
   allowCORS(res);
-  Models.getUserSegmentsBy(db, req.params.userId)
+  Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {
     res.status(200).type('application/json');
-    res.send(JSON.stringify(result));
+    res.send(JSON.stringify({ loaded: true, notFound: result.length === 0, userSegments: result }));
   }).catch((err) => {
     res.status(500).type('Sorry, an error occurred!');
   });

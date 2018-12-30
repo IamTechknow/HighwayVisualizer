@@ -157,7 +157,7 @@ export default class CreateApp extends React.Component {
       },
       body: JSON.stringify({
         userId: this.state.currUserId,
-        segments: this.userSegments
+        segments: this.highwayData.userSegments
       })
     }).then(res => res.json())
     .then(res => {

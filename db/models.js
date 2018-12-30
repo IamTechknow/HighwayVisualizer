@@ -72,9 +72,16 @@ class Models {
       .catch((err) => { console.error(err); });
   }
 
-  static getUserSegmentsBy(db, userId) {
-    return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [userId])
-      .then((result) => result[0].length ? Models.getPointsByUser(db, result[0]) : [])
+  static getUserSegmentsBy(db, username) {
+    return db.queryAsync('SELECT * FROM users WHERE user = ?;', [username])
+      .then((result) => {
+        if (result[0].length) {
+          return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [result[0][0].id])
+            .then((segResult) => segResult[0].length ? Models.getPointsByUser(db, segResult[0]) : [])
+        } else {
+          return [];
+        }
+      })
       .catch((err) => { console.error(err); });
   }
 
