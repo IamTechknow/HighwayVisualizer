@@ -4,6 +4,8 @@ import { Map as LeafletMap, TileLayer, Polyline } from 'react-leaflet';
 
 import Highways from './Highways';
 
+const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
+
 export default class UserApp extends React.Component {
   constructor(props) {
     super(props);
@@ -12,8 +14,11 @@ export default class UserApp extends React.Component {
       loaded: false,
       notFound: false,
       stats: [],
+      scale: METERS,
       userSegments: undefined  
     };
+
+    this.onScaleChange = this.onScaleChange.bind(this);
   }
 
   static getSegmentsFor(userId) {
@@ -28,8 +33,12 @@ export default class UserApp extends React.Component {
       });
   }
 
+  onScaleChange(event) {
+    this.setState({ scale: Number.parseFloat(event.target.value) });
+  }
+
   render() {
-    const { loaded, notFound, stats, userSegments } = this.state;
+    const { loaded, notFound, scale, stats, userSegments } = this.state;
     const user = this.props.match.params.user;
     const highwayUtils = new Highways();
     highwayUtils.buildCacheFor(0);
@@ -58,25 +67,36 @@ export default class UserApp extends React.Component {
         <div id="routeUi">
           <h3>{`${user}\'s traveling statistics`}</h3>
 
+          <p>Unit conversion</p>
+          <select onChange={this.onScaleChange}>
+            <option value={METERS}>Meters</option>
+            <option value={KM}>Kilometers</option>
+            <option value={MILES}>Miles</option>
+          </select>
+
           <table>
             <thead>
               <tr>
                 <th>Route</th>
-                <th>Traveled (meters)</th>
-                <th>Total (meters)</th>
-                <th>%</th>
+                <th>{`Traveled (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
+                <th>{`Total (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
+                <th>Percentage</th>
               </tr>
             </thead>
             <tbody>
               {
-                stats.map((stat) => (
-                  <tr>
-                    <td>{stat.route}</td>
-                    <td>{stat.traveled}</td>
-                    <td>{stat.total}</td>
-                    <td>{stat.percentage}%</td>
-                  </tr>
-                ))
+                stats.map((stat) => {
+                  const traveledStat = (stat.traveled / scale).toFixed(2);
+                  const totalStat = (stat.total / scale).toFixed(2);
+                  return (
+                    <tr>
+                      <td>{stat.route}</td>
+                      <td>{traveledStat}</td>
+                      <td>{totalStat}</td>
+                      <td>{stat.percentage}%</td>
+                    </tr>
+                  );
+                })
               }
             </tbody>
           </table>
