@@ -52,7 +52,7 @@ html {
 
 #routeUi {
   grid-column: span 2;
-  overflow-y: auto; /* allows scroll bar */
+  overflow: auto; /* allows scroll bar */
 }
 
 .segRow {

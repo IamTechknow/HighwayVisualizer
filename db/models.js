@@ -1,5 +1,8 @@
 const Utils = require('./Utils.js');
 
+// Module level caches
+const stateCache = {};
+
 // Static methods for database interactions
 class Models {
   static getStates(db) {
@@ -117,14 +120,21 @@ class Models {
 
     for (let seg of segments) {
       let metersTraveled = Utils.calcSegmentDistance(seg.points);
-      let total = await db.queryAsync('SELECT len_m FROM routes WHERE id = ?', [seg.route_id]).then((result) => result[0][0].len_m);
+      let route = await db.queryAsync('SELECT * FROM routes WHERE id = ?', [seg.route_id]).then((result) => result[0][0]);
+      let total = route.len_m;
+
+      let state;
+      if (!stateCache[route.state_key]) {
+        stateCache[route.state_key] = await db.queryAsync('SELECT * FROM states WHERE id = ?', [route.state_key]).then((result) => result[0][0].initials);
+      }
+      state = stateCache[route.state_key];
 
       // Truncate to two decimal points
       metersTraveled = ~~(metersTraveled * 100) / 100;
       total = ~~(total * 100) / 100;
       const percentage = ~~((metersTraveled / total) * 10000) / 100
 
-      stats.push({route: seg.route_id, traveled: metersTraveled, total, percentage});
+      stats.push({ state, route: route.route, segment: route.segment + 1, traveled: metersTraveled, total, percentage });
     }
 
     return stats;

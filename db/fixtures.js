@@ -33,7 +33,7 @@ const seedData = async (db) => {
         });
         temp = temp.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
         const len_meters = Utils.calcSegmentDistance(feature.geometry.coordinates[i].map(tup => [tup[1], tup[0]]));
-        
+
         await db.queryAsync(`UPDATE ${ROUTES} SET len_m = ${len_meters} WHERE id = ${num};`);
         await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${temp.join()};`);
 
@@ -48,8 +48,10 @@ const seedData = async (db) => {
         return { route: num, lat: tup[1], lon: tup[0] };
       });
       newPoints = newPoints.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
+      const len_meters = Utils.calcSegmentDistance(feature.geometry.coordinates.map(tup => [tup[1], tup[0]]));
 
       // Insert all rows by using commas
+      await db.queryAsync(`UPDATE ${ROUTES} SET len_m = ${len_meters} WHERE id = ${num};`);
       await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
 
       console.log(`Seeded ${newPoints.length} points`);

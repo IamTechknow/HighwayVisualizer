@@ -77,7 +77,9 @@ export default class UserApp extends React.Component {
           <table>
             <thead>
               <tr>
+                <th>State</th>
                 <th>Route</th>
+                <th>Segment</th>
                 <th>{`Traveled (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
                 <th>{`Total (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
                 <th>Percentage</th>
@@ -90,7 +92,9 @@ export default class UserApp extends React.Component {
                   const totalStat = (stat.total / scale).toFixed(2);
                   return (
                     <tr>
+                      <td>{stat.state}</td>
                       <td>{stat.route}</td>
+                      <td>{stat.segment}</td>
                       <td>{traveledStat}</td>
                       <td>{totalStat}</td>
                       <td>{stat.percentage}%</td>
