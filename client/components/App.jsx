@@ -281,6 +281,9 @@ export default class CreateApp extends React.Component {
               </label>
               <br />
               <button type="submit">Create User</button>
+              { currUserId >= 0 &&
+                <a href={'/users/' + users[currUserId - 1].user}>View Stats</a>
+              }
             </form>
           </Collapsible>
 

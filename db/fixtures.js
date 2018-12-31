@@ -2,6 +2,7 @@
 // Parse the shapefile to GeoJSON, then extract data for the state, route, and coordinates for each route.
 const fs = require('fs').promises;
 const shapefile = require('shapefile');
+const Utils = require('./Utils.js');
 
 const CA_DATA = 'db/ca.shp', CA_DB = 'db/ca.dbf';
 const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
@@ -21,7 +22,7 @@ const seedData = async (db) => {
     // The curve is either in a single array or multiple arrays
     let isSingleCurve = feature.geometry.type === 'LineString';
 
-    // Insert each array as its own route
+    // Insert each array as its own route. Also calculate the length in meters of the segment
     if (!isSingleCurve) {
       for (let i = 0; i < feature.geometry.coordinates.length; i++) {
         const len = feature.geometry.coordinates[i].length;
@@ -31,7 +32,9 @@ const seedData = async (db) => {
           return { route: num, lat: tup[1], lon: tup[0] };
         });
         temp = temp.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
-
+        const len_meters = Utils.calcSegmentDistance(feature.geometry.coordinates[i].map(tup => [tup[1], tup[0]]));
+        
+        await db.queryAsync(`UPDATE ${ROUTES} SET len_m = ${len_meters} WHERE id = ${num};`);
         await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${temp.join()};`);
 
         console.log(`Seeded ${temp.length} points`);

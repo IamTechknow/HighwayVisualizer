@@ -1,3 +1,5 @@
+const Utils = require('./Utils.js');
+
 // Static methods for database interactions
 class Models {
   static getStates(db) {
@@ -63,7 +65,11 @@ class Models {
       queries.push(queryBase + ` AND id >= ${start_id} AND id <= ${end_id}`);
     }
     queries.push('');
-    return Models.processPointQueries(db, queries, userSegs);
+    const userSegments = await Models.processPointQueries(db, queries, userSegs);
+    
+    // Calculate statistics - user travelled
+    const stats = await Models.calcStats(db, userSegs, userSegments);
+    return {stats, userSegments};
   }
 
   static getUsers(db) {
@@ -77,9 +83,9 @@ class Models {
       .then((result) => {
         if (result[0].length) {
           return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [result[0][0].id])
-            .then((segResult) => segResult[0].length ? Models.getPointsByUser(db, segResult[0]) : [])
+            .then((segResult) => segResult[0].length ? Models.getPointsByUser(db, segResult[0]) : false)
         } else {
-          return [];
+          return false;
         }
       })
       .catch((err) => { console.error(err); });
@@ -104,6 +110,24 @@ class Models {
     return db.queryAsync(`INSERT INTO segments (user_id, route_id, clinched, start_id, end_id) VALUES ${segments.join()};`)
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
+  }
+
+  static async calcStats(db, segData, segments) {
+    let stats = [];
+
+    for (let seg of segments) {
+      let metersTraveled = Utils.calcSegmentDistance(seg.points);
+      let total = await db.queryAsync('SELECT len_m FROM routes WHERE id = ?', [seg.route_id]).then((result) => result[0][0].len_m);
+
+      // Truncate to two decimal points
+      metersTraveled = ~~(metersTraveled * 100) / 100;
+      total = ~~(total * 100) / 100;
+      const percentage = ~~((metersTraveled / total) * 10000) / 100
+
+      stats.push({route: seg.route_id, traveled: metersTraveled, total, percentage});
+    }
+
+    return stats;
   }
 }
 

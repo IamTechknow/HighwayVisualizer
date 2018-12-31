@@ -80,8 +80,13 @@ app.get('/api/segments/:user', (req, res) => {
   allowCORS(res);
   Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {
+    let retval = { loaded: true, notFound: result === false };
+    if (result) {
+      Object.assign(retval, result);
+    }
+
     res.status(200).type('application/json');
-    res.send(JSON.stringify({ loaded: true, notFound: result.length === 0, userSegments: result }));
+    res.send(JSON.stringify(retval));
   }).catch((err) => {
     res.status(500).type('Sorry, an error occurred!');
   });

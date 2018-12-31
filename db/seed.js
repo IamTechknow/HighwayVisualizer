@@ -30,6 +30,7 @@ db.connectAsync()
     direction TEXT NOT NULL,
     state_key INTEGER NOT NULL,
     len INTEGER NOT NULL,
+    len_m DOUBLE NOT NULL DEFAULT 0.0,
     base INTEGER NOT NULL);`))
   .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${POINTS} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,

@@ -81,19 +81,19 @@ export default class Highways {
 
     // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
     for (let i = 0; i < points.length; i++) {
-      let {lat, lng} = points[i];
-      let clickedLat = clicked.lat, clickedLng = clicked.lng;
+      const {lat, lng} = points[i];
+      const clickedLat = clicked.lat, clickedLng = clicked.lng;
 
-      var lat1 = this.toRadians(lat);
-      var lat2 = this.toRadians(clickedLat);
-      var deltaLat = this.toRadians(clickedLat) - this.toRadians(lat);
-      var deltaLng = this.toRadians(clickedLng) - this.toRadians(lng);
+      const lat1 = this.toRadians(lat);
+      const lat2 = this.toRadians(clickedLat);
+      const deltaLat = this.toRadians(clickedLat) - this.toRadians(lat);
+      const deltaLng = this.toRadians(clickedLng) - this.toRadians(lng);
 
-      var a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
+      const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
         Math.cos(lat1) * Math.cos(lat2) *
         Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
-      var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      var d = R * c;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const d = R * c;
 
       if (d < shortestDistance) {
         shortestDistance = d;
