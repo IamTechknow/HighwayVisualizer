@@ -6,19 +6,21 @@ const db = require('../db');
 const PORT = 80;
 const app = express();
 
-app.use(express.static(path.resolve(__dirname, '../public')));
+app.use(express.static(path.resolve(__dirname, '../public'), {
+  immutable: true,
+  maxAge: 604800000
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Allow CORS for a given endpoint
-const allowCORS = function(res) {
+// Allow CORS and caching for endpoints
+const headerMiddleware = function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Cache-Control", "public, max-age=86400");
+  next();
 };
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+app.use(headerMiddleware);
 
 app.get('/users/:user', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
@@ -26,7 +28,6 @@ app.get('/users/:user', (req, res) => {
 
 // R endpoints
 app.get('/api/states', (req, res) => {
-  allowCORS(res);
   Models.getStates(db)
   .then((result) => {
     res.status(200).type('application/json');
@@ -37,7 +38,6 @@ app.get('/api/states', (req, res) => {
 });
 
 app.get('/api/users', (req, res) => {
-  allowCORS(res);
   Models.getUsers(db)
   .then((result) => {
     res.status(200).type('application/json');
@@ -48,7 +48,6 @@ app.get('/api/users', (req, res) => {
 });
 
 app.get('/api/routes/:stateId', (req, res) => {
-  allowCORS(res);
   Models.getRoutesBy(db, req.params.stateId)
   .then((result) => {
     res.status(200).type('application/json');
@@ -60,7 +59,6 @@ app.get('/api/routes/:stateId', (req, res) => {
 
 // Expects route segment and direction. Distinguish between U (unrelinquished) and S routes
 app.get('/api/points/:routeId', (req, res) => {
-  allowCORS(res);
   const getAll = req.query.getAll === "true";
   let routeInteger = req.params.routeId;
   if (/^\d+$/.test(routeInteger)) {
@@ -77,7 +75,6 @@ app.get('/api/points/:routeId', (req, res) => {
 });
 
 app.get('/api/segments/:user', (req, res) => {
-  allowCORS(res);
   Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {
     let retval = { loaded: true, notFound: result === false };
@@ -94,7 +91,6 @@ app.get('/api/segments/:user', (req, res) => {
 
 // C endpoints
 app.post('/api/newUser', (req, res) => {
-  allowCORS(res);
   Models.createUser(db, req.body.user)
   .then((result) => {
     res.status(201).type('application/json');
@@ -105,7 +101,6 @@ app.post('/api/newUser', (req, res) => {
 });
 
 app.post('/api/newUserSegments', (req, res) => {
-  allowCORS(res);
   Models.createUserSegment(db, req.body.userId, req.body.segments)
   .then((result) => {
     res.status(201).type('application/json');
