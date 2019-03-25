@@ -33,7 +33,7 @@ app.get('/api/states', (req, res) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 
@@ -43,7 +43,7 @@ app.get('/api/users', (req, res) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 
@@ -53,25 +53,31 @@ app.get('/api/routes/:stateId', (req, res) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 
 // Expects route segment and direction. Distinguish between U (unrelinquished) and S routes
 app.get('/api/points/:routeId', (req, res) => {
   const getAll = req.query.getAll === "true";
+  const stateId = req.query.stateId ?
+   Number.parseInt(req.query.stateId, 10) : undefined;
   let routeInteger = req.params.routeId;
   if (/^\d+$/.test(routeInteger)) {
     routeInteger = Number.parseInt(routeInteger, 10);
   }
 
-  Models.getPointsBy(db, routeInteger, req.query.dir, getAll)
-  .then((result) => {
-    res.status(200).type('application/json');
-    res.send(JSON.stringify(result));
-  }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
-  });
+  if (getAll && !req.query.stateId) {
+    res.status(400).send('If getting points for an entire route, a state ID must be provided');
+  } else {
+    Models.getPointsBy(db, routeInteger, req.query.dir, getAll, stateId)
+    .then((result) => {
+      res.status(200).type('application/json');
+      res.send(JSON.stringify(result));
+    }).catch((err) => {
+      res.status(500).send('Sorry, an error occurred!');
+    });
+  }
 });
 
 app.get('/api/segments/:user', (req, res) => {
@@ -85,7 +91,7 @@ app.get('/api/segments/:user', (req, res) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(retval));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 
@@ -96,7 +102,7 @@ app.post('/api/newUser', (req, res) => {
     res.status(201).type('application/json');
     res.send(JSON.stringify(result));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 
@@ -106,7 +112,7 @@ app.post('/api/newUserSegments', (req, res) => {
     res.status(201).type('application/json');
     res.send(JSON.stringify({ success: true, entries: req.body.segments.length }));
   }).catch((err) => {
-    res.status(500).type('Sorry, an error occurred!');
+    res.status(500).send('Sorry, an error occurred!');
   });
 });
 

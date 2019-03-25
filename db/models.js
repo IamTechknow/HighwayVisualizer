@@ -39,11 +39,13 @@ class Models {
 
   // Select all points for a route. Returns a promise for a 2D array of segment arrays
   // due to async keyword
-  static async getPointsBy(db, route, dir, getAll) {
+  static async getPointsBy(db, route, dir, getAll, stateId) {
     // Get all route keys. For each key, get the polyline.
     let keys = [{id: route}];
-    if (getAll) { // route is route number, not a segment ID
-      keys = await db.queryAsync('SELECT id FROM routes WHERE route = ? AND direction = ?;', [route, dir]).then((result) => result[0]);
+    if (getAll) { // route is route number, not a segment ID. Direction is optional
+      const query = `SELECT id FROM routes WHERE route = ? AND state_key = ?${dir ? ' AND direction = ?' : ''};`;
+      const args = dir ? [route, stateId, dir] : [route, stateId];
+      keys = await db.queryAsync(query, args).then((result) => result[0]);
     }
 
     // Use multiple queries to grab all the data at once!
