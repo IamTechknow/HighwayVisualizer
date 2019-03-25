@@ -60,7 +60,7 @@ export default class Highways {
     this.idCache = raw.reduce(idReducer, {});
   }
 
-  getNameForRoute(route) {
+  getRoutePrefix(route) {
     return this.titleCache[route] ? this.titleCache[route] : 'State Route';
   }
 

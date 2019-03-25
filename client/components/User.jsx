@@ -14,7 +14,7 @@ export default class UserApp extends React.Component {
       loaded: false,
       notFound: false,
       stats: [],
-      scale: METERS,
+      scale: MILES,
       userSegments: undefined  
     };
 

@@ -54,8 +54,22 @@ export default class CreateApp extends React.Component {
       .then(res => res.json());
   }
 
-  static getRoute(routeId, dir, getAll) {
-    const query = dir ? `?dir=${dir}&getAll=${getAll}` : '';
+  // If getAll, then the state and route number should be provided,
+  // otherwise provide the route ID of the segment.
+  // Route direction is only used for California.
+  static getRoute(routeId, dir, getAll, stateId) {
+    let query = dir || getAll ? '?' : '';
+    if (dir && stateId === 1) {
+      query += `dir=${dir}`;
+    }
+
+    if (getAll) {
+      if (dir) {
+        query += '&';
+      }
+      query += `getAll=${getAll}&stateId=${stateId}`;
+    }
+
     return fetch(`/api/points/${routeId}${query}`)
       .then(res => res.json());
   }
@@ -84,7 +98,7 @@ export default class CreateApp extends React.Component {
   componentDidMount() {
     CreateApp.getStates()
       .then(states => {
-        this.setState({ states, currState: states[0] });
+        this.setState({ states, stateId: states[0].id });
         this.highwayData.buildCacheFor(states[0]);
         return CreateApp.getRoutes(states[0].id);
       })
@@ -98,7 +112,6 @@ export default class CreateApp extends React.Component {
         return CreateApp.getUsers();
       })
       .then(users => {
-        users.unshift();
         this.setState({ users });
       });
   }
@@ -178,17 +191,20 @@ export default class CreateApp extends React.Component {
   }
 
   onStateClick(stateId) {
-    CreateApp.getRoutes(stateId)
-      .then(routes => {
-        this.setState({ routes: CreateApp.parseRoutes(routes) });
+    CreateApp.getRoutes(stateId).then(routes => {
+      this.setState({
+        routes: CreateApp.parseRoutes(routes),
+        stateId
       });
+      this.highwayData.buildCacheFor(this.state.states[stateId - 1]);
+    });
   }
 
   // Prevent events occurring twice
   onRouteClick(route, routeId, dir, getAll, event) {
     event.stopPropagation();
 
-    CreateApp.getRoute(routeId, dir, getAll)
+    CreateApp.getRoute(routeId, dir, getAll, this.state.stateId)
       .then(segments => this.routePromiseDone(segments, route, routeId));
 
     // Create segment if clicked and clinch mode is set
@@ -249,11 +265,26 @@ export default class CreateApp extends React.Component {
     });
   }
 
+  getRouteName(routeObj) {
+    const {states, stateId} = this.state;
+
+    let routeName = `${this.highwayData.getRoutePrefix(routeObj.route)} ${routeObj.route}`;
+    if (states[stateId - 1].name === 'California') {
+      routeName += ` ${routeObj.dir}`;
+    }
+
+    return routeName;
+  }
+
   render() {
-    const { lat, lon, zoom, states, route, routeId, 
+    const { lat, lon, zoom, states, route, routeId, stateId,
       routes, segments, userSegments, success, entries, users, 
-      currUserId, currState = '', startMarker, searchResults } = this.state;
+      currUserId, startMarker, searchResults } = this.state;
     const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
+
+    if (!users) { // Don't render until all data loaded
+      return null;
+    }
 
     return (
       <div id="mapGrid">
@@ -327,7 +358,7 @@ export default class CreateApp extends React.Component {
               {/* List each route and all route segments */}
               { routes && routes.map(obj => (
                 <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, true)}>
-                  {`${this.highwayData.getNameForRoute(obj[0].route)} ${obj[0].route} ${obj[0].dir}`}
+                  {this.getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>
                       {obj.map((seg, i) => (
@@ -341,12 +372,12 @@ export default class CreateApp extends React.Component {
           </Collapsible>
 
           <Collapsible title="Search" open="true">
-            <input type="text" size="25" className="nameFormElement" placeholder={`Search ${currState.name} routes...`} onChange={this.onSearchRoutes} />
+            <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
             <ul>
               {
                 searchResults.map(obj => (
                   <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
-                    {`${this.highwayData.getNameForRoute(obj.route)} ${obj.route} ${obj.dir}`}
+                    {this.getRouteName(obj)}
                   </li>
                 ))
               }
