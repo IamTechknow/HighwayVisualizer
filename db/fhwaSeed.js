@@ -74,9 +74,10 @@ const seedData = async (db, args) => {
   }
 
   // Sort first by Route ID, then to make it stable, sort by route ID and then begin_poin
+  // The Route ID can be a number string, in other cases it is alphanumeric
   for (let route in allData) {
     allData[route] = allData[route].sort((left, right) => {
-      return left.properties.Route_ID - right.properties.Route_ID;
+      return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
     });
 
     allData[route] = allData[route].sort((left, right) => {
@@ -84,7 +85,7 @@ const seedData = async (db, args) => {
         return left.properties.Begin_Poin - right.properties.Begin_Poin;
       }
 
-      return left.properties.Route_ID - right.properties.Route_ID;
+      return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
     });
 
     // Put all the route IDs into a new object. Then sort them
