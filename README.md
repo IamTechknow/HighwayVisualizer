@@ -17,7 +17,8 @@ User Stories:
   * [X] As a user, I can search for quick access to routes
   * [X] As a user, I can view segments of routes defined by other users
   * [X] As a user, I can see stats on the highways I have travelled on
-  * [ ] As a developer, I can seed highway data for any state from the FHWA [website](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).
+  * [X] As a developer, I can seed highway data for any state from the FHWA [website](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).
 
 ## Attributions
   * The geodata for California's state highway system was used. It may be found [here](http://www.dot.ca.gov/hq/tsip/gis/datalibrary/).
+  * Geodata for each state may be found [here](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).

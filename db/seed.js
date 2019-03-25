@@ -29,7 +29,7 @@ db.connectAsync()
     segment INTEGER NOT NULL,
     direction TEXT NOT NULL,
     state_key INTEGER NOT NULL,
-    len INTEGER NOT NULL,
+    len INTEGER NOT NULL DEFAULT 0,
     len_m DOUBLE NOT NULL DEFAULT 0.0,
     base INTEGER NOT NULL);`))
   .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${POINTS} (

@@ -63,3 +63,6 @@ typings/
 package-lock.json
 public/dist/
 public/*.png
+
+.dbf
+.shp
