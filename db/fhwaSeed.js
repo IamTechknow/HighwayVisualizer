@@ -32,11 +32,23 @@ const filterOutFeature = (feature) => {
     return true;
   }
 
+  // Exclude county and gov routes in Maryland due to route duplication
+  if (feature.properties.State_Code === 24) {
+    if (!feature.properties.Route_Name) {
+      return true;
+    }
+
+    const routeNum = feature.properties.Route_Name;
+    if ((routeNum[0] === 'M' && routeNum[1] === 'U') || (routeNum[0] === 'C' && routeNum[1] === 'O')
+      || (routeNum[0] === 'O' && routeNum[1] === 'P') || (routeNum[0] === 'G' && routeNum[1] === 'V')) {
+      return true;
+    }
+  }
+
   return feature.geometry.coordinates.length === 0 ||
     feature.properties.Route_Numb === 0 || feature.properties.Facility_T === 6;
 };
 
-// FIXME: Some routes are not sorted correctly and thus look weird
 const calcDir = (left, right) => {
   let pLeftFirst = left.geometry.coordinates[0], pRightLast = right.geometry.coordinates[0];
 
