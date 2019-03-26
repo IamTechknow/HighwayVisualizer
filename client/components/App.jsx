@@ -193,6 +193,7 @@ export default class CreateApp extends React.Component {
   onStateClick(stateId) {
     CreateApp.getRoutes(stateId).then(routes => {
       this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
+      this.highwayData.buildStateRoutesData(routes);
       this.setState({
         routes: CreateApp.parseRoutes(routes),
         stateId
@@ -325,7 +326,7 @@ export default class CreateApp extends React.Component {
                 userSegments.map((seg, i) => (
                   <div key={`userSegItem-${i}`} className="segRow">
                     <li>
-                      {`${this.highwayData.getNameForRoute(seg.route)} ${seg.route} Segment ${seg.seg}`}
+                      {`${this.highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${seg.seg}`}
                       <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
                     </li>
                   </div>

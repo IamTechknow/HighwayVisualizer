@@ -20,7 +20,7 @@
     "leaflet": "^1.4.0",
     "leaflet-defaulticon-compatibility": "^0.1.1",
     "mysql": "^2.16.0",
-    "prop-types": "^15.6.2",
+    "prop-types": "^15.7.2",
     "react": "^16.8.5",
     "react-dom": "^16.8.5",
     "react-leaflet": "^2.2.1",
