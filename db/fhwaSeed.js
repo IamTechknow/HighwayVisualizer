@@ -26,6 +26,12 @@ const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
 
 // Determine whether to exclude a feature. It's possible for a feature to not have a geometry
 const filterOutFeature = (feature) => {
+  // Exclude county/town/city/private routes
+  const ownerId = feature.properties.Ownership;
+  if (ownerId === 2 || ownerId === 3 || ownerId === 4 || ownerId === 26) {
+    return true;
+  }
+
   // Exclude features in DC that with route IDs ending in A
   const routeId = feature.properties.Route_ID;
   if (feature.properties.State_Code === 11 && routeId[routeId.length - 1] === 'A') {
@@ -40,7 +46,13 @@ const filterOutFeature = (feature) => {
 
     const routeNum = feature.properties.Route_Name;
     if ((routeNum[0] === 'M' && routeNum[1] === 'U') || (routeNum[0] === 'C' && routeNum[1] === 'O')
-      || (routeNum[0] === 'O' && routeNum[1] === 'P') || (routeNum[0] === 'G' && routeNum[1] === 'V')) {
+      || (routeNum[0] === 'O' && routeNum[1] === 'P') || (routeNum[0] === 'G' && routeNum[1] === 'V')
+      || (routeNum[0] === 'S' && routeNum[1] === 'R')) {
+      return true;
+    }
+
+    // Exclude non-mainline routes that end with a letter
+    if (routeNum[routeNum.length - 1] > '9') {
       return true;
     }
   }
