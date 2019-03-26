@@ -99,7 +99,7 @@ export default class CreateApp extends React.Component {
     CreateApp.getStates()
       .then(states => {
         this.setState({ states, stateId: states[0].id });
-        this.highwayData.buildCacheFor(states[0]);
+        this.highwayData.buildCacheFor(states[0].name);
         return CreateApp.getRoutes(states[0].id);
       })
       .then(routes => {
@@ -192,11 +192,11 @@ export default class CreateApp extends React.Component {
 
   onStateClick(stateId) {
     CreateApp.getRoutes(stateId).then(routes => {
+      this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
       this.setState({
         routes: CreateApp.parseRoutes(routes),
         stateId
       });
-      this.highwayData.buildCacheFor(this.state.states[stateId - 1]);
     });
   }
 

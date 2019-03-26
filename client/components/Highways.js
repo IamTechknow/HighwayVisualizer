@@ -1,3 +1,5 @@
+import Prefixes from './RoutePrefixes';
+
 const R = 6371e3; // Mean radius of Earth
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
@@ -29,13 +31,8 @@ export default class Highways {
     return 6;
   }
 
-  // TODO: Refactor to make an API call for this information
   buildCacheFor(state) {
-    this.titleCache = {};
-    ['5', '8', '10', '15', '40', '80', '105', '110', '205', '210', '215', '238', '280', '380', '405',
-    '505', '580', '605', '680', '710', '780', '805', '880', '980'].forEach(ele => { this.titleCache[ele] = "Interstate"; });
-
-    ['6', '50', '95', '97', '101', '199', '395'].forEach(ele => { this.titleCache[ele] = "US Highway"; });
+    this.titleCache = Prefixes[state];
   }
 
   // Build caches to access segment IDs for a state route and data for each segment ID
