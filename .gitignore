@@ -64,5 +64,5 @@ package-lock.json
 public/dist/
 public/*.png
 
-.dbf
-.shp
+*.dbf
+*.shp

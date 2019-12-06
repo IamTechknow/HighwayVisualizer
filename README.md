@@ -20,5 +20,5 @@ User Stories:
   * [X] As a developer, I can seed highway data for any state from the FHWA [website](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).
 
 ## Attributions
-  * The geodata for California's state highway system was used. It may be found [here](http://www.dot.ca.gov/hq/tsip/gis/datalibrary/).
+  * The geodata for California's state highway system was used. It may be found [here](https://gisdata-caltrans.opendata.arcgis.com/datasets/e21659aeca804a97b7e5265ffa76351c_0).
   * Geodata for each state may be found [here](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).
