@@ -12,9 +12,7 @@ import './app.css';
 
 ReactDOM.render((
   <BrowserRouter>
-    <div>
-      <Route exact path="/" component={CreateApp} />
-      <Route path="/users/:user" component={UserApp} />
-    </div>
+    <Route exact path="/" component={CreateApp} />
+    <Route path="/users/:user" component={UserApp} />
   </BrowserRouter>
 ), document.getElementById('app'));

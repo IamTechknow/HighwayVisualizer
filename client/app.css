@@ -25,29 +25,14 @@ html {
 
 /* Allow map to fit whole screen */
 .leaflet-container {
-  grid-column: span 7;
+  grid-column: span 8;
 }
 
 /* Grid classes */
 #mapGrid {
   display: grid;
-  grid-template-columns: repeat(9, 1fr);
-}
-
-@media (min-height:400px) {
-  #mapGrid { grid-auto-rows: 400px; }
-}
-
-@media (min-height:600px) {
-  #mapGrid { grid-auto-rows: 600px; }
-}
-
-@media (min-height:700px) {
-  #mapGrid { grid-auto-rows: 700px; }
-}
-
-@media (min-height:900px) {
-  #mapGrid { grid-auto-rows: 900px; }
+  grid-template-columns: repeat(10, 1fr);
+  height: 100vh;
 }
 
 #routeUi {

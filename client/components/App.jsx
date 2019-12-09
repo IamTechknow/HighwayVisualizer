@@ -16,7 +16,8 @@ export default class CreateApp extends React.Component {
       lon: -122.9585187,
       zoom: 7,
       searchResults: [],
-      currUserId: -1
+      currUserId: -1,
+      currMode: MANUAL,
     };
 
     this.onStateClick = this.onStateClick.bind(this);
@@ -33,7 +34,6 @@ export default class CreateApp extends React.Component {
     this.startMarker = undefined;
     this.endMarker = undefined;
     this.highwayData = new Highways();
-    this.currMode = MANUAL;
   }
 
   static getUsers() {
@@ -151,7 +151,9 @@ export default class CreateApp extends React.Component {
   }
 
   onModeClick(mode) {
-    this.currMode = mode;
+    this.setState({
+      currMode: mode,
+    });
   }
 
   // Filter query based on state routes, which is a 2-D array so use reduce
@@ -203,13 +205,14 @@ export default class CreateApp extends React.Component {
 
   // Prevent events occurring twice
   onRouteClick(route, routeId, dir, getAll, event) {
+    const {currMode} = this.state;
     event.stopPropagation();
 
     CreateApp.getRoute(routeId, dir, getAll, this.state.stateId)
       .then(segments => this.routePromiseDone(segments, route, routeId));
 
     // Create segment if clicked and clinch mode is set
-    if (this.currMode === CLINCH) {
+    if (currMode === CLINCH) {
       if (!getAll) {
         this.highwayData.addFullSegment(route, routeId);
       } else {
@@ -280,7 +283,7 @@ export default class CreateApp extends React.Component {
   render() {
     const { lat, lon, zoom, states, route, routeId, stateId,
       routes, segments, userSegments, success, entries, users, 
-      currUserId, startMarker, searchResults } = this.state;
+      currUserId, currMode, startMarker, searchResults } = this.state;
     const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
 
     if (!users) { // Don't render until all data loaded
@@ -291,7 +294,7 @@ export default class CreateApp extends React.Component {
       <div id="mapGrid">
         <div id="routeUi">
           <h3>
-            Create Mode
+            { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
             <span className="segRow">
               <button type="button" onClick={this.onModeClick.bind(this, MANUAL)}>Manual</button>
               <button type="button" onClick={this.onModeClick.bind(this, CLINCH)}>Clinch</button>
