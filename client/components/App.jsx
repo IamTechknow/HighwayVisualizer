@@ -1,9 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import { Map as LeafletMap, TileLayer, Polyline, Marker } from 'react-leaflet';
+import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
+import { FiHome } from "react-icons/fi";
 
 import Collapsible from './Collapsible';
 import Highways from './Highways';
+import Sidebar from './Sidebar';
+import SidebarTab from './SidebarTab';
 
 const MANUAL = 0, CLINCH = 1;
 
@@ -18,6 +21,8 @@ export default class CreateApp extends React.Component {
       searchResults: [],
       currUserId: -1,
       currMode: MANUAL,
+      isCollapsed: false,
+      selectedId: 'home',
     };
 
     this.onStateClick = this.onStateClick.bind(this);
@@ -245,6 +250,17 @@ export default class CreateApp extends React.Component {
     }
   }
 
+  onSidebarClose() {
+    this.setState({ isCollapsed: true });
+  }
+
+  onSidebarOpen(id) {
+    this.setState({
+      isCollapsed: false,
+      selectedId: id,
+    });
+  }
+
   // Change user and load user's segments if any
   onUserChange(event) {
     const currUserId = Number.parseInt(event.target.value, 10);
@@ -283,7 +299,7 @@ export default class CreateApp extends React.Component {
   render() {
     const { lat, lon, zoom, states, route, routeId, stateId,
       routes, segments, userSegments, success, entries, users, 
-      currUserId, currMode, startMarker, searchResults } = this.state;
+      currUserId, currMode, startMarker, searchResults, isCollapsed, selectedId } = this.state;
     const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
 
     if (!users) { // Don't render until all data loaded
@@ -291,105 +307,8 @@ export default class CreateApp extends React.Component {
     }
 
     return (
-      <div id="mapGrid">
-        <div id="routeUi">
-          <h3>
-            { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
-            <span className="segRow">
-              <button type="button" onClick={this.onModeClick.bind(this, MANUAL)}>Manual</button>
-              <button type="button" onClick={this.onModeClick.bind(this, CLINCH)}>Clinch</button>
-            </span>
-          </h3>
-          
-          <Collapsible title="Users" open="true">
-            <select value={currUserId} onChange={this.onUserChange} className="nameFormElement">
-              <option key={-1} value={-1}>Select or create User</option>
-              { users &&
-                users.map((user) => (<option key={user.id} value={user.id}>{user.user}</option>)) 
-              }
-            </select>
-
-            <form onSubmit={this.onFormSubmit}>
-              <label htmlFor="userName" className="nameFormElement">
-                Username
-                <input type="text" id="userName" name="userName" className="nameFormElement" />
-              </label>
-              <br />
-              <button type="submit">Create User</button>
-              { currUserId >= 0 &&
-                <a href={'/users/' + users[currUserId - 1].user}>View Stats</a>
-              }
-            </form>
-          </Collapsible>
-
-          <Collapsible title="User Segments">
-            <ul>
-              {
-                userSegments &&
-                userSegments.map((seg, i) => (
-                  <div key={`userSegItem-${i}`} className="segRow">
-                    <li>
-                      {`${this.highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${seg.seg}`}
-                      <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
-                    </li>
-                  </div>
-                ))
-              }
-            </ul>
-
-            { currUserId >= 0 &&
-              <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
-            }
-            <button type="button" onClick={this.onResetSegments}>Clear User Segments</button>
-
-            {
-              success &&
-              <p>{`Successfully created ${entries} entries`}</p>
-            }
-          </Collapsible>
-
-          <Collapsible title="States" open="true">
-            <ul>
-              { states && states.map(obj => (
-                  <li key={obj.initials} className="clickable" onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
-                ))
-              }
-            </ul>
-          </Collapsible>
-
-          <Collapsible title="Routes">
-            <ul>
-              {/* List each route and all route segments */}
-              { routes && routes.map(obj => (
-                <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, true)}>
-                  {this.getRouteName(obj[0])}
-                  { obj.length > 1 && (
-                    <ul>
-                      {obj.map((seg, i) => (
-                        <li key={`segment-${seg.id}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", false)}>{`Segment ${i + 1}`}</li>
-                      ))}
-                    </ul>
-                  )}
-                </li>
-              ))}
-            </ul>
-          </Collapsible>
-
-          <Collapsible title="Search" open="true">
-            <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
-            <ul>
-              {
-                searchResults.map(obj => (
-                  <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
-                    {this.getRouteName(obj)}
-                  </li>
-                ))
-              }
-            </ul>
-          </Collapsible>
-        </div>
-
-        <LeafletMap center={[lat, lon]} zoom={zoom}>
+      <div>
+        <Map className="mapStyle" center={[lat, lon]} zoom={zoom} zoomControl={false}>
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
@@ -407,7 +326,114 @@ export default class CreateApp extends React.Component {
           { startMarker &&
             <Marker position={startMarker} />
           }
-        </LeafletMap>
+        </Map>
+
+        <Sidebar
+          id="sidebar"
+          collapsed={isCollapsed}
+          selected={selectedId}
+          onOpen={this.onSidebarOpen.bind(this)}
+          onClose={this.onSidebarClose.bind(this)}
+        >
+          <SidebarTab id="home" header="Home" icon={<FiHome />}>
+            <div id="routeUi">
+              <h3>
+                { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
+                <span className="segRow">
+                  <button type="button" onClick={this.onModeClick.bind(this, MANUAL)}>Manual</button>
+                  <button type="button" onClick={this.onModeClick.bind(this, CLINCH)}>Clinch</button>
+                </span>
+              </h3>
+
+              <Collapsible title="Users" open="true">
+                <select value={currUserId} onChange={this.onUserChange} className="nameFormElement">
+                  <option key={-1} value={-1}>Select or create User</option>
+                  { users &&
+                    users.map((user) => (<option key={user.id} value={user.id}>{user.user}</option>))
+                  }
+                </select>
+
+                <form onSubmit={this.onFormSubmit}>
+                  <label htmlFor="userName" className="nameFormElement">
+                    Username
+                    <input type="text" id="userName" name="userName" className="nameFormElement" />
+                  </label>
+                  <br />
+                  <button type="submit">Create User</button>
+                  { currUserId >= 0 &&
+                    <a href={'/users/' + users[currUserId - 1].user}>View Stats</a>
+                  }
+                </form>
+              </Collapsible>
+
+              <Collapsible title="User Segments">
+                <ul>
+                  {
+                    userSegments &&
+                    userSegments.map((seg, i) => (
+                      <div key={`userSegItem-${i}`} className="segRow">
+                        <li>
+                          {`${this.highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${seg.seg}`}
+                          <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
+                        </li>
+                      </div>
+                    ))
+                  }
+                </ul>
+
+                { currUserId >= 0 &&
+                  <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
+                }
+                <button type="button" onClick={this.onResetSegments}>Clear User Segments</button>
+
+                {
+                  success &&
+                  <p>{`Successfully created ${entries} entries`}</p>
+                }
+              </Collapsible>
+
+              <Collapsible title="States" open="true">
+                <ul>
+                  { states && states.map(obj => (
+                      <li key={obj.initials} className="clickable" onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
+                    ))
+                  }
+                </ul>
+              </Collapsible>
+
+              <Collapsible title="Routes">
+                <ul>
+                  {/* List each route and all route segments */}
+                  { routes && routes.map(obj => (
+                    <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, true)}>
+                      {this.getRouteName(obj[0])}
+                      { obj.length > 1 && (
+                        <ul>
+                          {obj.map((seg, i) => (
+                            <li key={`segment-${seg.id}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", false)}>{`Segment ${i + 1}`}</li>
+                          ))}
+                        </ul>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </Collapsible>
+
+              <Collapsible title="Search" open="true">
+                <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
+                <ul>
+                  {
+                    searchResults.map(obj => (
+                      <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
+                        {this.getRouteName(obj)}
+                      </li>
+                    ))
+                  }
+                </ul>
+              </Collapsible>
+            </div>
+          </SidebarTab>
+        </Sidebar>
       </div>
     );
   }
