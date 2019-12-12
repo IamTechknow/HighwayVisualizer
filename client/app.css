@@ -37,6 +37,10 @@ body {
   flex-direction: row;
 }
 
+.tabContent {
+  margin-top: 8px;
+}
+
 /* Collapsible selectors */
 /* Join the two selectors to hide checkboxes for collapsibles */
 input[type='checkbox'].toggle {

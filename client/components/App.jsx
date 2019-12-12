@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
-import { FiHome } from "react-icons/fi";
+import { FiMap, FiSearch, FiUser } from "react-icons/fi";
 
 import Collapsible from './Collapsible';
 import Highways from './Highways';
@@ -22,7 +22,7 @@ export default class CreateApp extends React.Component {
       currUserId: -1,
       currMode: MANUAL,
       isCollapsed: false,
-      selectedId: 'home',
+      selectedId: 'routes',
     };
 
     this.onStateClick = this.onStateClick.bind(this);
@@ -165,7 +165,7 @@ export default class CreateApp extends React.Component {
   onSearchRoutes(event) {
     const results = this.state.routes.reduce((accum, curr) => accum.concat(curr.filter(obj => obj.route.indexOf(event.target.value) >= 0 && obj.seg === 0)), []);
 
-    this.setState({ searchResults: event.target.value ? results.slice(0, 10) : [] });
+    this.setState({ searchResults: event.target.value ? results.slice(0, 30) : [] });
   }
 
   onSendSegments() {
@@ -335,8 +335,8 @@ export default class CreateApp extends React.Component {
           onOpen={this.onSidebarOpen.bind(this)}
           onClose={this.onSidebarClose.bind(this)}
         >
-          <SidebarTab id="home" header="Home" icon={<FiHome />}>
-            <div id="routeUi">
+          <SidebarTab id="users" header="User Settings" icon={<FiUser />}>
+            <div className="tabContent">
               <h3>
                 { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
                 <span className="segRow">
@@ -391,7 +391,10 @@ export default class CreateApp extends React.Component {
                   <p>{`Successfully created ${entries} entries`}</p>
                 }
               </Collapsible>
-
+            </div>
+          </SidebarTab>
+          <SidebarTab id="routes" header="Routes" icon={<FiMap />}>
+            <div className="tabContent">
               <Collapsible title="States" open="true">
                 <ul>
                   { states && states.map(obj => (
@@ -401,7 +404,7 @@ export default class CreateApp extends React.Component {
                 </ul>
               </Collapsible>
 
-              <Collapsible title="Routes">
+              <Collapsible title="Routes" open="true">
                 <ul>
                   {/* List each route and all route segments */}
                   { routes && routes.map(obj => (
@@ -418,19 +421,20 @@ export default class CreateApp extends React.Component {
                   ))}
                 </ul>
               </Collapsible>
-
-              <Collapsible title="Search" open="true">
-                <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
-                <ul>
-                  {
-                    searchResults.map(obj => (
-                      <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
-                        {this.getRouteName(obj)}
-                      </li>
-                    ))
-                  }
-                </ul>
-              </Collapsible>
+            </div>
+          </SidebarTab>
+          <SidebarTab id="search" header="Search" icon={<FiSearch />}>
+            <div className="tabContent">
+              <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
+              <ul>
+                {
+                  searchResults.map(obj => (
+                    <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
+                      {this.getRouteName(obj)}
+                    </li>
+                  ))
+                }
+              </ul>
             </div>
           </SidebarTab>
         </Sidebar>
