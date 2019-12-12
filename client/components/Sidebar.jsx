@@ -49,10 +49,7 @@ export default class Sidebar extends MapComponent {
     return (
       <div
         id={id}
-        className={`leaflet-sidebar leaflet-touch ${positionClass} ${collapsedClass}`}>
-        ref={el => {
-          this.rootElement = el;
-        }}
+        className={`leaflet-sidebar leaflet-touch ${positionClass} ${collapsedClass}`}
       >
         <div className='leaflet-sidebar-tabs'>
           <ul role='tablist'>
