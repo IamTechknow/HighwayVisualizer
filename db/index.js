@@ -1,8 +1,7 @@
 const mysql = require('mysql');
 const Promise = require('bluebird');
-const seedData = require('./fixtures.js');
 
-const database = 'highways';
+const DATABASE = 'highways';
 const AUTHENTICATION_FIX = 'https://stackoverflow.com/questions/50093144/mysql-8-0-client-does-not-support-authentication-protocol-requested-by-server';
 
 const connection = mysql.createConnection({
@@ -16,16 +15,16 @@ const connection = mysql.createConnection({
 const db = Promise.promisifyAll(connection, { multiArgs: true });
 
 db.connectAsync()
-  .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}`))
-  .then(() => db.queryAsync(`USE ${database}`))
+  .then(() => console.log(`Connected to ${DATABASE} database as ID ${db.threadId}`))
+  .then(() => db.queryAsync(`USE ${DATABASE}`))
   .catch((err) => {
     console.error(err);
     if (err.code === 'ER_BAD_DB_ERROR') {
-      console.error('highways DB not found. Did you seed data yet?');
+      console.error('highways DB not found. Did you run "npm run seed" yet?');
     } else if (err.code === 'ER_NOT_SUPPORTED_AUTH_MODE') {
       console.error(`NodeJS driver does not support v8.0 authentication (yet). Go to ${AUTHENTICATION_FIX} to work around`);
     } else {
-      console.error('Failed to connect. Has mysqld --console been run yet?');
+      console.error('Failed to connect. Has "mysqld --console" been run yet?');
     }
     process.exit(0);
   });

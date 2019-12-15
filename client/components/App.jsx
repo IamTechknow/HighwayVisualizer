@@ -161,11 +161,29 @@ export default class CreateApp extends React.Component {
     });
   }
 
-  // Filter query based on state routes, which is a 2-D array so use reduce
+  // Filter query based on state routes, which is a 2-D array so use reduce and flatten first
+  // If search query contains classification and number, filter one at a time
   onSearchRoutes(event) {
-    const results = this.state.routes.reduce((accum, curr) => accum.concat(curr.filter(obj => obj.route.indexOf(event.target.value) >= 0 && obj.seg === 0)), []);
+    const {routes} = this.state;
+    const query = event.target.value;
+    const queries = query.split(' ');
+    const highwayClass = this.highwayData.getClassificationFromQuery(queries[0]);
+    const routeNum = queries.length > 1 ?
+      queries[queries.length - 1] :
+      highwayClass === null && queries.length === 1 ? queries[0] : null;
 
-    this.setState({ searchResults: event.target.value ? results.slice(0, 30) : [] });
+    const filteredRoutes = highwayClass !== null ?
+      routes.reduce(
+        (accum, curr) => accum.concat(
+          curr.filter(routeObj => this.highwayData.getRoutePrefix(routeObj.route) === highwayClass && routeObj.seg === 0)
+        ),
+        [],
+      ) :
+      routes.flat();
+    const results = routeNum != null ?
+      filteredRoutes.filter(routeObj => routeObj.route.indexOf(routeNum) >= 0 && routeObj.seg === 0) :
+      filteredRoutes;
+    this.setState({ searchResults: query ? results.slice(0, 30) : [] });
   }
 
   onSendSegments() {
@@ -425,7 +443,7 @@ export default class CreateApp extends React.Component {
           </SidebarTab>
           <SidebarTab id="search" header="Search" icon={<FiSearch />}>
             <div className="tabContent">
-              <input type="text" size="25" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes...`} onChange={this.onSearchRoutes} />
+              <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes by type and/or number...`} onChange={this.onSearchRoutes} />
               <ul>
                 {
                   searchResults.map(obj => (

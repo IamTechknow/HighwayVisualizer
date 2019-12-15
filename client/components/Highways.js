@@ -65,6 +65,16 @@ export default class Highways {
     return new Map(segments.map((seg, i) => [seg.id, i]));
   }
 
+  // If a search query is prefix of classification, filter search by that
+  getClassificationFromQuery(query) {
+    for (let classification of ['Interstate', 'US Highway', 'State Route']) {
+      if (classification.startsWith(query)) {
+        return classification;
+      }
+    }
+    return null;
+  }
+
   toRadians (angle) {
     return angle * (Math.PI / 180);
   }
