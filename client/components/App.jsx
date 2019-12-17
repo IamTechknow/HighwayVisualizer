@@ -1,12 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
-import { FiMap, FiSearch, FiUser } from "react-icons/fi";
 
-import Collapsible from './Collapsible';
 import Highways from './Highways';
-import Sidebar from './Sidebar';
-import SidebarTab from './SidebarTab';
+import RouteDrawer from './RouteDrawer';
 
 const MANUAL = 0, CLINCH = 1;
 
@@ -15,26 +12,23 @@ export default class CreateApp extends React.Component {
     super(props);
 
     this.state = {
+      currMode: MANUAL,
       lat: 37.5904827,
       lon: -122.9585187,
+      submitData: {},
       zoom: 7,
-      searchResults: [],
-      currUserId: -1,
-      currMode: MANUAL,
-      isCollapsed: false,
-      selectedId: 'routes',
     };
 
+    this.getRouteName = this.getRouteName.bind(this);
     this.onStateClick = this.onStateClick.bind(this);
     this.onRouteClick = this.onRouteClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
     this.onResetSegments = this.onResetSegments.bind(this);
-    this.onSearchRoutes = this.onSearchRoutes.bind(this);
     this.onSendSegments = this.onSendSegments.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
     this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
-    this.onModeClick = this.onModeClick.bind(this);
+    this.onSetMode = this.onSetMode.bind(this);
 
     this.startMarker = undefined;
     this.endMarker = undefined;
@@ -155,35 +149,8 @@ export default class CreateApp extends React.Component {
       });
   }
 
-  onModeClick(mode) {
-    this.setState({
-      currMode: mode,
-    });
-  }
-
-  // Filter query based on state routes, which is a 2-D array so use reduce and flatten first
-  // If search query contains classification and number, filter one at a time
-  onSearchRoutes(event) {
-    const {routes} = this.state;
-    const query = event.target.value;
-    const queries = query.split(' ');
-    const highwayClass = this.highwayData.getClassificationFromQuery(queries[0]);
-    const routeNum = queries.length > 1 ?
-      queries[queries.length - 1] :
-      highwayClass === null && queries.length === 1 ? queries[0] : null;
-
-    const filteredRoutes = highwayClass !== null ?
-      routes.reduce(
-        (accum, curr) => accum.concat(
-          curr.filter(routeObj => this.highwayData.getRoutePrefix(routeObj.route) === highwayClass && routeObj.seg === 0)
-        ),
-        [],
-      ) :
-      routes.flat();
-    const results = routeNum != null ?
-      filteredRoutes.filter(routeObj => routeObj.route.indexOf(routeNum) >= 0 && routeObj.seg === 0) :
-      filteredRoutes;
-    this.setState({ searchResults: query ? results.slice(0, 30) : [] });
+  onSetMode(currMode) {
+    this.setState({currMode});
   }
 
   onSendSegments() {
@@ -201,8 +168,7 @@ export default class CreateApp extends React.Component {
     .then(res => {
       this.highwayData.clearUserSegments();
       this.setState({
-        success: true,
-        entries: res.entries,
+        submitData: {success: true, entries: res.entries},
         userSegments: []
       });
     });
@@ -210,24 +176,11 @@ export default class CreateApp extends React.Component {
 
   onResetSegments() {
     this.highwayData.clearUserSegments();
-    this.setState({
-      userSegments: []
-    });
-  }
-
-  onStateClick(stateId) {
-    CreateApp.getRoutes(stateId).then(routes => {
-      this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
-      this.highwayData.buildStateRoutesData(routes);
-      this.setState({
-        routes: CreateApp.parseRoutes(routes),
-        stateId
-      });
-    });
+    this.setState({ userSegments: [] });
   }
 
   // Prevent events occurring twice
-  onRouteClick(route, routeId, dir, getAll, event) {
+  onRouteClick(event, route, routeId, dir, getAll) {
     const {currMode} = this.state;
     event.stopPropagation();
 
@@ -241,10 +194,7 @@ export default class CreateApp extends React.Component {
       } else {
         this.highwayData.addAllSegments(route, dir);
       }
-
-      this.setState({
-        userSegments: this.highwayData.userSegments
-      });
+      this.setState({ userSegments: this.highwayData.userSegments });
     }
   }
 
@@ -254,9 +204,7 @@ export default class CreateApp extends React.Component {
 
     if (!this.startMarker) {
       this.startMarker = segLatLng;
-      this.setState({
-        startMarker: this.startMarker
-      });
+      this.setState({ startMarker: this.startMarker });
     } else {
       this.highwayData.addNewUserSegments(this.startMarker, segLatLng, this.state.route, routeId, this.state.segments);
 
@@ -268,23 +216,21 @@ export default class CreateApp extends React.Component {
     }
   }
 
-  onSidebarClose() {
-    this.setState({ isCollapsed: true });
-  }
-
-  onSidebarOpen(id) {
-    this.setState({
-      isCollapsed: false,
-      selectedId: id,
+  onStateClick(stateId) {
+    CreateApp.getRoutes(stateId).then(routes => {
+      this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
+      this.highwayData.buildStateRoutesData(routes);
+      this.setState({
+        routes: CreateApp.parseRoutes(routes),
+        stateId
+      });
     });
   }
 
   // Change user and load user's segments if any
   onUserChange(event) {
     const currUserId = Number.parseInt(event.target.value, 10);
-    this.setState({
-      currUserId
-    });
+    this.setState({ currUserId });
   }
 
   // Process array of route segments. There will always be at least one
@@ -315,9 +261,9 @@ export default class CreateApp extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, route, routeId, stateId,
-      routes, segments, userSegments, success, entries, users, 
-      currUserId, currMode, startMarker, searchResults, isCollapsed, selectedId } = this.state;
+    const { lat, lon, zoom, states, stateId,
+      routes, segments, userSegments, users,
+      currUserId, currMode, startMarker, submitData } = this.state;
     const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
 
     if (!users) { // Don't render until all data loaded
@@ -335,127 +281,33 @@ export default class CreateApp extends React.Component {
             segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
           {/* Show unsubmitted user segments if selected route and segment is the same */}
-          { userSegments &&
-            userSegments.map((seg, i) =>
+          { userSegments && userSegments.map((seg, i) =>
               liveSegs && liveSegs.has(seg.routeId) &&
               <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
             )
           }
-          { startMarker &&
-            <Marker position={startMarker} />
-          }
+          { startMarker && <Marker position={startMarker} /> }
         </Map>
-
-        <Sidebar
-          id="sidebar"
-          collapsed={isCollapsed}
-          selected={selectedId}
-          onOpen={this.onSidebarOpen.bind(this)}
-          onClose={this.onSidebarClose.bind(this)}
-        >
-          <SidebarTab id="users" header="User Settings" icon={<FiUser />}>
-            <div className="tabContent">
-              <h3>
-                { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
-                <span className="segRow">
-                  <button type="button" onClick={this.onModeClick.bind(this, MANUAL)}>Manual</button>
-                  <button type="button" onClick={this.onModeClick.bind(this, CLINCH)}>Clinch</button>
-                </span>
-              </h3>
-
-              <Collapsible title="Users" open="true">
-                <select value={currUserId} onChange={this.onUserChange} className="nameFormElement">
-                  <option key={-1} value={-1}>Select or create User</option>
-                  { users &&
-                    users.map((user) => (<option key={user.id} value={user.id}>{user.user}</option>))
-                  }
-                </select>
-
-                <form onSubmit={this.onFormSubmit}>
-                  <label htmlFor="userName" className="nameFormElement">
-                    Username
-                    <input type="text" id="userName" name="userName" className="nameFormElement" />
-                  </label>
-                  <br />
-                  <button type="submit">Create User</button>
-                  { currUserId >= 0 &&
-                    <a href={'/users/' + users[currUserId - 1].user}>View Stats</a>
-                  }
-                </form>
-              </Collapsible>
-
-              <Collapsible title="User Segments">
-                <ul>
-                  {
-                    userSegments &&
-                    userSegments.map((seg, i) => (
-                      <div key={`userSegItem-${i}`} className="segRow">
-                        <li>
-                          {`${this.highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${seg.seg}`}
-                          <input type="checkbox" onClick={this.onClinchToggleFor.bind(this, i)}/>
-                        </li>
-                      </div>
-                    ))
-                  }
-                </ul>
-
-                { currUserId >= 0 &&
-                  <button type="button" onClick={this.onSendSegments}>Submit Segments</button>
-                }
-                <button type="button" onClick={this.onResetSegments}>Clear User Segments</button>
-
-                {
-                  success &&
-                  <p>{`Successfully created ${entries} entries`}</p>
-                }
-              </Collapsible>
-            </div>
-          </SidebarTab>
-          <SidebarTab id="routes" header="Routes" icon={<FiMap />}>
-            <div className="tabContent">
-              <Collapsible title="States" open="true">
-                <ul>
-                  { states && states.map(obj => (
-                      <li key={obj.initials} className="clickable" onClick={this.onStateClick.bind(this, obj.id)}>{obj.name}</li>
-                    ))
-                  }
-                </ul>
-              </Collapsible>
-
-              <Collapsible title="Routes" open="true">
-                <ul>
-                  {/* List each route and all route segments */}
-                  { routes && routes.map(obj => (
-                    <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj[0].route, obj[0].route, obj[0].dir, true)}>
-                      {this.getRouteName(obj[0])}
-                      { obj.length > 1 && (
-                        <ul>
-                          {obj.map((seg, i) => (
-                            <li key={`segment-${seg.id}`} className="clickable" onClick={this.onRouteClick.bind(this, seg.route, seg.id, "", false)}>{`Segment ${i + 1}`}</li>
-                          ))}
-                        </ul>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </Collapsible>
-            </div>
-          </SidebarTab>
-          <SidebarTab id="search" header="Search" icon={<FiSearch />}>
-            <div className="tabContent">
-              <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes by type and/or number...`} onChange={this.onSearchRoutes} />
-              <ul>
-                {
-                  searchResults.map(obj => (
-                    <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={this.onRouteClick.bind(this, obj.route, obj.route, obj.dir, true)}>
-                      {this.getRouteName(obj)}
-                    </li>
-                  ))
-                }
-              </ul>
-            </div>
-          </SidebarTab>
-        </Sidebar>
+        <RouteDrawer
+          currMode={currMode}
+          currUserId={currUserId}
+          getRouteName={this.getRouteName}
+          highwayData={this.highwayData}
+          onClinchToggleFor={this.onClinchToggleFor}
+          onFormSubmit={this.onFormSubmit}
+          onResetSegments={this.onResetSegments}
+          onRouteClick={this.onRouteClick}
+          onSendSegments={this.onSendSegments}
+          onSetMode={this.onSetMode}
+          onStateClick={this.onStateClick}
+          onUserChange={this.onUserChange}
+          routes={routes}
+          stateId={stateId}
+          states={states}
+          submitData={submitData}
+          userSegments={userSegments}
+          users={users}
+        />
       </div>
     );
   }
