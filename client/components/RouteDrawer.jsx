@@ -155,15 +155,26 @@ const RouteDrawer = ({
       <SidebarTab id="search" header="Search" icon={<FiSearch />}>
         <div className="tabContent">
           <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes by type and/or number...`} onChange={onSearchRoutes} />
-          <ul>
-            {
-              searchResults.map(obj => (
-                <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={(event) => {onRouteClick(event, obj.route, obj.route, obj.dir, true);}}>
-                  {getRouteName(obj)}
-                </li>
-              ))
-            }
-          </ul>
+          {
+            !searchResults.length ?
+            <div>
+              <h3>Search hints:</h3>
+              <ul>
+                <li>Try typing a more of a route number to get more specific results</li>
+                <li>To filter by Interstates and US Highways, type I or US and number separated by space or dash</li>
+              </ul>
+            </div>
+            :
+            <ul>
+              {
+                searchResults.map(obj => (
+                  <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={(event) => {onRouteClick(event, obj.route, obj.route, obj.dir, true);}}>
+                    {getRouteName(obj)}
+                  </li>
+                ))
+              }
+            </ul>
+          }
         </div>
       </SidebarTab>
     </Sidebar>
