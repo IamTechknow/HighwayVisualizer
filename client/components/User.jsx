@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { FiUser } from "react-icons/fi";
@@ -124,7 +125,7 @@ export default class UserApp extends React.Component {
                       const traveledStat = (stat.traveled / scale).toFixed(2);
                       const totalStat = (stat.total / scale).toFixed(2);
                       return (
-                        <tr>
+                        <tr key={`${stat.state}_${stat.route}_${stat.segment}`}>
                           <td>{stat.state}</td>
                           <td>{stat.route}</td>
                           <td>{stat.segment}</td>
@@ -144,3 +145,11 @@ export default class UserApp extends React.Component {
     );
   }
 }
+
+UserApp.propTypes = {
+  match: PropTypes.shape({
+    params: PropTypes.shape({
+      user: PropTypes.string.isRequired,
+    }).isRequired,
+  }).isRequired,
+};

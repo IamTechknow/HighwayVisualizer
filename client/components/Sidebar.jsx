@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import ReactDOM from 'react-dom';
 import { MapComponent } from 'react-leaflet';
@@ -42,8 +43,8 @@ export default class Sidebar extends MapComponent {
   }
 
   render() {
-    const { children, collapsed, id, position } = this.props;
-    const positionClass = `leaflet-sidebar-${position || 'left'}`;
+    const { children, collapsed = false, id, position = 'left' } = this.props;
+    const positionClass = `leaflet-sidebar-${position}`;
     const collapsedClass = collapsed ? 'collapsed' : '';
     const tabs = React.Children.toArray(children);
     return (
@@ -63,3 +64,15 @@ export default class Sidebar extends MapComponent {
     );
   }
 }
+
+Sidebar.propTypes = {
+  children: PropTypes.node.isRequired,
+  collapsed: PropTypes.bool,
+  id: PropTypes.string.isRequired,
+  position: PropTypes.string,
+};
+
+Sidebar.defaultProps = {
+  collapsed: false,
+  position: 'left',
+};

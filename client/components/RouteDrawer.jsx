@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import ReactDOM from 'react-dom';
 import { FiMap, FiSearch, FiUser } from "react-icons/fi";
@@ -179,6 +180,53 @@ const RouteDrawer = ({
       </SidebarTab>
     </Sidebar>
   )
+};
+
+RouteDrawer.propTypes = {
+  currMode: PropTypes.number.isRequired,
+  currUserId: PropTypes.number,
+  getRouteName: PropTypes.func.isRequired,
+  highwayData: PropTypes.object,
+  onClinchToggleFor: PropTypes.func.isRequired,
+  onFormSubmit: PropTypes.func.isRequired,
+  onResetSegments: PropTypes.func.isRequired,
+  onRouteClick: PropTypes.func.isRequired,
+  onSendSegments: PropTypes.func.isRequired,
+  onSetMode: PropTypes.func.isRequired,
+  onStateClick: PropTypes.func.isRequired,
+  onUserChange: PropTypes.func.isRequired,
+  routes: PropTypes.arrayOf(
+    PropTypes.arrayOf(
+      PropTypes.shape({
+        dir: PropTypes.string,
+        route: PropTypes.string.isRequired,
+      }),
+    ),
+  ),
+  stateId: PropTypes.number.isRequired,
+  states: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      initials: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+    }),
+  ),
+  submitData: PropTypes.shape({
+    entries: PropTypes.number,
+    success: PropTypes.bool,
+  }).isRequired,
+  userSegments: PropTypes.arrayOf(
+    PropTypes.shape({
+      route: PropTypes.string.isRequired,
+      seg: PropTypes.string.isRequired,
+    }),
+  ),
+  users: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      user: PropTypes.string.isRequired,
+    }),
+  ),
 };
 
 export default RouteDrawer;
