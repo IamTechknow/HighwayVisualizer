@@ -6,10 +6,7 @@ const db = require('../db');
 const PORT = 80;
 const app = express();
 
-app.use(express.static(path.resolve(__dirname, '../public'), {
-  immutable: true,
-  maxAge: 604800000
-}));
+app.use(express.static(path.resolve(__dirname, '../public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -20,6 +17,7 @@ const headerMiddleware = function(req, res, next) {
   res.header("Cache-Control", "public, max-age=86400");
   next();
 };
+
 app.use(headerMiddleware);
 
 app.get('/users/:user', (req, res) => {

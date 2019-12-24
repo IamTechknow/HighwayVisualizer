@@ -1,7 +1,7 @@
 # HighwayVisualizer
 
 ## Instructions
-Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Start a terminal window and run `npm run seed`. Then start another terminal window, and run `npm run start` and `npm run react`. Now you may go to localhost to access the site!
+Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Set the `NODE_ENV` environment variable to `production`. Download the ZIP file of the Shapefile for California's state highway system, extract `ca.shp` and `ca.dbf` to the `db` folder. Start a terminal window and run `npm run seed`. Then start another terminal window, and run `npm run start` and `npm run react`. Now you may go to localhost to access the site!
 
 ## Video
 A video of this project based on the commit tagged `mvp` may be found [here](https://youtu.be/i92g7lDWulA).
