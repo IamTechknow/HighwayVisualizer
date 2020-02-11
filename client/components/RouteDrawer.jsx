@@ -103,7 +103,7 @@ const RouteDrawer = ({
                 userSegments.map((seg, i) => (
                   <div key={`userSegItem-${i}`} className="segRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${seg.seg}`}
+                      {`${highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${highwayData.getSegmentNum(seg.route)}`}
                       <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
                     </li>
                   </div>
@@ -218,7 +218,6 @@ RouteDrawer.propTypes = {
   userSegments: PropTypes.arrayOf(
     PropTypes.shape({
       route: PropTypes.string.isRequired,
-      seg: PropTypes.string.isRequired,
     }),
   ),
   users: PropTypes.arrayOf(

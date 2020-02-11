@@ -1,3 +1,4 @@
+import UserSegment from '../types/UserSegment';
 import Prefixes from './RoutePrefixes';
 
 const R = 6371e3; // Mean radius of Earth
@@ -75,6 +76,10 @@ export default class Highways {
     return null;
   }
 
+  getSegmentNum(routeId) {
+    return this.routeData[routeId].seg + 1;
+  }
+
   toRadians (angle) {
     return angle * (Math.PI / 180);
   }
@@ -119,8 +124,8 @@ export default class Highways {
     this.userSegments[idx].clinched = !this.userSegments[idx].clinched;
   }
 
-  addSegment(route, routeId, startId, endId, clinched) {
-    this.userSegments.push({ route, routeId, startId, endId, clinched, seg: this.routeData[routeId].seg + 1 });
+  addSegment(userSegment) {
+    this.userSegments.push(userSegment);
   }
 
   addNewUserSegments(startMarker, endMarker, route, routeId, segments) {
@@ -128,7 +133,7 @@ export default class Highways {
     if (startMarker.routeId === routeId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.addSegment(route, routeId, startId, endId, false);
+      this.addSegment(new UserSegment(route, routeId, startId, endId, false));
     } else {
       // Figure out higher and lower points
       const start = startMarker.routeId > routeId ? endMarker : startMarker;
@@ -136,25 +141,26 @@ export default class Highways {
       const idMap = this.getMapForLiveIds(segments);
 
       // Add first segment
-      this.addSegment(route, start.routeId, start.idx, segments[idMap.get(start.routeId)].points.length, false);
+      const endIdx = segments[idMap.get(start.routeId)].points.length;
+      this.addSegment(new UserSegment(route, start.routeId, start.idx, endIdx, false));
       // Add entire user segments if needed
       if (end.routeId - start.routeId > 1) {
         for (let i = start.routeId + 1; i < end.routeId; i += 1) {
-          this.addSegment(route, i, 0, segments[idMap.get(i)].points.length, false);
+          this.addSegment(new UserSegment(route, i, 0, segments[idMap.get(i)].points.length, false));
         }
       }
 
-      this.addSegment(route, end.routeId, 0, end.idx, false); // Add last segment
+      this.addSegment(new UserSegment(route, end.routeId, 0, end.idx, false)); // Add last segment
     }
   }
 
   addFullSegment(route, routeId) {
-    this.addSegment(route, routeId, 0, this.routeData[routeId].len, false);
+    this.addSegment(new UserSegment(route, routeId, 0, this.routeData[routeId].len, false));
   }
 
   addAllSegments(route, dir) {
     for (let routeId of this.idCache[route + dir]) {
-      this.addSegment(route, routeId, 0, this.routeData[routeId].len, false);
+      this.addFullSegment(route, routeId);
     }
   }
 }
