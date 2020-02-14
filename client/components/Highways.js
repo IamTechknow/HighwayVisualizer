@@ -1,7 +1,8 @@
 import UserSegment from '../types/UserSegment';
 import Prefixes from './RoutePrefixes';
 
-const R = 6371e3; // Mean radius of Earth
+const R = 6371e3; // Mean radius of Earth in meters
+const FACTOR = Math.PI / 180;
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
@@ -81,7 +82,7 @@ export default class Highways {
   }
 
   toRadians (angle) {
-    return angle * (Math.PI / 180);
+    return angle * FACTOR;
   }
 
   // Brute force: iterate through all points, calc distance between coordinate to clicked coordinate. Return closest coordinate
@@ -90,20 +91,22 @@ export default class Highways {
     let points = polyline.getLatLngs();
     let shortestDistance = Number.MAX_VALUE;
     let closest;
+    const clickedLat = clicked.lat, clickedLng = clicked.lng;
+    const radX2 = this.toRadians(clickedLat), radY2 = this.toRadians(clickedLng);
 
     // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
     for (let i = 0; i < points.length; i++) {
       const {lat, lng} = points[i];
-      const clickedLat = clicked.lat, clickedLng = clicked.lng;
 
-      const lat1 = this.toRadians(lat);
-      const lat2 = this.toRadians(clickedLat);
-      const deltaLat = this.toRadians(clickedLat) - this.toRadians(lat);
-      const deltaLng = this.toRadians(clickedLng) - this.toRadians(lng);
+      const radX1 = this.toRadians(lat);
+      const deltaLat = radX2 - radX1;
+      const deltaLng = radY2 - this.toRadians(lng);
+      const sinOfDeltaLat = Math.sin(deltaLat / 2);
+      const sinOfDeltaLng = Math.sin(deltaLng / 2);
 
-      const a = Math.sin(deltaLat / 2) * Math.sin(deltaLat / 2) +
-        Math.cos(lat1) * Math.cos(lat2) *
-        Math.sin(deltaLng / 2) * Math.sin(deltaLng / 2);
+      const a = sinOfDeltaLat * sinOfDeltaLat +
+        Math.cos(radX1) * Math.cos(radX2) *
+        sinOfDeltaLng * sinOfDeltaLng;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       const d = R * c;
 
