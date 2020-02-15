@@ -68,14 +68,14 @@ export default class Highways {
     return new Map(segments.map((seg, i) => [seg.id, i]));
   }
 
-  // If a search query is prefix of classification, filter search by that
-  getClassificationFromQuery(query) {
-    for (let classification of ['Interstate', 'US Highway', 'State Route']) {
-      if (classification.startsWith(query)) {
-        return classification;
-      }
-    }
-    return null;
+  getClassification(input) {
+    const classifications = {
+      I : 'Interstate',
+      i : 'Interstate',
+      US : 'US Highway',
+      us : 'US Highway',
+    };
+    return classifications[input] ? classifications[input] : null;
   }
 
   getSegmentNum(routeId) {

@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import ReactDOM from 'react-dom';
 import { FiMap, FiSearch, FiUser } from "react-icons/fi";
 
@@ -32,29 +32,25 @@ const RouteDrawer = ({
   const [searchResults, setSearchResults] = useState([]);
   const [isCollapsed, setCollapsed] = useState(false);
   const [selectedId, setSelectedId] = useState('routes');
+  const fullRoutes = useMemo(() => routes.flat().filter(routeObj => routeObj.seg === 0), [routes]);
 
-  // Filter query based on state routes, which is a 2-D array so use reduce and flatten first
-  // If search query contains classification and number, filter one at a time
   const onSearchRoutes = (event) => {
     const query = event.target.value;
-    const queries = query.split(' ');
-    const highwayClass = highwayData.getClassificationFromQuery(queries[0]);
+    const dashSplit = query.split('-');
+    const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
+    const highwayClass = highwayData.getClassification(queries[0]);
     const routeNum = queries.length > 1 ?
       queries[queries.length - 1] :
       highwayClass === null && queries.length === 1 ? queries[0] : null;
-
-    const filteredRoutes = highwayClass !== null ?
-      routes.reduce(
-        (accum, curr) => accum.concat(
-          curr.filter(routeObj => highwayData.getRoutePrefix(routeObj.route) === highwayClass && routeObj.seg === 0)
-        ),
-        [],
-      ) :
-      routes.flat();
-    const results = routeNum != null ?
-      filteredRoutes.filter(routeObj => routeObj.route.indexOf(routeNum) >= 0 && routeObj.seg === 0) :
-      filteredRoutes;
-    setSearchResults(query ? results.slice(0, 30) : []);
+    let filteredRoutes = fullRoutes;
+    if (highwayClass !== null) {
+      filteredRoutes = filteredRoutes.filter(
+        routeObj => highwayData.getRoutePrefix(routeObj.route) === highwayClass
+      );
+    }
+    const results =
+      filteredRoutes.filter(routeObj => routeObj.route.indexOf(routeNum) >= 0);
+    setSearchResults(results.slice(0, 30));
   };
 
   return (
