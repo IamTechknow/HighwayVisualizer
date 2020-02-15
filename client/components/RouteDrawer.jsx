@@ -169,7 +169,7 @@ const RouteDrawer = ({
             <ul>
               {
                 searchResults.map(obj => (
-                  <li key={`${obj.route}${obj.dir}`} className="clickable" onClick={(event) => {onRouteClick(event, obj.route, obj.route, obj.dir, true);}}>
+                  <li key={obj.id} className="clickable" onClick={(event) => {onRouteClick(event, obj.route, obj.route, obj.dir, true);}}>
                     {getRouteName(obj)}
                   </li>
                 ))
@@ -198,6 +198,7 @@ RouteDrawer.propTypes = {
   routes: PropTypes.arrayOf(
     PropTypes.arrayOf(
       PropTypes.shape({
+        id: PropTypes.number,
         dir: PropTypes.string,
         route: PropTypes.string.isRequired,
       }),
