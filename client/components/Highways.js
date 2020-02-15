@@ -3,6 +3,7 @@ import Prefixes from './RoutePrefixes';
 
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
+const POINTS_BINSEARCH_ITERATIONS = 2;
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
@@ -85,8 +86,12 @@ export default class Highways {
     return angle * FACTOR;
   }
 
-  // Brute force: iterate through all points, calc distance between coordinate to clicked coordinate. Return closest coordinate
-  // Optimized way: Using nearest neighbour algorithm for a 2D space, or a KD tree/quadtree?
+  /*
+    Assumptions made for binary search:
+    - The route is generally travelling in a certain direction.
+    - Less likely to work for routes that travel circulatr, may need to debug comparsions
+    - CA 18 is a special case, it does not work right even for linear search
+  */
   findSegmentPoint(polyline, clicked, routeId) {
     let points = polyline.getLatLngs();
     let shortestDistance = Number.MAX_VALUE;
@@ -94,22 +99,28 @@ export default class Highways {
     const clickedLat = clicked.lat, clickedLng = clicked.lng;
     const radX2 = this.toRadians(clickedLat), radY2 = this.toRadians(clickedLng);
 
-    // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
-    for (let i = 0; i < points.length; i++) {
-      const {lat, lng} = points[i];
+    // Binary search for desired range by comparing distances
+    // Not exhaustive to ensure point is found
+    let lo = 0, hi = points.length - 1;
+    for (let i = 0; i < POINTS_BINSEARCH_ITERATIONS; i += 1) {
+      let mid = Math.trunc((hi + lo) / 2);
+      let startDistance = this.calcHavensine(points[lo], radX2, radY2);
+      let midDistance = this.calcHavensine(points[mid], radX2, radY2);
+      let endDistance = this.calcHavensine(points[hi], radX2, radY2);
+      let temp;
+      if (startDistance <= midDistance && startDistance <= endDistance) {
+        hi = mid;
+      } else if (midDistance <= startDistance && midDistance <= endDistance && startDistance <= endDistance) {
+        hi = mid;
+      } else if (midDistance <= startDistance && midDistance <= endDistance && startDistance > endDistance) {
+        lo = mid;
+      } else {
+        lo = mid;
+      }
+    }
 
-      const radX1 = this.toRadians(lat);
-      const deltaLat = radX2 - radX1;
-      const deltaLng = radY2 - this.toRadians(lng);
-      const sinOfDeltaLat = Math.sin(deltaLat / 2);
-      const sinOfDeltaLng = Math.sin(deltaLng / 2);
-
-      const a = sinOfDeltaLat * sinOfDeltaLat +
-        Math.cos(radX1) * Math.cos(radX2) *
-        sinOfDeltaLng * sinOfDeltaLng;
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      const d = R * c;
-
+    for (let i = lo; i <= hi; i += 1) {
+      const d = this.calcHavensine(points[i], radX2, radY2);
       if (d < shortestDistance) {
         shortestDistance = d;
         closest = i;
@@ -165,5 +176,22 @@ export default class Highways {
     for (let routeId of this.idCache[route + dir]) {
       this.addFullSegment(route, routeId);
     }
+  }
+
+  // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
+  calcHavensine(point, radX2, radY2) {
+    const {lat, lng} = point;
+
+    const radX1 = this.toRadians(lat);
+    const deltaLat = radX2 - radX1;
+    const deltaLng = radY2 - this.toRadians(lng);
+    const sinOfDeltaLat = Math.sin(deltaLat / 2);
+    const sinOfDeltaLng = Math.sin(deltaLng / 2);
+
+    const a = sinOfDeltaLat * sinOfDeltaLat +
+      Math.cos(radX1) * Math.cos(radX2) *
+      sinOfDeltaLng * sinOfDeltaLng;
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
   }
 }
