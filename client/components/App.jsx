@@ -283,7 +283,7 @@ export default class CreateApp extends React.Component {
           {/* Show unsubmitted user segments if selected route and segment is the same */}
           { userSegments && userSegments.map((seg, i) =>
               liveSegs && liveSegs.has(seg.routeId) &&
-              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId)} color={ seg.clinched ? "lime" : "yellow" } />
+              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId + 1)} color={ seg.clinched ? "lime" : "yellow" } />
             )
           }
           { startMarker && <Marker position={startMarker} /> }
