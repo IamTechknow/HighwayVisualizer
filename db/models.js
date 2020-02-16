@@ -13,7 +13,7 @@ class Models {
 
   // Select by sorting the routes, casting them as integers
   static getRoutesBy(db, stateId) {
-    return db.queryAsync('SELECT id, route, segment AS seg, direction AS dir, len FROM routes WHERE state_key = ? ORDER BY CAST(route as unsigned);', [stateId])
+    return db.queryAsync('SELECT id, route, segment AS seg, direction AS dir, len, len_m FROM routes WHERE state_key = ? ORDER BY CAST(route as unsigned);', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }

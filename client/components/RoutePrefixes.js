@@ -18,6 +18,7 @@ let Nevada = {};
 ['11', '15', '80', '215', '515', '580'].forEach(ele => { Nevada[ele] = "Interstate"; });
 ['6', '50', '93', '95', '395'].forEach(ele => { Nevada[ele] = "US Highway"; });
 
+// Note: Variable names must match that in the backend, otherwise prefix cache can become undefined
 module.exports = {
   California,
   District,

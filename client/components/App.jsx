@@ -16,7 +16,6 @@ export default class CreateApp extends React.Component {
       lat: 37.5904827,
       lon: -122.9585187,
       submitData: {},
-      zoom: 7,
     };
 
     this.getRouteName = this.getRouteName.bind(this);
@@ -245,7 +244,6 @@ export default class CreateApp extends React.Component {
       startMarker: this.startMarker,
       lat: tup[0],
       lon: tup[1],
-      zoom: this.highwayData.getZoomForRouteLen(segments.reduce((curr, obj) => curr += obj.points.length, 0))
     });
   }
 
@@ -261,7 +259,7 @@ export default class CreateApp extends React.Component {
   }
 
   render() {
-    const { lat, lon, zoom, states, stateId,
+    const { lat, lon, states, stateId, route, routeId,
       routes, segments, userSegments, users,
       currUserId, currMode, startMarker, submitData } = this.state;
     const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
@@ -269,6 +267,9 @@ export default class CreateApp extends React.Component {
     if (!users) { // Don't render until all data loaded
       return null;
     }
+    const routeAndDir = route + this.highwayData.routeData[segments[0].id].dir;
+    const wholeRouteSelected = segments.length > 1 || this.highwayData.idCache[routeAndDir].length === 1;
+    const zoom = this.highwayData.getZoomForRouteId(wholeRouteSelected ? routeAndDir : routeId, wholeRouteSelected);
 
     return (
       <div>

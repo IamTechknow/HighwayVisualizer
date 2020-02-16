@@ -12,24 +12,30 @@ export default class Highways {
     this.routeData = undefined;
     this.idCache = undefined;
     this.userSegments = [];
+    // Map route number to route length
+    this.routeLengthMap = undefined;
   }
 
-  // Determine a good zoom level based on route complexity
-  getZoomForRouteLen(len) {
-    if (len <= 50) {
-      return 13;
-    } else if (len <= 100) {
-      return 12;
-    } else if (len <= 300) {
+  getZoomForRouteId(routeId, isRouteNumber) {
+    const len = isRouteNumber ? this.routeLengthMap[routeId] : this.routeData[routeId].len_m;
+    if (len <= 1000) {
+      return 14.5;
+    } else if (len <= 3000) {
+      return 13.5;
+    } else if (len <= 5000) {
+      return 12.5;
+    } else if (len <= 10000) {
+      return 11.5;
+    } else if (len <= 30000) {
       return 11;
-    } else if (len <= 600) {
-      return 10;
-    } else if(len <= 1000) {
-      return 9;
-    } else if(len <= 2000) {
-      return 8;
-    } else if(len <= 5000) {
-      return 7;
+    } else if (len <= 50000) {
+      return 10.5;
+    } else if (len <= 100000) {
+      return 9.5;
+    } else if (len <= 300000) {
+      return 8.5;
+    } else if (len <= 500000) {
+      return 7.5;
     }
     return 6;
   }
@@ -52,12 +58,22 @@ export default class Highways {
       } else {
         accum[key] = [curr.id];
       }
+      return accum;
+    }
 
+    const lenReducer = (accum, curr) => {
+      const key = curr.route + curr.dir;
+      if (accum[key]) {
+        accum[key] += curr.len_m;
+      } else {
+        accum[key] = curr.len_m;
+      }
       return accum;
     }
 
     this.routeData = raw.reduce(routeReducer, {});
     this.idCache = raw.reduce(idReducer, {});
+    this.routeLengthMap = raw.reduce(lenReducer, {});
   }
 
   getRoutePrefix(route) {
