@@ -8,9 +8,13 @@ const POINTS_BINSEARCH_ITERATIONS = 2;
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
   constructor() {
+    // Map route numbers to Interstate and US Highway prefixes
     this.titleCache = undefined;
+    // Flatened map from route ID to route data
     this.routeData = undefined;
+    // Map route number and direction to segment IDs
     this.idCache = undefined;
+    // User segment data
     this.userSegments = [];
     // Map route number to route length
     this.routeLengthMap = undefined;
@@ -41,16 +45,14 @@ export default class Highways {
   }
 
   buildCacheFor(state) {
-    this.titleCache = Prefixes[state];
+    this.titleCache = Prefixes[state] ?? {};
   }
 
-  // Build caches to access segment IDs for a state route and data for each segment ID
   buildStateRoutesData(raw) {
     const routeReducer = (accum, curr) => {
       accum[curr.id] = curr;
       return accum;
     };
-
     const idReducer = (accum, curr) => {
       const key = curr.route + curr.dir;
       if (accum[key]) {
@@ -60,7 +62,6 @@ export default class Highways {
       }
       return accum;
     }
-
     const lenReducer = (accum, curr) => {
       const key = curr.route + curr.dir;
       if (accum[key]) {
@@ -70,7 +71,6 @@ export default class Highways {
       }
       return accum;
     }
-
     this.routeData = raw.reduce(routeReducer, {});
     this.idCache = raw.reduce(idReducer, {});
     this.routeLengthMap = raw.reduce(lenReducer, {});
@@ -104,8 +104,8 @@ export default class Highways {
 
   /*
     Assumptions made for binary search:
-    - The route is generally travelling in a certain direction.
-    - Less likely to work for routes that travel circulatr, may need to debug comparsions
+    - The route is generally travelling in a certain direction so points can be treated as a sorted array.
+    - Less likely to work for routes that travel circular, may need to debug comparsions
     - CA 18 is a special case, it does not work right even for linear search
   */
   findSegmentPoint(polyline, clicked, routeId) {

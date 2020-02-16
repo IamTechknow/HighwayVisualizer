@@ -215,14 +215,17 @@ export default class CreateApp extends React.Component {
     }
   }
 
+  // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
     CreateApp.getRoutes(stateId).then(routes => {
       this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
       this.highwayData.buildStateRoutesData(routes);
-      this.setState({
-        routes: CreateApp.parseRoutes(routes),
-        stateId
-      });
+      return CreateApp.getRoute(routes[0].id, routes[0].dir, false, stateId)
+        .then(segments => this.routePromiseDone(segments, routes[0].route, routes[0].id))
+        .then(() => this.setState({
+          routes: CreateApp.parseRoutes(routes),
+          stateId
+        }));
     });
   }
 
