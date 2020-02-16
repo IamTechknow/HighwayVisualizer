@@ -1,18 +1,9 @@
-const mysql = require('mysql');
-const Promise = require('bluebird');
+const DB = require('.');
 const seedData = require('./fixtures.js');
 
 const database = 'highways', STATES = 'states', ROUTES = 'routes', POINTS = 'points',
   USERS = 'users', SEGMENTS = 'segments';
-
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-});
-
-// Use promisification on the MySQL database connection
-const db = Promise.promisifyAll(connection, { multiArgs: true });
+const db = DB.getDB();
 
 db.connectAsync()
   .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}, seeding database...`))

@@ -15,8 +15,7 @@
   (for simplicity, skip all IDs ending with A and all Facility_T === 6)
 */
 
-const mysql = require('mysql');
-const Promise = require('bluebird');
+const DB = require('.');
 const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
@@ -143,20 +142,11 @@ const seedData = async (db, args) => {
   }
 };
 
-const connection = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: '',
-});
-
-// Use promisification on the MySQL database connection
-const db = Promise.promisifyAll(connection, { multiArgs: true });
-db.connectAsync()
-  .then(() => db.queryAsync('USE highways;'))
+const db = DB.getDB();
+DB.connectWithDB(db)
   .then(() => seedData(db, process.argv))
   .then(() => db.end())
   .catch(err => {
     console.log(err);
     db.end();
   });
-
