@@ -134,8 +134,8 @@ const seedData = async (db, args) => {
     const dir = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]).dir;
     const routeNum = `'${route}'`, routeDir = `'${dir}'`;
     for (let i = 0; i < finalArray.length; i += 1) {
-      const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${basePointID});`).then(res => res[0].insertId);
       const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
+      const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
       await Utils.processCoordinates(db, ROUTES, POINTS, routeID, coords);
       basePointID += coords.length;
     }
