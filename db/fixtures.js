@@ -19,13 +19,13 @@ const seedData = async (db) => {
       for (let i = 0; i < feature.geometry.coordinates.length; i += 1) {
         const len = feature.geometry.coordinates[i].length;
         const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
-        await processCoordinates(db, routeID, feature.geometry.coordinates[i]);
+        await Utils.processCoordinates(db, ROUTES, POINTS, routeID, feature.geometry.coordinates[i]);
         basePointID += len;
       }
     } else {
       const len = feature.geometry.coordinates.length;
       const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, 0, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
-      await processCoordinates(db, routeID, feature.geometry.coordinates);
+      await Utils.processCoordinates(db, ROUTES, POINTS, routeID, feature.geometry.coordinates);
       basePointID += len;
     }
   }
@@ -34,14 +34,6 @@ const seedData = async (db) => {
   return db.queryAsync(`CREATE INDEX POINT_IDX ON ${POINTS} (route_key);`)
     .then(res => db.queryAsync(`CREATE INDEX ROUTE_IDX on ${ROUTES} (route(4), direction(1));`));
 };
-
-const processCoordinates = async (db, routeID, coords) => {
-  const items = coords.map(tup => [routeID, tup[1], tup[0]]);
-  const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-  await db.queryAsync(`UPDATE ${ROUTES} SET len_m = ${lenInMeters} WHERE id = ${routeID};`);
-  await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ?;`, [items]);
-  console.log(`Seeded route with ID ${routeID} with ${items.length} points, length = ${lenInMeters}m`);
-}
 
 // Check if the database is empty before populating it with mock data.
 // Remember that the results will be a 2D array, first element has actual results

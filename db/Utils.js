@@ -23,13 +23,21 @@ class Utils {
       const sinOfDeltaLng = Math.sin(deltaLng / 2);
 
       const a = sinOfDeltaLat * sinOfDeltaLat +
-        Math.cos(rad1) * Math.cos(rad2) *
+        Math.cos(radX1) * Math.cos(radX2) *
         sinOfDeltaLng * sinOfDeltaLng;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
       metersTraveled += R * c;
     }
 
     return metersTraveled;
+  }
+
+  static processCoordinates = async (db, routesDB, pointsDB, routeID, coords) => {
+    const items = coords.map(tup => [routeID, tup[1], tup[0]]);
+    const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
+    await db.queryAsync(`UPDATE ${routesDB} SET len_m = ${lenInMeters} WHERE id = ${routeID};`);
+    await db.queryAsync(`INSERT INTO ${pointsDB} (route_key, lat, lon) VALUES ?;`, [items]);
+    console.log(`Seeded route with ID ${routeID} with ${items.length} points, length = ${lenInMeters}m`);
   }
 }
 

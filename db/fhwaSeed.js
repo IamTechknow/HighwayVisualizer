@@ -1,6 +1,4 @@
 /*
-  The direction of a freeway may be indicated by Facility_T. 2 means inventory direction, 6 means non-inventory
-
   General approach to parse FHWA shapefile:
 
   For all features
@@ -24,22 +22,28 @@ const Utils = require('./Utils.js');
 
 const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
 
-// Determine whether to exclude a feature. It's possible for a feature to not have a geometry
+// Codes defined in Chapter 4 of the HPMS Field Manual
+const COUNTY_OWNER_CODE = 2, TOWN_OWNER_CODE = 3, CITY_OWNER_CODE = 4, PRIVATE_OWNER_CODE = 26;
+const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
+const NON_INVENTORY_FACILITY_CODE = 6;
+
 const filterOutFeature = (feature) => {
-  // Exclude county/town/city/private routes
   const ownerId = feature.properties.Ownership;
-  if (ownerId === 2 || ownerId === 3 || ownerId === 4 || ownerId === 26) {
+  if (
+    ownerId === COUNTY_OWNER_CODE || ownerId === TOWN_OWNER_CODE ||
+    ownerId === CITY_OWNER_CODE || ownerId === PRIVATE_OWNER_CODE
+  ) {
     return true;
   }
 
   // Exclude features in DC that with route IDs ending in A
   const routeId = feature.properties.Route_ID;
-  if (feature.properties.State_Code === 11 && routeId[routeId.length - 1] === 'A') {
+  if (feature.properties.State_Code === DC_STATE_CODE && routeId[routeId.length - 1] === 'A') {
     return true;
   }
 
   // Exclude county and gov routes in Maryland due to route duplication
-  if (feature.properties.State_Code === 24) {
+  if (feature.properties.State_Code === MARYLAND_STATE_CODE) {
     if (!feature.properties.Route_Name) {
       return true;
     }
@@ -57,8 +61,9 @@ const filterOutFeature = (feature) => {
     }
   }
 
+  // Exclude features without points, local roads, ramps, and non-mainline facilities
   return feature.geometry.coordinates.length === 0 ||
-    feature.properties.Route_Numb === 0 || feature.properties.Facility_T === 6;
+    feature.properties.Route_Numb === 0 || feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
 };
 
 const calcDir = (left, right) => {
@@ -75,9 +80,9 @@ const calcDir = (left, right) => {
 const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
-  let stateKey = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("${stateName}", "${stateInitials}");`).then(res => res[0].insertId);
+  let stateID = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("${stateName}", "${stateInitials}");`).then(res => res[0].insertId);
   let allData = {};
-  let base = await db.queryAsync('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
+  let basePointID = await db.queryAsync('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
 
   for (let feature of features) {
     if (filterOutFeature(feature)) {
@@ -128,35 +133,12 @@ const seedData = async (db, args) => {
 
     // Insert into DB
     const dir = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]).dir;
-    let routeObj = {
-      num: `'${route}'`,
-      dir: `'${dir}'`,
-      seg: 0
-    };
-
-    for (let segment of finalArray) {
-      let totalLen = 0;
-      let coords = [];
-      let num = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${routeObj.num}, ${routeObj.seg}, ${routeObj.dir}, ${stateKey}, ${base});`).then(res => res[0].insertId);
-
-      for (let feature of segment) {
-        coords = coords.concat(feature.geometry.coordinates);
-      }
-      totalLen += coords.length;
-      base += coords.length;
-
-      let newPoints = coords.map(tup => {
-        return { route: num, lat: tup[1], lon: tup[0] };
-      });
-      newPoints = newPoints.map(obj => `(${obj.route}, ${obj.lat}, ${obj.lon})`);
-      const len_meters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-
-      // Insert all rows by using commas
-      await db.queryAsync(`UPDATE ${ROUTES} SET len = ${totalLen}, len_m = ${len_meters} WHERE id = ${num};`);
-      await db.queryAsync(`INSERT INTO ${POINTS} (route_key, lat, lon) VALUES ${newPoints.join()};`);
-
-      console.log(`Seeded route ${route} with ${newPoints.length} points, length = ${len_meters}`);
-      routeObj.seg += 1;
+    const routeNum = `'${route}'`, routeDir = `'${dir}'`;
+    for (let i = 0; i < finalArray.length; i += 1) {
+      const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${basePointID});`).then(res => res[0].insertId);
+      const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
+      await Utils.processCoordinates(db, ROUTES, POINTS, routeID, coords);
+      basePointID += coords.length;
     }
   }
 };
