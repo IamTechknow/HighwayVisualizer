@@ -16,6 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "bluebird": "^3.7.2",
+    "compression": "^1.7.4",
     "express": "^4.17.1",
     "leaflet": "^1.6.0",
     "leaflet-defaulticon-compatibility": "^0.1.1",
@@ -42,8 +43,8 @@
     "postcss-loader": "^3.0.0",
     "shapefile": "^0.6.6",
     "style-loader": "^1.1.3",
-    "webpack": "^4.41.5",
-    "webpack-cli": "^3.3.10"
+    "webpack": "^4.41.6",
+    "webpack-cli": "^3.3.11"
   },
   "bugs": {
     "url": "https://github.com/IamTechknow/HighwayVisualizer/issues"

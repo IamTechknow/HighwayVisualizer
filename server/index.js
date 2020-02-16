@@ -1,3 +1,4 @@
+const compression = require('compression');
 const express = require('express');
 const path = require('path');
 const Models = require('../db/models.js');
@@ -7,6 +8,7 @@ const PORT = 80;
 const app = express();
 const db = DB.getDB();
 
+app.use(compression({threshold: 8192}));
 app.use(express.static(path.resolve(__dirname, '../public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
