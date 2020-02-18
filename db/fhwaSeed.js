@@ -76,6 +76,8 @@ const calcDir = (left, right) => {
   return Math.abs(xDelta) > Math.abs(yDelta) ? { delta: xDelta, dir: 'E'} : { delta: yDelta, dir: 'N'};
 };
 
+const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateName stateInitials shpPath dbfPath');
+
 const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
@@ -141,6 +143,18 @@ const seedData = async (db, args) => {
     }
   }
 };
+
+if (process.argv.length !== 6) {
+  console.log('Four arguments are required.');
+  printUsage();
+  return;
+}
+
+if (process.argv.length === 6 && (!process.argv[4].includes('.shp') || !process.argv[5].includes('.dbf'))) {
+  console.log('SHP and DBF file paths must include file extension');
+  printUsage();
+  return;
+}
 
 const db = DB.getDB();
 DB.connectWithDB(db)
