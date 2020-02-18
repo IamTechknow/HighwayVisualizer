@@ -22,8 +22,8 @@ export default class CreateApp extends React.Component {
     this.onStateClick = this.onStateClick.bind(this);
     this.onRouteClick = this.onRouteClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
-    this.onResetSegments = this.onResetSegments.bind(this);
-    this.onSendSegments = this.onSendSegments.bind(this);
+    this.onResetUserSegments = this.onResetUserSegments.bind(this);
+    this.onSendUserSegments = this.onSendUserSegments.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
     this.onUserChange = this.onUserChange.bind(this);
     this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
@@ -152,8 +152,8 @@ export default class CreateApp extends React.Component {
     this.setState({currMode});
   }
 
-  onSendSegments() {
-    fetch('/api/newUserSegments', {
+  onSendUserSegments() {
+    fetch('/api/user_segments/new', {
       method: 'POST',
       mode: 'cors',
       headers: {
@@ -161,7 +161,7 @@ export default class CreateApp extends React.Component {
       },
       body: JSON.stringify({
         userId: this.state.currUserId,
-        segments: this.highwayData.userSegments
+        user_segments: this.highwayData.userSegments
       })
     }).then(res => res.json())
     .then(res => {
@@ -173,7 +173,7 @@ export default class CreateApp extends React.Component {
     });
   }
 
-  onResetSegments() {
+  onResetUserSegments() {
     this.highwayData.clearUserSegments();
     this.setState({ userSegments: [] });
   }
@@ -285,9 +285,9 @@ export default class CreateApp extends React.Component {
             segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
           {/* Show unsubmitted user segments if selected route and segment is the same */}
-          { userSegments && userSegments.map((seg, i) =>
-              liveSegs && liveSegs.has(seg.routeId) &&
-              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(seg.routeId)].points.slice(seg.startId, seg.endId + 1)} color={ seg.clinched ? "lime" : "yellow" } />
+          { userSegments && userSegments.map((userSeg, i) =>
+              liveSegs && liveSegs.has(userSeg.routeId) &&
+              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(userSeg.routeId)].points.slice(userSeg.startId, userSeg.endId + 1)} color={ userSeg.clinched ? "lime" : "yellow" } />
             )
           }
           { startMarker && <Marker position={startMarker} /> }
@@ -299,9 +299,9 @@ export default class CreateApp extends React.Component {
           highwayData={this.highwayData}
           onClinchToggleFor={this.onClinchToggleFor}
           onFormSubmit={this.onFormSubmit}
-          onResetSegments={this.onResetSegments}
+          onResetUserSegments={this.onResetUserSegments}
           onRouteClick={this.onRouteClick}
-          onSendSegments={this.onSendSegments}
+          onSendUserSegments={this.onSendUserSegments}
           onSetMode={this.onSetMode}
           onStateClick={this.onStateClick}
           onUserChange={this.onUserChange}

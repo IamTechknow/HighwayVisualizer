@@ -81,7 +81,7 @@ app.get('/api/points/:routeId', (req, res) => {
   }
 });
 
-app.get('/api/segments/:user', (req, res) => {
+app.get('/api/user_segments/:user', (req, res) => {
   Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {
     let retval = { loaded: true, notFound: result === false };
@@ -107,13 +107,13 @@ app.post('/api/newUser', (req, res) => {
   });
 });
 
-app.post('/api/newUserSegments', (req, res) => {
-  Models.createUserSegment(db, req.body.userId, req.body.segments)
+app.post('/api/user_segments/new', (req, res) => {
+  res.status(201).type('application/json');
+  Models.createUserSegment(db, req.body.userId, req.body.userSegments)
   .then((result) => {
-    res.status(201).type('application/json');
-    res.send(JSON.stringify({ success: true, entries: req.body.segments.length }));
+    res.send(JSON.stringify({ success: true, entries: req.body.userSegments.length }));
   }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
+    res.send(JSON.stringify({ success: false, entries: 0 }));
   });
 });
 

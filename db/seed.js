@@ -2,7 +2,7 @@ const DB = require('.');
 const seedData = require('./fixtures.js');
 
 const database = 'highways', STATES = 'states', ROUTES = 'routes', POINTS = 'points',
-  USERS = 'users', SEGMENTS = 'segments';
+  USERS = 'users', USER_SEGMENTS = 'user_segments';
 const db = DB.getDB();
 
 db.connectAsync()
@@ -31,7 +31,7 @@ db.connectAsync()
   .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${USERS} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user TEXT NOT NULL);`))
-  .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${SEGMENTS} (
+  .then(() => db.queryAsync(`CREATE TABLE IF NOT EXISTS ${USER_SEGMENTS} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INTEGER NOT NULL,
     route_id INTEGER NOT NULL,

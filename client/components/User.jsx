@@ -26,13 +26,13 @@ export default class UserApp extends React.Component {
     this.onScaleChange = this.onScaleChange.bind(this);
   }
 
-  static getSegmentsFor(userId) {
-    return fetch(`/api/segments/${userId}`)
+  static getUserSegmentsFor(userId) {
+    return fetch(`/api/user_segments/${userId}`)
       .then(res => res.json());
   }
 
   componentDidMount() {
-    return UserApp.getSegmentsFor(this.props.match.params.user)
+    return UserApp.getUserSegmentsFor(this.props.match.params.user)
       .then(result => {
         this.setState(result); // Data shape from endpoint matches that of the component state
       });
@@ -87,7 +87,7 @@ export default class UserApp extends React.Component {
           />
 
           { userSegments &&
-            userSegments.map((seg, i) => <Polyline key={`seg-${i}`} positions={seg.points} color={ seg.clinched ? "lime" : "yellow" } /> )
+            userSegments.map((userSeg, i) => <Polyline key={`userSeg-${i}`} positions={userSeg.points} color={ userSeg.clinched ? "lime" : "yellow" } /> )
           }
         </Map>
         <Sidebar

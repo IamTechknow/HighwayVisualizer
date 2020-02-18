@@ -16,9 +16,9 @@ const RouteDrawer = ({
   highwayData,
   onClinchToggleFor,
   onFormSubmit,
-  onResetSegments,
+  onResetUserSegments,
   onRouteClick,
-  onSendSegments,
+  onSendUserSegments,
   onSetMode,
   onStateClick,
   onUserChange,
@@ -96,10 +96,10 @@ const RouteDrawer = ({
             <ul>
               {
                 userSegments &&
-                userSegments.map((seg, i) => (
-                  <div key={`userSegItem-${i}`} className="segRow">
+                userSegments.map((userSeg, i) => (
+                  <div key={`userSegItem-${i}`} className="userSegRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(seg.route)} ${seg.route} Segment ${highwayData.getSegmentNum(seg.routeId)}`}
+                      {`${highwayData.getRoutePrefix(userSeg.route)} ${userSeg.route} Segment ${highwayData.getSegmentNum(userSeg.routeId)}`}
                       <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
                     </li>
                   </div>
@@ -108,13 +108,13 @@ const RouteDrawer = ({
             </ul>
 
             { currUserId >= 0 && userSegments &&
-              <button type="button" onClick={onSendSegments}>Submit Segments</button>
+              <button type="button" onClick={onSendUserSegments}>Submit User Segments</button>
             }
-            <button type="button" onClick={onResetSegments}>Clear User Segments</button>
+            <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>
 
             {
               submitData.success &&
-              <p>{`Successfully created ${submitData.entries} entries`}</p>
+              <p>{`Successfully created ${submitData.entries} user segments`}</p>
             }
           </Collapsible>
         </div>
@@ -130,9 +130,9 @@ const RouteDrawer = ({
             </ul>
           </Collapsible>
 
+          {/* List each route and all route segments */}
           <Collapsible title="Routes" open="true">
             <ul>
-              {/* List each route and all route segments */}
               { routes && routes.map(obj => (
                 <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={(event) => {onRouteClick(event, obj[0].route, obj[0].route, obj[0].dir, true);}}>
                   {getRouteName(obj[0])}
@@ -185,9 +185,9 @@ RouteDrawer.propTypes = {
   highwayData: PropTypes.object,
   onClinchToggleFor: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
-  onResetSegments: PropTypes.func.isRequired,
+  onResetUserSegments: PropTypes.func.isRequired,
   onRouteClick: PropTypes.func.isRequired,
-  onSendSegments: PropTypes.func.isRequired,
+  onSendUserSegments: PropTypes.func.isRequired,
   onSetMode: PropTypes.func.isRequired,
   onStateClick: PropTypes.func.isRequired,
   onUserChange: PropTypes.func.isRequired,

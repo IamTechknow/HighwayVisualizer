@@ -87,8 +87,8 @@ class Models {
     return db.queryAsync('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
         if (result[0].length) {
-          return db.queryAsync('SELECT * FROM segments WHERE user_id = ?;', [result[0][0].id])
-            .then((segResult) => segResult[0].length ? Models.getPointsByUser(db, segResult[0]) : false)
+          return db.queryAsync('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
+            .then((userSegResult) => userSegResult[0].length ? Models.getPointsByUser(db, userSegResult[0]) : false)
         } else {
           return false;
         }
@@ -110,17 +110,17 @@ class Models {
       .catch((err) => { console.error(err); });
   }
 
-  static createUserSegment(db, userId, segments) {
-    segments = segments.map(obj => `(${userId}, ${obj.routeId}, ${obj.clinched ? 1 : 0}, ${obj.startId}, ${obj.endId})`);
-    return db.queryAsync(`INSERT INTO segments (user_id, route_id, clinched, start_id, end_id) VALUES ${segments.join()};`)
+  static createUserSegment(db, userId, userSegments) {
+    userSegments = userSegments.map(obj => `(${userId}, ${obj.routeId}, ${obj.clinched ? 1 : 0}, ${obj.startId}, ${obj.endId})`);
+    return db.queryAsync(`INSERT INTO user_segments (user_id, route_id, clinched, start_id, end_id) VALUES ${userSegments.join()};`)
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
-  static async calcStats(db, segData, segments) {
+  static async calcStats(db, segData, userSegments) {
     let stats = [];
 
-    for (let seg of segments) {
+    for (let seg of userSegments) {
       let metersTraveled = Utils.calcSegmentDistance(seg.points);
       let route = await db.queryAsync('SELECT * FROM routes WHERE id = ?', [seg.route_id]).then((result) => result[0][0]);
       let total = route.len_m;
