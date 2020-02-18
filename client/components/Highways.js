@@ -10,18 +10,18 @@ export default class Highways {
   constructor() {
     // Map route numbers to Interstate and US Highway prefixes
     this.titleCache = undefined;
-    // Flatened map from route ID to route data
-    this.routeData = undefined;
+    // Flatened map from segment ID to segment data
+    this.segmentData = undefined;
     // Map route number and direction to segment IDs
     this.idCache = undefined;
     // User segment data
     this.userSegments = [];
-    // Map route number to route length
+    // Map route number to segment length
     this.routeLengthMap = undefined;
   }
 
-  getZoomForRouteId(routeId, isRouteNumber) {
-    const len = isRouteNumber ? this.routeLengthMap[routeId] : this.routeData[routeId].len_m;
+  getZoomForSegmentId(segmentId, isRouteNumber) {
+    const len = isRouteNumber ? this.routeLengthMap[segmentId] : this.segmentData[segmentId].len_m;
     if (len <= 1000) {
       return 14.5;
     } else if (len <= 3000) {
@@ -48,13 +48,13 @@ export default class Highways {
     this.titleCache = Prefixes[state] ?? {};
   }
 
-  buildStateRoutesData(raw) {
-    const routeReducer = (accum, curr) => {
+  buildStateSegmentsData(raw) {
+    const segmentReducer = (accum, curr) => {
       accum[curr.id] = curr;
       return accum;
     };
     const idReducer = (accum, curr) => {
-      const key = curr.route + curr.dir;
+      const key = curr.routeNum + curr.dir;
       if (accum[key]) {
         accum[key].push(curr.id);
       } else {
@@ -63,7 +63,7 @@ export default class Highways {
       return accum;
     }
     const lenReducer = (accum, curr) => {
-      const key = curr.route + curr.dir;
+      const key = curr.routeNum + curr.dir;
       if (accum[key]) {
         accum[key] += curr.len_m;
       } else {
@@ -71,7 +71,7 @@ export default class Highways {
       }
       return accum;
     }
-    this.routeData = raw.reduce(routeReducer, {});
+    this.segmentData = raw.reduce(segmentReducer, {});
     this.idCache = raw.reduce(idReducer, {});
     this.routeLengthMap = raw.reduce(lenReducer, {});
   }
@@ -94,8 +94,8 @@ export default class Highways {
     return classifications[input] ? classifications[input] : null;
   }
 
-  getSegmentNum(routeId) {
-    return this.routeData[routeId].seg + 1;
+  getSegmentNum(segmentId) {
+    return this.segmentData[segmentId].segNum + 1;
   }
 
   toRadians (angle) {
@@ -108,7 +108,7 @@ export default class Highways {
     - Less likely to work for routes that travel circular, may need to debug comparsions
     - CA 18 is a special case, it does not work right even for linear search
   */
-  findSegmentPoint(polyline, clicked, routeId) {
+  findSegmentPoint(polyline, clicked, segmentId) {
     let points = polyline.getLatLngs();
     let shortestDistance = Number.MAX_VALUE;
     let closest;
@@ -143,7 +143,7 @@ export default class Highways {
       }
     }
 
-    return Object.assign(points[closest], {idx: closest, routeId});
+    return Object.assign(points[closest], {idx: closest, segmentId});
   }
 
   clearUserSegments() {
@@ -158,39 +158,39 @@ export default class Highways {
     this.userSegments.push(userSegment);
   }
 
-  addNewUserSegments(startMarker, endMarker, route, routeId, segments) {
+  addNewUserSegments(startMarker, endMarker, routeNum, segmentId, userSegments) {
     // Check whether both points have the same route ID
-    if (startMarker.routeId === routeId) {
+    if (startMarker.segmentId === segmentId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.addSegment(new UserSegment(route, routeId, startId, endId, false));
+      this.addSegment(new UserSegment(routeNum, segmentId, startId, endId, false));
     } else {
       // Figure out higher and lower points
-      const start = startMarker.routeId > routeId ? endMarker : startMarker;
-      const end = startMarker.routeId < routeId ? endMarker : startMarker;
-      const idMap = this.getMapForLiveIds(segments);
+      const start = startMarker.segmentId > segmentId ? endMarker : startMarker;
+      const end = startMarker.segmentId < segmentId ? endMarker : startMarker;
+      const idMap = this.getMapForLiveIds(userSegments);
 
       // Add first segment
-      const endIdx = segments[idMap.get(start.routeId)].points.length;
-      this.addSegment(new UserSegment(route, start.routeId, start.idx, endIdx, false));
+      const endIdx = userSegments[idMap.get(start.segmentId)].points.length;
+      this.addSegment(new UserSegment(routeNum, start.segmentId, start.idx, endIdx, false));
       // Add entire user segments if needed
-      if (end.routeId - start.routeId > 1) {
-        for (let i = start.routeId + 1; i < end.routeId; i += 1) {
-          this.addSegment(new UserSegment(route, i, 0, segments[idMap.get(i)].points.length, false));
+      if (end.segmentId - start.segmentId > 1) {
+        for (let i = start.segmentId + 1; i < end.segmentId; i += 1) {
+          this.addSegment(new UserSegment(routeNum, i, 0, userSegments[idMap.get(i)].points.length, false));
         }
       }
 
-      this.addSegment(new UserSegment(route, end.routeId, 0, end.idx, false)); // Add last segment
+      this.addSegment(new UserSegment(routeNum, end.segmentId, 0, end.idx, false)); // Add last segment
     }
   }
 
-  addFullSegment(route, routeId) {
-    this.addSegment(new UserSegment(route, routeId, 0, this.routeData[routeId].len, false));
+  addFullSegment(routeNum, segmentId) {
+    this.addSegment(new UserSegment(routeNum, segmentId, 0, this.segmentData[segmentId].len, false));
   }
 
-  addAllSegments(route, dir) {
-    for (let routeId of this.idCache[route + dir]) {
-      this.addFullSegment(route, routeId);
+  addAllSegments(routeNum, dir) {
+    for (let segmentId of this.idCache[routeNum + dir]) {
+      this.addFullSegment(routeNum, segmentId);
     }
   }
 

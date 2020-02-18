@@ -20,8 +20,8 @@ export default class CreateApp extends React.Component {
 
     this.getRouteName = this.getRouteName.bind(this);
     this.onStateClick = this.onStateClick.bind(this);
-    this.onRouteClick = this.onRouteClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
+    this.onSegmentItemClick = this.onSegmentItemClick.bind(this);
     this.onResetUserSegments = this.onResetUserSegments.bind(this);
     this.onSendUserSegments = this.onSendUserSegments.bind(this);
     this.onFormSubmit = this.onFormSubmit.bind(this);
@@ -44,18 +44,18 @@ export default class CreateApp extends React.Component {
       .then(res => res.json());
   }
 
-  // Get the routes then organize them by route numbers
+  // Get segments then organize them by route numbers
   // Use a set to maintain whether or not the route number and direction
   // is repeated. If it is, push to array, otherwise add to new array
-  static getRoutes(stateId) {
-    return fetch(`/api/routes/${stateId}`)
+  static getSegments(stateId) {
+    return fetch(`/api/segments/${stateId}`)
       .then(res => res.json());
   }
 
   // If getAll, then the state and route number should be provided,
   // otherwise provide the route ID of the segment.
   // Route direction is only used for California.
-  static getRoute(routeId, dir, getAll, stateId) {
+  static getSegment(segmentId, dir, getAll, stateId) {
     let query = dir || getAll ? '?' : '';
     if (dir && stateId === 1) {
       query += `dir=${dir}`;
@@ -68,17 +68,17 @@ export default class CreateApp extends React.Component {
       query += `getAll=${getAll}&stateId=${stateId}`;
     }
 
-    return fetch(`/api/points/${routeId}${query}`)
+    return fetch(`/api/points/${segmentId}${query}`)
       .then(res => res.json());
   }
 
-  static parseRoutes(routes) {
+  static parseSegments(rawSegments) {
     let set = new Set();
     let organized = [];
     let count = -1;
 
-    for (let seg of routes) {
-      const key = `${seg.route}${seg.dir}`;
+    for (let seg of rawSegments) {
+      const key = `${seg.routeNum}${seg.dir}`;
 
       if (set.has(key)) {
         organized[count].push(seg);
@@ -98,15 +98,15 @@ export default class CreateApp extends React.Component {
       .then(states => {
         this.setState({ states, stateId: states[0].id });
         this.highwayData.buildCacheFor(states[0].name);
-        return CreateApp.getRoutes(states[0].id);
+        return CreateApp.getSegments(states[0].id);
       })
-      .then(routes => {
-        this.highwayData.buildStateRoutesData(routes);
-        this.setState({ routes: CreateApp.parseRoutes(routes) });
-        return CreateApp.getRoute(1);
+      .then(rawSegments => {
+        this.highwayData.buildStateSegmentsData(rawSegments);
+        this.setState({ segments: CreateApp.parseSegments(rawSegments) });
+        return CreateApp.getSegment(1);
       })
-      .then(segments => {
-        this.routePromiseDone(segments, '101', 1);
+      .then(segment => {
+        this.segmentPromiseDone(segment, '101', 1);
         return CreateApp.getUsers();
       })
       .then(users => {
@@ -161,7 +161,7 @@ export default class CreateApp extends React.Component {
       },
       body: JSON.stringify({
         userId: this.state.currUserId,
-        user_segments: this.highwayData.userSegments
+        userSegments: this.highwayData.userSegments
       })
     }).then(res => res.json())
     .then(res => {
@@ -179,34 +179,33 @@ export default class CreateApp extends React.Component {
   }
 
   // Prevent events occurring twice
-  onRouteClick(event, route, routeId, dir, getAll) {
+  onSegmentItemClick(event, routeStr, segmentId, dir, getAll) {
     const {currMode} = this.state;
     event.stopPropagation();
 
-    CreateApp.getRoute(routeId, dir, getAll, this.state.stateId)
-      .then(segments => this.routePromiseDone(segments, route, routeId));
+    CreateApp.getSegment(segmentId, dir, getAll, this.state.stateId)
+      .then(segments => this.segmentPromiseDone(segments, routeStr, segmentId));
 
     // Create segment if clicked and clinch mode is set
     if (currMode === CLINCH) {
       if (!getAll) {
-        this.highwayData.addFullSegment(route, routeId);
+        this.highwayData.addFullSegment(routeStr, segmentId);
       } else {
-        this.highwayData.addAllSegments(route, dir);
+        this.highwayData.addAllSegments(routeStr, dir);
       }
       this.setState({ userSegments: this.highwayData.userSegments });
     }
   }
 
   // Keep track of clicked points
-  onSegmentClick(i, routeId, event) {
-    const segLatLng = this.highwayData.findSegmentPoint(event.target, event.latlng, routeId);
+  onSegmentClick(i, segmentId, event) {
+    const segLatLng = this.highwayData.findSegmentPoint(event.target, event.latlng, segmentId);
 
     if (!this.startMarker) {
       this.startMarker = segLatLng;
       this.setState({ startMarker: this.startMarker });
     } else {
-      this.highwayData.addNewUserSegments(this.startMarker, segLatLng, this.state.route, routeId, this.state.segments);
-
+      this.highwayData.addNewUserSegments(this.startMarker, segLatLng, this.state.routeNum, segmentId, this.state.segmentData);
       this.startMarker = undefined;
       this.setState({
         startMarker: this.startMarker,
@@ -217,13 +216,13 @@ export default class CreateApp extends React.Component {
 
   // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
-    CreateApp.getRoutes(stateId).then(routes => {
+    CreateApp.getSegments(stateId).then(rawSegments => {
       this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
-      this.highwayData.buildStateRoutesData(routes);
-      return CreateApp.getRoute(routes[0].id, routes[0].dir, false, stateId)
-        .then(segments => this.routePromiseDone(segments, routes[0].route, routes[0].id))
+      this.highwayData.buildStateSegmentsData(rawSegments);
+      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId)
+        .then(segmentData => this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id))
         .then(() => this.setState({
-          routes: CreateApp.parseRoutes(routes),
+          segments: CreateApp.parseSegments(rawSegments),
           stateId
         }));
     });
@@ -236,43 +235,41 @@ export default class CreateApp extends React.Component {
   }
 
   // Process array of route segments. There will always be at least one
-  routePromiseDone(segments, route, routeId) {
-    const tup = segments[0].points[0];
+  segmentPromiseDone(segmentData, routeNum, segmentId) {
+    const tup = segmentData[0].points[0];
     this.startMarker = undefined;
 
     this.setState({
-      route,
-      routeId,
-      segments,
+      routeNum,
+      segmentId,
+      segmentData,
       startMarker: this.startMarker,
       lat: tup[0],
       lon: tup[1],
     });
   }
 
-  getRouteName(routeObj) {
+  getRouteName(segmentObj) {
     const {states, stateId} = this.state;
 
-    let routeName = `${this.highwayData.getRoutePrefix(routeObj.route)} ${routeObj.route}`;
-    if (states[stateId - 1].name === 'California') {
-      routeName += ` ${routeObj.dir}`;
-    }
-
-    return routeName;
+    let routeName = `${this.highwayData.getRoutePrefix(segmentObj.routeNum)} ${segmentObj.routeNum}`;
+    return states[stateId - 1].name === 'California'
+      ? routeName + ` ${segmentObj.dir}`
+      : routeName;
   }
 
   render() {
-    const { lat, lon, states, stateId, route, routeId,
-      routes, segments, userSegments, users,
+    const { lat, lon, states, stateId, routeNum, segmentId,
+      segments, segmentData, userSegments, users,
       currUserId, currMode, startMarker, submitData } = this.state;
-    const liveSegs = segments ? this.highwayData.getMapForLiveIds(segments) : undefined;
+    const liveSegs = segmentData ? this.highwayData.getMapForLiveIds(segmentData) : undefined;
 
     if (!users) { // Don't render until all data loaded
       return null;
     }
-    const routeAndDir = route + this.highwayData.routeData[segments[0].id].dir;
-    const wholeRouteSelected = segments.length > 1 || this.highwayData.idCache[routeAndDir].length === 1;
-    const zoom = this.highwayData.getZoomForRouteId(wholeRouteSelected ? routeAndDir : routeId, wholeRouteSelected);
+    const routeAndDir = routeNum + this.highwayData.segmentData[segmentData[0].id].dir;
+    const wholeRouteSelected = segmentData.length > 1 || this.highwayData.idCache[routeAndDir].length === 1;
+    const zoom = this.highwayData.getZoomForSegmentId(wholeRouteSelected ? routeAndDir : segmentId, wholeRouteSelected);
 
     return (
       <div>
@@ -281,13 +278,13 @@ export default class CreateApp extends React.Component {
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
           />
-          { segments &&
-            segments.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
+          { segmentData &&
+            segmentData.map((seg, i) => <Polyline key={`seg-${seg.id}`} onClick={this.onSegmentClick.bind(this, i, seg.id)} positions={seg.points} /> )
           }
           {/* Show unsubmitted user segments if selected route and segment is the same */}
           { userSegments && userSegments.map((userSeg, i) =>
-              liveSegs && liveSegs.has(userSeg.routeId) &&
-              <Polyline key={`userSeg-${i}`} positions={segments[liveSegs.get(userSeg.routeId)].points.slice(userSeg.startId, userSeg.endId + 1)} color={ userSeg.clinched ? "lime" : "yellow" } />
+              liveSegs && liveSegs.has(userSeg.segmentId) &&
+              <Polyline key={`userSeg-${i}`} positions={segmentData[liveSegs.get(userSeg.segmentId)].points.slice(userSeg.startId, userSeg.endId + 1)} color={ userSeg.clinched ? "lime" : "yellow" } />
             )
           }
           { startMarker && <Marker position={startMarker} /> }
@@ -300,12 +297,12 @@ export default class CreateApp extends React.Component {
           onClinchToggleFor={this.onClinchToggleFor}
           onFormSubmit={this.onFormSubmit}
           onResetUserSegments={this.onResetUserSegments}
-          onRouteClick={this.onRouteClick}
+          onSegmentItemClick={this.onSegmentItemClick}
           onSendUserSegments={this.onSendUserSegments}
           onSetMode={this.onSetMode}
           onStateClick={this.onStateClick}
           onUserChange={this.onUserChange}
-          routes={routes}
+          segments={segments}
           stateId={stateId}
           states={states}
           submitData={submitData}

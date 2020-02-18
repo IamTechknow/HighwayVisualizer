@@ -32,12 +32,12 @@ class Utils {
     return metersTraveled;
   }
 
-  static processCoordinates = async (db, routesDB, pointsDB, routeID, coords) => {
-    const items = coords.map(tup => [routeID, tup[1], tup[0]]);
+  static insertSegment = async (db, segmentsTable, pointsTable, segmentID, coords) => {
+    const items = coords.map(tup => [segmentID, tup[1], tup[0]]);
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-    await db.queryAsync(`UPDATE ${routesDB} SET len_m = ${lenInMeters} WHERE id = ${routeID};`);
-    await db.queryAsync(`INSERT INTO ${pointsDB} (route_key, lat, lon) VALUES ?;`, [items]);
-    console.log(`Seeded route with ID ${routeID} with ${items.length} points, length = ${lenInMeters}m`);
+    await db.queryAsync(`UPDATE ${segmentsTable} SET len_m = ${lenInMeters} WHERE id = ${segmentID};`);
+    await db.queryAsync(`INSERT INTO ${pointsTable} (segment_key, lat, lon) VALUES ?;`, [items]);
+    console.log(`Seeded segment with ID ${segmentID} with ${items.length} points, length = ${lenInMeters}m`);
   }
 }
 

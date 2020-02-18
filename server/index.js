@@ -48,8 +48,8 @@ app.get('/api/users', (req, res) => {
   });
 });
 
-app.get('/api/routes/:stateId', (req, res) => {
-  Models.getRoutesBy(db, req.params.stateId)
+app.get('/api/segments/:stateId', (req, res) => {
+  Models.getSegmentsBy(db, req.params.stateId)
   .then((result) => {
     res.status(200).type('application/json');
     res.send(JSON.stringify(result));
@@ -58,12 +58,12 @@ app.get('/api/routes/:stateId', (req, res) => {
   });
 });
 
-// Expects route segment and direction. Distinguish between U (unrelinquished) and S routes
-app.get('/api/points/:routeId', (req, res) => {
+// Expects route segment and direction. Distinguish between U (unrelinquished) and S segments
+app.get('/api/points/:segmentId', (req, res) => {
   const getAll = req.query.getAll === "true";
   const stateId = req.query.stateId ?
-   Number.parseInt(req.query.stateId, 10) : undefined;
-  let routeInteger = req.params.routeId;
+    Number.parseInt(req.query.stateId, 10) : undefined;
+  let routeInteger = req.params.segmentId;
   if (/^\d+$/.test(routeInteger)) {
     routeInteger = Number.parseInt(routeInteger, 10);
   }

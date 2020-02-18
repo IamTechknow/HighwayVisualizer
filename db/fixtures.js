@@ -3,7 +3,7 @@ const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
 const CA_DATA = 'db/SHN_Lines.shp', CA_DB = 'db/SHN_Lines.dbf';
-const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
+const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 const seedData = async (db) => {
   const features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
@@ -18,21 +18,21 @@ const seedData = async (db) => {
     if (feature.geometry.type !== 'LineString') {
       for (let i = 0; i < feature.geometry.coordinates.length; i += 1) {
         const len = feature.geometry.coordinates[i].length;
-        const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
-        await Utils.processCoordinates(db, ROUTES, POINTS, routeID, feature.geometry.coordinates[i]);
+        const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
+        await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, feature.geometry.coordinates[i]);
         basePointID += len;
       }
     } else {
       const len = feature.geometry.coordinates.length;
-      const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, 0, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
-      await Utils.processCoordinates(db, ROUTES, POINTS, routeID, feature.geometry.coordinates);
+      const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, 0, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
+      await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, feature.geometry.coordinates);
       basePointID += len;
     }
   }
 
   console.log('Creating indices...');
-  return db.queryAsync(`CREATE INDEX POINT_IDX ON ${POINTS} (route_key);`)
-    .then(res => db.queryAsync(`CREATE INDEX ROUTE_IDX on ${ROUTES} (route(4), direction(1));`));
+  return db.queryAsync(`CREATE INDEX POINT_IDX ON ${POINTS} (segment_key);`)
+    .then(res => db.queryAsync(`CREATE INDEX SEGMENT_IDX on ${SEGMENTS} (route_num(4), direction(1));`));
 };
 
 // Check if the database is empty before populating it with mock data.

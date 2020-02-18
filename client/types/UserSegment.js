@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types/prop-types';
 
 export default class UserSegment {
-  constructor(route, routeId, startId, endId, clinched) {
-    this.route = route;
-    this.routeId = routeId;
+  constructor(routeNum, segmentId, startId, endId, clinched) {
+    this.routeNum = routeNum;
+    this.segmentId = segmentId;
     this.startId = startId;
     this.endId = endId;
     this.clinched = clinched;
@@ -19,7 +19,7 @@ export default class UserSegment {
 UserSegment.propTypes = {
   clinched: PropTypes.bool.isRequired,
   endId: PropTypes.number.isRequired,
-  route: PropTypes.string.isRequired,
-  routeId: PropTypes.number.isRequired,
+  routeNum: PropTypes.string.isRequired,
+  segmentId: PropTypes.number.isRequired,
   startId: PropTypes.number.isRequired,
 };

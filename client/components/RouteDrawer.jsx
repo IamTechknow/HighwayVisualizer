@@ -17,12 +17,12 @@ const RouteDrawer = ({
   onClinchToggleFor,
   onFormSubmit,
   onResetUserSegments,
-  onRouteClick,
+  onSegmentItemClick,
   onSendUserSegments,
   onSetMode,
   onStateClick,
   onUserChange,
-  routes,
+  segments,
   stateId,
   states,
   submitData,
@@ -31,25 +31,29 @@ const RouteDrawer = ({
 }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [isCollapsed, setCollapsed] = useState(false);
-  const [selectedId, setSelectedId] = useState('routes');
-  const fullRoutes = useMemo(() => routes.flat().filter(routeObj => routeObj.seg === 0), [routes]);
+  const [selectedId, setSelectedId] = useState('segments');
+  const fullRoutes = useMemo(() => segments.flat().filter(routeObj => routeObj.segNum === 0), [segments]);
 
-  const onSearchRoutes = (event) => {
+  const onSearchSegments = (event) => {
     const query = event.target.value;
+    if (!query) {
+      setSearchResults([]);
+      return;
+    }
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
     const highwayClass = highwayData.getClassification(queries[0]);
     const routeNum = queries.length > 1 ?
       queries[queries.length - 1] :
       highwayClass === null && queries.length === 1 ? queries[0] : null;
-    let filteredRoutes = fullRoutes;
+    let filteredSegments = fullRoutes;
     if (highwayClass !== null) {
-      filteredRoutes = filteredRoutes.filter(
-        routeObj => highwayData.getRoutePrefix(routeObj.route) === highwayClass
+      filteredSegments = filteredSegments.filter(
+        routeObj => highwayData.getRoutePrefix(routeObj.routeNum) === highwayClass
       );
     }
     const results =
-      filteredRoutes.filter(routeObj => routeObj.route.indexOf(routeNum) >= 0);
+      filteredSegments.filter(routeObj => routeObj.routeNum.indexOf(routeNum) >= 0);
     setSearchResults(results.slice(0, 30));
   };
 
@@ -99,7 +103,7 @@ const RouteDrawer = ({
                 userSegments.map((userSeg, i) => (
                   <div key={`userSegItem-${i}`} className="userSegRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(userSeg.route)} ${userSeg.route} Segment ${highwayData.getSegmentNum(userSeg.routeId)}`}
+                      {`${highwayData.getRoutePrefix(userSeg.routeNum)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
                       <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
                     </li>
                   </div>
@@ -119,7 +123,7 @@ const RouteDrawer = ({
           </Collapsible>
         </div>
       </SidebarTab>
-      <SidebarTab id="routes" header="Routes" icon={<FiMap />}>
+      <SidebarTab id="segments" header="Segments" icon={<FiMap />}>
         <div className="tabContent">
           <Collapsible title="States" open="true">
             <ul>
@@ -131,15 +135,15 @@ const RouteDrawer = ({
           </Collapsible>
 
           {/* List each route and all route segments */}
-          <Collapsible title="Routes" open="true">
+          <Collapsible title="Segments" open="true">
             <ul>
-              { routes && routes.map(obj => (
-                <li key={`${obj[0].route}${obj[0].dir}`} className="clickable" onClick={(event) => {onRouteClick(event, obj[0].route, obj[0].route, obj[0].dir, true);}}>
+              { segments && segments.map(obj => (
+                <li key={`${obj[0].routeNum}${obj[0].dir}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true);}}>
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>
                       {obj.map((seg, i) => (
-                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onRouteClick(event, seg.route, seg.id, "", false);}}>{`Segment ${i + 1}`}</li>
+                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false);}}>{`Segment ${i + 1}`}</li>
                       ))}
                     </ul>
                   )}
@@ -151,7 +155,7 @@ const RouteDrawer = ({
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<FiSearch />}>
         <div className="tabContent">
-          <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} routes by type and/or number...`} onChange={onSearchRoutes} />
+          <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} segments by type and/or number...`} onChange={onSearchSegments} />
           {
             !searchResults.length ?
             <div>
@@ -165,7 +169,7 @@ const RouteDrawer = ({
             <ul>
               {
                 searchResults.map(obj => (
-                  <li key={obj.id} className="clickable" onClick={(event) => {onRouteClick(event, obj.route, obj.route, obj.dir, true);}}>
+                  <li key={obj.id} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj.routeNum, obj.routeNum, obj.dir, true);}}>
                     {getRouteName(obj)}
                   </li>
                 ))
@@ -186,17 +190,17 @@ RouteDrawer.propTypes = {
   onClinchToggleFor: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onResetUserSegments: PropTypes.func.isRequired,
-  onRouteClick: PropTypes.func.isRequired,
+  onSegmentItemClick: PropTypes.func.isRequired,
   onSendUserSegments: PropTypes.func.isRequired,
   onSetMode: PropTypes.func.isRequired,
   onStateClick: PropTypes.func.isRequired,
   onUserChange: PropTypes.func.isRequired,
-  routes: PropTypes.arrayOf(
+  segments: PropTypes.arrayOf(
     PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.number,
         dir: PropTypes.string,
-        route: PropTypes.string.isRequired,
+        routeNum: PropTypes.string.isRequired,
       }),
     ),
   ),
@@ -214,8 +218,8 @@ RouteDrawer.propTypes = {
   }).isRequired,
   userSegments: PropTypes.arrayOf(
     PropTypes.shape({
-      route: PropTypes.string.isRequired,
-      routeId: PropTypes.number.isRequired,
+      routeNum: PropTypes.string.isRequired,
+      segmentId: PropTypes.number.isRequired,
     }),
   ),
   users: PropTypes.arrayOf(

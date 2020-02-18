@@ -19,7 +19,7 @@ const DB = require('.');
 const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
-const STATES = 'states', ROUTES = 'routes', POINTS = 'points';
+const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 // Codes defined in Chapter 4 of the HPMS Field Manual
 const COUNTY_OWNER_CODE = 2, TOWN_OWNER_CODE = 3, CITY_OWNER_CODE = 4, PRIVATE_OWNER_CODE = 26;
@@ -132,13 +132,12 @@ const seedData = async (db, args) => {
       return calcDir(left[0], right[right.length - 1]).delta;
     });
 
-    // Insert into DB
     const dir = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]).dir;
     const routeNum = `'${route}'`, routeDir = `'${dir}'`;
     for (let i = 0; i < finalArray.length; i += 1) {
       const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
-      const routeID = await db.queryAsync(`INSERT INTO ${ROUTES} (route, segment, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
-      await Utils.processCoordinates(db, ROUTES, POINTS, routeID, coords);
+      const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
+      await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, coords);
       basePointID += coords.length;
     }
   }

@@ -1,9 +1,9 @@
 import PropTypes from 'prop-types/prop-types';
 
 export default class Point {
-  constructor(id, routeKey, lat, lon) {
+  constructor(id, segmentKey, lat, lon) {
     this.id = id;
-    this.routeKey = routeKey;
+    this.segmentKey = segmentKey;
     this.lat = lat;
     this.lon = lon;
 
@@ -19,5 +19,5 @@ Point.propTypes = {
   id: PropTypes.number.isRequired,
   lat: PropTypes.number.isRequired,
   lon: PropTypes.number.isRequired,
-  routeKey: PropTypes.number.isRequired,
+  segmentKey: PropTypes.number.isRequired,
 };
