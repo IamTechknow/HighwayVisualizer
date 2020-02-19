@@ -210,4 +210,19 @@ export default class Highways {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
     return R * c;
   }
+
+  // Calculate # of points, then iterate thru array to get center, and return coordinates
+  getCenterOfRoute(routeNumAndDir) {
+    const segmentIds = this.idCache[routeNumAndDir];
+    const numPoints = segmentIds.map(segmentId => this.segmentData[segmentId].len);
+    let totalNum = numPoints.reduce((accum, curr) => accum + curr, 0);
+
+    let segmentIdIdx = 0;
+    let midPointIdx = Math.floor(totalNum / 2);
+    while (segmentIdIdx < numPoints.length && midPointIdx > numPoints[segmentIdIdx]) {
+      midPointIdx -= numPoints[segmentIdIdx];
+      segmentIdIdx += 1;
+    }
+    return [segmentIdIdx, midPointIdx];
+  }
 }

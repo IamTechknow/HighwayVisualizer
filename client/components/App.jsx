@@ -236,7 +236,12 @@ export default class CreateApp extends React.Component {
 
   // Process array of route segments. There will always be at least one
   segmentPromiseDone(segmentData, routeNum, segmentId) {
-    const tup = segmentData[0].points[0];
+    const [midSegmentId, midPointIdx] = segmentData.length > 1
+      ? this.highwayData.getCenterOfRoute(
+        routeNum + this.highwayData.segmentData[segmentData[0].id].dir
+      )
+      : [0, Math.floor(segmentData[0].points.length / 2)];
+    const centerTup = segmentData[midSegmentId].points[midPointIdx];
     this.startMarker = undefined;
 
     this.setState({
@@ -244,8 +249,8 @@ export default class CreateApp extends React.Component {
       segmentId,
       segmentData,
       startMarker: this.startMarker,
-      lat: tup[0],
-      lon: tup[1],
+      lat: centerTup[0],
+      lon: centerTup[1],
     });
   }
 
