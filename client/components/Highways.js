@@ -225,4 +225,14 @@ export default class Highways {
     }
     return [segmentIdIdx, midPointIdx];
   }
+
+  shouldUseRouteDir(stateName) {
+    switch(stateName) {
+      case 'California':
+      case 'District':
+        return true;
+      default:
+        return false;
+    }
+  }
 }

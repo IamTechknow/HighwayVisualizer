@@ -12,7 +12,7 @@
     Make a new object and place each feature to an array whose key is the route ID
 
   Convert the object to an array and Sort the arrays of the object by checking the coordinates for the first and last elements of both arrays
-  (for simplicity, skip all IDs ending with A and all Facility_T === 6)
+  (for simplicity, skip all IDs ending with A)
 */
 
 const DB = require('.');
@@ -62,7 +62,7 @@ const filterOutFeature = (feature) => {
 
   // Exclude features without points, local roads, ramps, and non-mainline facilities
   return feature.geometry.coordinates.length === 0 ||
-    feature.properties.Route_Numb === 0 || feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
+    feature.properties.Route_Numb === 0;
 };
 
 const calcDir = (left, right) => {
@@ -132,9 +132,12 @@ const seedData = async (db, args) => {
       return calcDir(left[0], right[right.length - 1]).delta;
     });
 
-    const dir = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]).dir;
-    const routeNum = `'${route}'`, routeDir = `'${dir}'`;
+    const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
+    const routeNum = `'${route}'`, oppositeDir = dir === 'E' ? 'W' : 'S';
     for (let i = 0; i < finalArray.length; i += 1) {
+      const routeDir = finalArray[i][0].properties.Facility_T === NON_INVENTORY_FACILITY_CODE
+        ? `'${oppositeDir}'`
+        : `'${dir}'`;
       const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
       const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
       await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, coords);

@@ -54,10 +54,10 @@ export default class CreateApp extends React.Component {
 
   // If getAll, then the state and route number should be provided,
   // otherwise provide the route ID of the segment.
-  // Route direction is only used for California.
-  static getSegment(segmentId, dir, getAll, stateId) {
+  // Route direction is only used if non-main direction segments exist for a state.
+  static getSegment(segmentId, dir, getAll, stateId, shouldUseRouteDir = false) {
     let query = dir || getAll ? '?' : '';
-    if (dir && stateId === 1) {
+    if (dir && shouldUseRouteDir) {
       query += `dir=${dir}`;
     }
 
@@ -180,10 +180,11 @@ export default class CreateApp extends React.Component {
 
   // Prevent events occurring twice
   onSegmentItemClick(event, routeStr, segmentId, dir, getAll) {
-    const {currMode} = this.state;
+    const {currMode, stateId, states} = this.state;
     event.stopPropagation();
+    const shouldUseDir = this.highwayData.shouldUseRouteDir(states[stateId - 1].name);
 
-    CreateApp.getSegment(segmentId, dir, getAll, this.state.stateId)
+    CreateApp.getSegment(segmentId, dir, getAll, stateId, shouldUseDir)
       .then(segments => this.segmentPromiseDone(segments, routeStr, segmentId));
 
     // Create segment if clicked and clinch mode is set
@@ -219,7 +220,8 @@ export default class CreateApp extends React.Component {
     CreateApp.getSegments(stateId).then(rawSegments => {
       this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
       this.highwayData.buildStateSegmentsData(rawSegments);
-      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId)
+      const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
+      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, shouldUseDir)
         .then(segmentData => this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id))
         .then(() => this.setState({
           segments: CreateApp.parseSegments(rawSegments),
@@ -258,7 +260,7 @@ export default class CreateApp extends React.Component {
     const {states, stateId} = this.state;
 
     let routeName = `${this.highwayData.getRoutePrefix(segmentObj.routeNum)} ${segmentObj.routeNum}`;
-    return states[stateId - 1].name === 'California'
+    return this.highwayData.shouldUseRouteDir(states[stateId - 1].name)
       ? routeName + ` ${segmentObj.dir}`
       : routeName;
   }
