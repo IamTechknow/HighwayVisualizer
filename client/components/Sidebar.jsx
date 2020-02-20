@@ -11,10 +11,10 @@ export default class Sidebar extends MapComponent {
     this.props.onClose && this.props.onClose();
   }
 
-  onOpen(e, tabId) {
+  onToggle(e, tabId) {
     e.preventDefault();
     e.stopPropagation();
-    this.props.onOpen && this.props.onOpen(tabId);
+    this.props.onToggle && this.props.onToggle(tabId);
   }
 
   renderTab(tab) {
@@ -23,7 +23,7 @@ export default class Sidebar extends MapComponent {
     const disabledText = disabled ? ' disabled' : '';
     return (
       <li className={activeText + disabledText} key={id}>
-        <a href={'#' + id} role="tab" onClick={e => disabled || this.onOpen(e, id)}>
+        <a href={'#' + id} role="tab" onClick={e => disabled || this.onToggle(e, id)}>
           {icon}
         </a>
       </li>
@@ -69,6 +69,8 @@ Sidebar.propTypes = {
   children: PropTypes.node.isRequired,
   collapsed: PropTypes.bool,
   id: PropTypes.string.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onToggle: PropTypes.func.isRequired,
   position: PropTypes.string,
 };
 
