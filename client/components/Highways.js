@@ -230,6 +230,7 @@ export default class Highways {
     switch(stateName) {
       case 'California':
       case 'District':
+      case 'Maryland':
         return true;
       default:
         return false;

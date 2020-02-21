@@ -24,9 +24,19 @@ const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 // Codes defined in Chapter 4 of the HPMS Field Manual
 const COUNTY_OWNER_CODE = 2, TOWN_OWNER_CODE = 3, CITY_OWNER_CODE = 4, PRIVATE_OWNER_CODE = 26;
 const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
-const NON_INVENTORY_FACILITY_CODE = 6;
+const INTERSTATE_FACILITY_TYPE = 1;
+const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
+
+const isNonMainlineInterstate = (feature) =>
+  (feature.properties.Route_Name !== '' || feature.properties.Route_Numb !== 0) &&
+  feature.properties.F_System === INTERSTATE_FACILITY_TYPE &&
+  feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
 
 const filterOutFeature = (feature) => {
+  if (feature.geometry.coordinates.length === 0) {
+    return true;
+  }
+
   const ownerId = feature.properties.Ownership;
   if (
     ownerId === COUNTY_OWNER_CODE || ownerId === TOWN_OWNER_CODE ||
@@ -60,9 +70,13 @@ const filterOutFeature = (feature) => {
     }
   }
 
-  // Exclude features without points, local roads, ramps, and non-mainline facilities
-  return feature.geometry.coordinates.length === 0 ||
-    feature.properties.Route_Numb === 0;
+  // Allow Interstate routes that are non-mainline facilities
+  if (isNonMainlineInterstate(feature)) {
+    return false;
+  }
+
+  // Exclude local roads, ramps
+  return feature.properties.Route_Numb === 0 || feature.properties.Facility_T === RAMP_FACILITY_CODE;
 };
 
 const calcDir = (left, right) => {
@@ -94,6 +108,10 @@ const seedData = async (db, args) => {
     if (feature.geometry.type === 'MultiLineString') {
       console.log('Found multi line string, sanitizing...');
       feature.geometry.coordinates = feature.geometry.coordinates[0];
+    }
+
+    if (isNonMainlineInterstate(feature) && feature.properties.Route_Numb === 0) {
+      feature.properties.Route_Numb = Number(feature.properties.Route_Name.substring(2));
     }
 
     if (allData[feature.properties.Route_Numb]) {
