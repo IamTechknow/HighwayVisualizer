@@ -109,7 +109,7 @@ const RouteDrawer = ({
                 userSegments.map((userSeg, i) => (
                   <div key={`userSegItem-${i}`} className="userSegRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(fullRoutes[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
+                      {`${highwayData.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
                       <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
                     </li>
                   </div>
@@ -144,7 +144,7 @@ const RouteDrawer = ({
           <Collapsible title="Segments" open="true">
             <ul>
               { segments && segments.map(obj => (
-                <li key={`${obj[0].routeNum}${obj[0].dir}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true, obj[0].type);}}>
+                <li key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true, obj[0].type);}}>
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>

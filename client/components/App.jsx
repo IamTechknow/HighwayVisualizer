@@ -241,10 +241,9 @@ export default class CreateApp extends React.Component {
 
   // Process array of route segments. There will always be at least one
   segmentPromiseDone(segmentData, routeNum, segmentId) {
+    const {dir, type} = this.highwayData.segmentData[segmentData[0].id];
     const [midSegmentId, midPointIdx] = segmentData.length > 1
-      ? this.highwayData.getCenterOfRoute(
-        routeNum + this.highwayData.segmentData[segmentData[0].id].dir
-      )
+      ? this.highwayData.getCenterOfRoute(routeNum + dir, type)
       : [0, Math.floor(segmentData[0].points.length / 2)];
     const centerTup = segmentData[midSegmentId].points[midPointIdx];
     this.startMarker = undefined;
@@ -281,9 +280,9 @@ export default class CreateApp extends React.Component {
     if (!users) { // Don't render until all data loaded
       return null;
     }
-    const routeAndDir = routeNum + this.highwayData.segmentData[segmentData[0].id].dir;
-    const wholeRouteSelected = segmentData.length > 1 || this.highwayData.idCache[routeAndDir].length === 1;
-    const zoom = this.highwayData.getZoomForSegmentId(wholeRouteSelected ? routeAndDir : segmentId, wholeRouteSelected);
+    const {dir, type} = this.highwayData.segmentData[segmentData[0].id];
+    const wholeRouteSelected = segmentData.length > 1 || this.highwayData.idCache[type][routeNum + dir].length === 1;
+    const zoom = this.highwayData.getZoomForSegmentId(wholeRouteSelected ? routeNum + dir : segmentId, wholeRouteSelected);
 
     return (
       <div>

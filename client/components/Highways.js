@@ -19,8 +19,12 @@ export default class Highways {
   constructor() {
     // Flatened map from segment ID to segment data
     this.segmentData = undefined;
-    // Map route number and direction to segment IDs
-    this.idCache = undefined;
+    // Map route number and direction to segment IDs for each route signage type
+    this.idCache = {
+      [TYPE_ENUM.INTERSTATE]: {},
+      [TYPE_ENUM.US_HIGHWAY]: {},
+      [TYPE_ENUM.STATE]: {},
+    };
     // User segment data
     this.userSegments = [];
     // Map route number to segment length
@@ -56,26 +60,24 @@ export default class Highways {
       accum[curr.id] = curr;
       return accum;
     };
-    const idReducer = (accum, curr) => {
-      const key = curr.routeNum + curr.dir;
-      if (accum[key]) {
-        accum[key].push(curr.id);
+    const idReducer = (accum, currSegment) => {
+      const { dir, id, routeNum, type } = currSegment;
+      const key = routeNum + dir;
+      if (accum[type][key]) {
+        accum[type][key].push(id);
       } else {
-        accum[key] = [curr.id];
+        accum[type][key] = [id];
       }
       return accum;
     }
-    const lenReducer = (accum, curr) => {
-      const key = curr.routeNum + curr.dir;
-      if (accum[key]) {
-        accum[key] += curr.len_m;
-      } else {
-        accum[key] = curr.len_m;
-      }
+    const lenReducer = (accum, currSegment) => {
+      const { dir, len_m, routeNum } = currSegment;
+      const key = routeNum + dir;
+      accum[key] = accum[key] ? accum[key] + len_m : len_m;
       return accum;
     }
     this.segmentData = raw.reduce(segmentReducer, {});
-    this.idCache = raw.reduce(idReducer, {});
+    this.idCache = raw.reduce(idReducer, this.idCache);
     this.routeLengthMap = raw.reduce(lenReducer, {});
   }
 
@@ -191,8 +193,8 @@ export default class Highways {
     this.addSegment(new UserSegment(routeNum, segmentId, 0, this.segmentData[segmentId].len, false));
   }
 
-  addAllSegments(routeNum, dir) {
-    for (let segmentId of this.idCache[routeNum + dir]) {
+  addAllSegments(routeNum, dir, type) {
+    for (let segmentId of this.idCache[type][routeNum + dir]) {
       this.addFullSegment(routeNum, segmentId);
     }
   }
@@ -215,8 +217,8 @@ export default class Highways {
   }
 
   // Calculate # of points, then iterate thru array to get center, and return coordinates
-  getCenterOfRoute(routeNumAndDir) {
-    const segmentIds = this.idCache[routeNumAndDir];
+  getCenterOfRoute(routeNumAndDir, type) {
+    const segmentIds = this.idCache[type][routeNumAndDir];
     const numPoints = segmentIds.map(segmentId => this.segmentData[segmentId].len);
     let totalNum = numPoints.reduce((accum, curr) => accum + curr, 0);
 

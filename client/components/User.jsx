@@ -18,8 +18,9 @@ export default class UserApp extends React.Component {
       isCollapsed: false,
       loaded: false,
       notFound: false,
-      stats: [],
       scale: MILES,
+      selectedId: 'users',
+      stats: [],
       userSegments: undefined  
     };
 
@@ -31,11 +32,10 @@ export default class UserApp extends React.Component {
       .then(res => res.json());
   }
 
+  // Data shape from endpoint matches that of the component state
   componentDidMount() {
     return UserApp.getUserSegmentsFor(this.props.match.params.user)
-      .then(result => {
-        this.setState(result); // Data shape from endpoint matches that of the component state
-      });
+      .then(result => this.setState(result));
   }
 
   onScaleChange(event) {
@@ -46,18 +46,20 @@ export default class UserApp extends React.Component {
     this.setState({ isCollapsed: true });
   }
 
-  onSidebarOpen(id) {
-    this.setState({
-      isCollapsed: false,
-      selectedId: id,
-    });
+  onSidebarToggle(id) {
+    const { isCollapsed, selectedId } = this.state;
+    if (selectedId === id) {
+      this.setState({ isCollapsed: !isCollapsed });
+    }
+    if (isCollapsed) {
+      this.setState({ isCollapsed: false });
+    }
+    this.setState({ selectedId: id });
   }
 
   render() {
-    const { isCollapsed, loaded, notFound, scale, stats, userSegments } = this.state;
+    const { isCollapsed, loaded, notFound, scale, selectedId, stats, userSegments } = this.state;
     const user = this.props.match.params.user;
-    const highwayUtils = new Highways();
-    highwayUtils.buildCacheFor(0);
 
     if (!loaded) {
       return (
@@ -93,9 +95,9 @@ export default class UserApp extends React.Component {
         <Sidebar
           id="sidebar"
           collapsed={isCollapsed}
-          selected="users"
-          onOpen={this.onSidebarOpen.bind(this)}
+          selected={selectedId}
           onClose={this.onSidebarClose.bind(this)}
+          onToggle={this.onSidebarToggle.bind(this)}
         >
           <SidebarTab id="users" header="User Stats" icon={<FiUser />}>
             <div id="tabContent">
