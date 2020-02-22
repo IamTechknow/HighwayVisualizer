@@ -63,7 +63,15 @@ const RouteDrawer = ({
       collapsed={isCollapsed}
       selected={selectedId}
       onClose={() => setCollapsed(true)}
-      onToggle={(id) => { setCollapsed(!isCollapsed); setSelectedId(id); }}
+      onToggle={(id) => {
+        if (selectedId === id) {
+          setCollapsed(!isCollapsed);
+        }
+        if (isCollapsed) {
+          setCollapsed(false);
+        }
+        setSelectedId(id);
+      }}
     >
       <SidebarTab id="users" header="User Settings" icon={<FiUser />}>
         <div className="tabContent">
