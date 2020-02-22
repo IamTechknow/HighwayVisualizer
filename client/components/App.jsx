@@ -262,7 +262,11 @@ export default class CreateApp extends React.Component {
   getRouteName(segmentObj) {
     const {states, stateId} = this.state;
 
-    let routeName = `${this.highwayData.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
+    // One exception for D.C. Route 295
+    let routeName = states[stateId - 1].name === 'District' && segmentObj.type === 4
+      ? `D.C. Route ${segmentObj.routeNum}`
+      : `${this.highwayData.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
+
     return this.highwayData.shouldUseRouteDir(states[stateId - 1].name)
       ? routeName + ` ${segmentObj.dir}`
       : routeName;
