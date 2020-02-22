@@ -1,4 +1,5 @@
-const fs = require('fs').promises;
+const TYPE_ENUM = require('./routeEnum.js');
+const routePrefixes = require('./routePrefixes.js');
 const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
@@ -14,17 +15,18 @@ const seedData = async (db) => {
   for (let feature of features) {
     const routeNum = `'${feature.properties.ROUTE}'`;
     const dir = `'${feature.properties.DIR}'`;
+    const type = routePrefixes['California'][feature.properties.ROUTE] || TYPE_ENUM.STATE;
     // The curve is either in a single array or multiple arrays
     if (feature.geometry.type !== 'LineString') {
       for (let i = 0; i < feature.geometry.coordinates.length; i += 1) {
         const len = feature.geometry.coordinates[i].length;
-        const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
+        const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, type, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${type}, ${i}, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
         await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, feature.geometry.coordinates[i]);
         basePointID += len;
       }
     } else {
       const len = feature.geometry.coordinates.length;
-      const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, 0, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
+      const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, type, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${type}, 0, ${dir}, ${stateID}, ${len}, ${basePointID});`).then(res => res[0].insertId);
       await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, feature.geometry.coordinates);
       basePointID += len;
     }

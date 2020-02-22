@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types/prop-types';
 
 export default class Segment {
-  constructor(id, routeNum, segNum, dir, len, len_m) {
+  constructor(id, routeNum, type, segNum, dir, len, len_m) {
     this.id = id;
     this.routeNum = routeNum;
+    this.type = type;
     this.segNum = segNum;
     this.dir = dir;
     this.len = len;
@@ -24,4 +25,5 @@ Segment.propTypes = {
   len_m: PropTypes.number.isRequired,
   routeNum: PropTypes.string.isRequired,
   segNum: PropTypes.number.isRequired,
+  type: PropTypes.number.isRequired,
 };

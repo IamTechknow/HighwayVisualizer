@@ -1,15 +1,22 @@
 import UserSegment from '../types/UserSegment';
-import Prefixes from './RoutePrefixes';
 
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
 const POINTS_BINSEARCH_ITERATIONS = 2;
+const TYPE_ENUM = Object.freeze({
+  INTERSTATE: 2,
+  US_HIGHWAY: 3,
+  STATE: 4,
+});
+const ROUTE_NAMES = Object.freeze({
+  [TYPE_ENUM.INTERSTATE]: 'Interstate',
+  [TYPE_ENUM.US_HIGHWAY]: 'US Highway',
+  [TYPE_ENUM.STATE]: 'State Route',
+});
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
   constructor() {
-    // Map route numbers to Interstate and US Highway prefixes
-    this.titleCache = undefined;
     // Flatened map from segment ID to segment data
     this.segmentData = undefined;
     // Map route number and direction to segment IDs
@@ -44,10 +51,6 @@ export default class Highways {
     return 6;
   }
 
-  buildCacheFor(state) {
-    this.titleCache = Prefixes[state] ?? {};
-  }
-
   buildStateSegmentsData(raw) {
     const segmentReducer = (accum, curr) => {
       accum[curr.id] = curr;
@@ -76,22 +79,22 @@ export default class Highways {
     this.routeLengthMap = raw.reduce(lenReducer, {});
   }
 
-  getRoutePrefix(route) {
-    return this.titleCache[route] ? this.titleCache[route] : 'State Route';
+  getRoutePrefix(typeEnum) {
+    return ROUTE_NAMES[typeEnum];
   }
 
   getMapForLiveIds(segments) {
     return new Map(segments.map((seg, i) => [seg.id, i]));
   }
 
-  getClassification(input) {
+  getType(input) {
     const classifications = {
-      I : 'Interstate',
-      i : 'Interstate',
-      US : 'US Highway',
-      us : 'US Highway',
+      I : TYPE_ENUM.INTERSTATE,
+      i : TYPE_ENUM.INTERSTATE,
+      US : TYPE_ENUM.US_HIGHWAY,
+      us : TYPE_ENUM.US_HIGHWAY,
     };
-    return classifications[input] ? classifications[input] : null;
+    return classifications[input] ? classifications[input] : TYPE_ENUM.STATE;
   }
 
   getSegmentNum(segmentId) {

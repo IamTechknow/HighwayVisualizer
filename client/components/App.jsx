@@ -55,7 +55,7 @@ export default class CreateApp extends React.Component {
   // If getAll, then the state and route number should be provided,
   // otherwise provide the route ID of the segment.
   // Route direction is only used if non-main direction segments exist for a state.
-  static getSegment(segmentId, dir, getAll, stateId, shouldUseRouteDir = false) {
+  static getSegment(segmentId, dir, getAll, stateId, type, shouldUseRouteDir = false) {
     let query = dir || getAll ? '?' : '';
     if (dir && shouldUseRouteDir) {
       query += `dir=${dir}`;
@@ -66,6 +66,9 @@ export default class CreateApp extends React.Component {
         query += '&';
       }
       query += `getAll=${getAll}&stateId=${stateId}`;
+      if (type) {
+        query += `&type=${type}`;
+      }
     }
 
     return fetch(`/api/points/${segmentId}${query}`)
@@ -78,7 +81,7 @@ export default class CreateApp extends React.Component {
     let count = -1;
 
     for (let seg of rawSegments) {
-      const key = `${seg.routeNum}${seg.dir}`;
+      const key = `${seg.routeNum}${seg.dir}_${seg.type}`;
 
       if (set.has(key)) {
         organized[count].push(seg);
@@ -94,20 +97,21 @@ export default class CreateApp extends React.Component {
 
   // Load all data from API endpoints
   componentDidMount() {
+    const stateId = 1;
     CreateApp.getStates()
       .then(states => {
         this.setState({ states, stateId: states[0].id });
-        this.highwayData.buildCacheFor(states[0].name);
         return CreateApp.getSegments(states[0].id);
       })
       .then(rawSegments => {
         this.highwayData.buildStateSegmentsData(rawSegments);
+        const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
         this.setState({ segments: CreateApp.parseSegments(rawSegments) });
-        return CreateApp.getSegment(1);
-      })
-      .then(segment => {
-        this.segmentPromiseDone(segment, '101', 1);
-        return CreateApp.getUsers();
+        return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, rawSegments[0].type, shouldUseDir)
+          .then(segmentData => {
+            this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id);
+            return CreateApp.getUsers();
+          });
       })
       .then(users => {
         this.setState({ users });
@@ -179,12 +183,12 @@ export default class CreateApp extends React.Component {
   }
 
   // Prevent events occurring twice
-  onSegmentItemClick(event, routeStr, segmentId, dir, getAll) {
+  onSegmentItemClick(event, routeStr, segmentId, dir, getAll, type) {
     const {currMode, stateId, states} = this.state;
     event.stopPropagation();
     const shouldUseDir = this.highwayData.shouldUseRouteDir(states[stateId - 1].name);
 
-    CreateApp.getSegment(segmentId, dir, getAll, stateId, shouldUseDir)
+    CreateApp.getSegment(segmentId, dir, getAll, stateId, type, shouldUseDir)
       .then(segments => this.segmentPromiseDone(segments, routeStr, segmentId));
 
     // Create segment if clicked and clinch mode is set
@@ -218,10 +222,9 @@ export default class CreateApp extends React.Component {
   // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
     CreateApp.getSegments(stateId).then(rawSegments => {
-      this.highwayData.buildCacheFor(this.state.states[stateId - 1].name);
       this.highwayData.buildStateSegmentsData(rawSegments);
       const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
-      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, shouldUseDir)
+      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, rawSegments[0].type, shouldUseDir)
         .then(segmentData => this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id))
         .then(() => this.setState({
           segments: CreateApp.parseSegments(rawSegments),
@@ -259,7 +262,7 @@ export default class CreateApp extends React.Component {
   getRouteName(segmentObj) {
     const {states, stateId} = this.state;
 
-    let routeName = `${this.highwayData.getRoutePrefix(segmentObj.routeNum)} ${segmentObj.routeNum}`;
+    let routeName = `${this.highwayData.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
     return this.highwayData.shouldUseRouteDir(states[stateId - 1].name)
       ? routeName + ` ${segmentObj.dir}`
       : routeName;

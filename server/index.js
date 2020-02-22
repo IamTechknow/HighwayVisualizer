@@ -1,6 +1,7 @@
 const compression = require('compression');
 const express = require('express');
 const path = require('path');
+const TYPE_ENUM = require('../db/routeEnum.js');
 const Models = require('../db/models.js');
 const DB = require('../db');
 
@@ -63,15 +64,21 @@ app.get('/api/points/:segmentId', (req, res) => {
   const getAll = req.query.getAll === "true";
   const stateId = req.query.stateId ?
     Number.parseInt(req.query.stateId, 10) : undefined;
+  const type = req.query.type ?
+    Number.parseInt(req.query.type, 10) : undefined;
   let routeInteger = req.params.segmentId;
   if (/^\d+$/.test(routeInteger)) {
     routeInteger = Number.parseInt(routeInteger, 10);
   }
 
-  if (getAll && !req.query.stateId) {
+  if (getAll && !req.query.type) {
+    res.status(400).send('If getting points for an entire route, route type is required');
+  } else if (getAll && !req.query.stateId) {
     res.status(400).send('If getting points for an entire route, a state ID must be provided');
+  } else if (type < TYPE_ENUM.INTERSTATE || type > TYPE_ENUM.STATE) {
+    res.status(400).send('Route type is invalid');
   } else {
-    Models.getPointsBy(db, routeInteger, req.query.dir, getAll, stateId)
+    Models.getPointsBy(db, routeInteger, req.query.dir, getAll, stateId, type)
     .then((result) => {
       res.status(200).type('application/json');
       res.send(JSON.stringify(result));

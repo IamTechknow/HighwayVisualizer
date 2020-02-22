@@ -19,6 +19,7 @@ db.connectAsync()
   `CREATE TABLE IF NOT EXISTS ${SEGMENTS} (
     id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
     route_num TEXT NOT NULL,
+    type INTEGER NOT NULL,
     segment_num INTEGER NOT NULL,
     direction TEXT NOT NULL,
     state_key INTEGER NOT NULL,

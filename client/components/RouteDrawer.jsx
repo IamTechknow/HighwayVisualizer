@@ -42,15 +42,13 @@ const RouteDrawer = ({
     }
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
-    const highwayClass = highwayData.getClassification(queries[0]);
     const routeNum = queries.length > 1 ?
       queries[queries.length - 1] :
-      highwayClass === null && queries.length === 1 ? queries[0] : null;
+      queries.length === 1 ? queries[0] : null;
     let filteredSegments = fullRoutes;
-    if (highwayClass !== null) {
-      filteredSegments = filteredSegments.filter(
-        routeObj => highwayData.getRoutePrefix(routeObj.routeNum) === highwayClass
-      );
+    if (queries.length > 1) {
+      const highwayType = highwayData.getType(queries[0]);
+      filteredSegments = fullRoutes.filter(routeObj => routeObj.type === highwayType);
     }
     const results =
       filteredSegments.filter(routeObj => routeObj.routeNum.indexOf(routeNum) >= 0);
@@ -111,7 +109,7 @@ const RouteDrawer = ({
                 userSegments.map((userSeg, i) => (
                   <div key={`userSegItem-${i}`} className="userSegRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(userSeg.routeNum)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
+                      {`${highwayData.getRoutePrefix(fullRoutes[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
                       <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
                     </li>
                   </div>
@@ -146,12 +144,12 @@ const RouteDrawer = ({
           <Collapsible title="Segments" open="true">
             <ul>
               { segments && segments.map(obj => (
-                <li key={`${obj[0].routeNum}${obj[0].dir}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true);}}>
+                <li key={`${obj[0].routeNum}${obj[0].dir}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true, obj[0].type);}}>
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>
                       {obj.map((seg, i) => (
-                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false);}}>{`Segment ${i + 1}`}</li>
+                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false, seg.type);}}>{`Segment ${i + 1}`}</li>
                       ))}
                     </ul>
                   )}
@@ -177,7 +175,7 @@ const RouteDrawer = ({
             <ul>
               {
                 searchResults.map(obj => (
-                  <li key={obj.id} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj.routeNum, obj.routeNum, obj.dir, true);}}>
+                  <li key={obj.id} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj.routeNum, obj.routeNum, obj.dir, true, obj.type);}}>
                     {getRouteName(obj)}
                   </li>
                 ))
@@ -209,6 +207,7 @@ RouteDrawer.propTypes = {
         id: PropTypes.number,
         dir: PropTypes.string,
         routeNum: PropTypes.string.isRequired,
+        type: PropTypes.number.isRequired,
       }),
     ),
   ),

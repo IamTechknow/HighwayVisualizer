@@ -16,6 +16,8 @@
 */
 
 const DB = require('.');
+const TYPE_ENUM = require('./routeEnum.js');
+const routePrefixes = require('./routePrefixes.js');
 const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
@@ -90,11 +92,32 @@ const calcDir = (left, right) => {
 
 const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateName stateInitials shpPath dbfPath');
 
+// Account for features with Route_Sign = 1 (unsigned)
+const getTypeWithProperties = (properties, stateName) => {
+  const { F_System, Route_Name, Route_Numb } = properties;
+  const routeNum = Route_Numb !== 0 ? Route_Numb : Number(Route_Name.substring(2));
+  const typeEnum = routePrefixes[stateName][routeNum];
+
+  if (!typeEnum) { // Default unsigned routes to state routes
+    return TYPE_ENUM.STATE;
+  } else if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
+    return TYPE_ENUM.STATE;
+  } else if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === TYPE_ENUM.US_HIGHWAY) {
+    return TYPE_ENUM.STATE;
+  }
+
+  return typeEnum;
+};
+
 const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
   let stateID = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("${stateName}", "${stateInitials}");`).then(res => res[0].insertId);
-  let allData = {};
+  let allData = {
+    [TYPE_ENUM.INTERSTATE]: {},
+    [TYPE_ENUM.US_HIGHWAY]: {},
+    [TYPE_ENUM.STATE]: {}
+  };
   let basePointID = await db.queryAsync('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
 
   for (let feature of features) {
@@ -108,56 +131,63 @@ const seedData = async (db, args) => {
       feature.geometry.coordinates = feature.geometry.coordinates[0];
     }
 
-    if (isNonMainlineInterstate(feature) && feature.properties.Route_Numb === 0) {
-      feature.properties.Route_Numb = Number(feature.properties.Route_Name.substring(2));
-    }
+    const { Route_Name, Route_Numb, Route_Sign } = feature.properties;
+    const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
+      ? Number(Route_Name.substring(2))
+      : Route_Numb;
+    const type = Route_Sign > 1 ? 
+      Route_Sign : 
+      getTypeWithProperties(feature.properties, stateName);
 
-    if (allData[feature.properties.Route_Numb]) {
-      allData[feature.properties.Route_Numb].push(feature);
+    if (allData[type][routeNum]) {
+      allData[type][routeNum].push(feature);
     } else {
-      allData[feature.properties.Route_Numb] = [feature];
+      allData[type][routeNum] = [feature];
     }
   }
 
   // Sort first by Route ID, then to make it stable, sort by route ID and then begin_poin
   // The Route ID can be a number string, in other cases it is alphanumeric
-  for (let route in allData) {
-    allData[route] = allData[route].sort((left, right) => {
-      return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
-    });
+  for (let type in allData) {
+    const segmentsByType = allData[type];
+    for (let route in segmentsByType) {
+      segmentsByType[route] = segmentsByType[route].sort((left, right) => {
+        return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
+      });
 
-    allData[route] = allData[route].sort((left, right) => {
-      if (left.properties.Route_ID === right.properties.Route_ID) {
-        return left.properties.Begin_Poin - right.properties.Begin_Poin;
+      segmentsByType[route] = segmentsByType[route].sort((left, right) => {
+        if (left.properties.Route_ID === right.properties.Route_ID) {
+          return left.properties.Begin_Poin - right.properties.Begin_Poin;
+        }
+
+        return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
+      });
+
+      // Put all the route IDs into a new object. Then sort them
+      let routeIds = {};
+      for (let feature of segmentsByType[route]) {
+        if (routeIds[feature.properties.Route_ID]) {
+          routeIds[feature.properties.Route_ID].push(feature);
+        } else {
+          routeIds[feature.properties.Route_ID] = [feature];
+        }
       }
 
-      return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
-    });
+      let finalArray = Object.values(routeIds).sort((left, right) => {
+        return calcDir(left[0], right[right.length - 1]).delta;
+      });
 
-    // Put all the route IDs into a new object. Then sort them
-    let routeIds = {};
-    for (let feature of allData[route]) {
-      if (routeIds[feature.properties.Route_ID]) {
-        routeIds[feature.properties.Route_ID].push(feature);
-      } else {
-        routeIds[feature.properties.Route_ID] = [feature];
+      const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
+      const routeNum = `'${route}'`, oppositeDir = dir === 'E' ? 'W' : 'S';
+      for (let i = 0; i < finalArray.length; i += 1) {
+        const routeDir = finalArray[i][0].properties.Facility_T === NON_INVENTORY_FACILITY_CODE
+          ? `'${oppositeDir}'`
+          : `'${dir}'`;
+        const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
+        const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, type, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${type}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
+        await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, coords);
+        basePointID += coords.length;
       }
-    }
-
-    let finalArray = Object.values(routeIds).sort((left, right) => {
-      return calcDir(left[0], right[right.length - 1]).delta;
-    });
-
-    const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
-    const routeNum = `'${route}'`, oppositeDir = dir === 'E' ? 'W' : 'S';
-    for (let i = 0; i < finalArray.length; i += 1) {
-      const routeDir = finalArray[i][0].properties.Facility_T === NON_INVENTORY_FACILITY_CODE
-        ? `'${oppositeDir}'`
-        : `'${dir}'`;
-      const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
-      const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
-      await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, coords);
-      basePointID += coords.length;
     }
   }
 };

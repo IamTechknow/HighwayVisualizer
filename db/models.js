@@ -13,7 +13,7 @@ class Models {
 
   // Select by sorting the segments by route number
   static getSegmentsBy(db, stateId) {
-    return db.queryAsync('SELECT id, route_num as routeNum, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned);', [stateId])
+    return db.queryAsync('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned);', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
@@ -39,12 +39,12 @@ class Models {
 
   // Select all points for a segment. Returns a promise for a 2D array of segment arrays
   // due to async keyword
-  static async getPointsBy(db, routeNum, dir, getAll, stateId) {
+  static async getPointsBy(db, routeNum, dir, getAll, stateId, type) {
     // Get all route_num keys. For each key, get the polyline.
     let keys = [{id: routeNum}];
     if (getAll) { // routeNum is not a segment ID. Direction is optional
-      const query = `SELECT id FROM segments WHERE route_num = ? AND state_key = ?${dir ? ' AND direction = ?' : ''};`;
-      const args = dir ? [routeNum, stateId, dir] : [routeNum, stateId];
+      const query = `SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
+      const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
       keys = await db.queryAsync(query, args).then((result) => result[0]);
     }
 
