@@ -98,6 +98,7 @@ const getTypeWithProperties = (properties, stateName) => {
 const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
+  await db.startTransaction();
   let stateID = await db.queryAsync('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
   let allData = {
     [TYPE_ENUM.INTERSTATE]: {},
@@ -177,6 +178,7 @@ const seedData = async (db, args) => {
       }
     }
   }
+  await db.endTransaction();
 };
 
 if (process.argv.length !== 6) {

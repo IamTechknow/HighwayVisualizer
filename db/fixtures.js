@@ -8,6 +8,7 @@ const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 const seedData = async (db) => {
   const features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
+  await db.startTransaction();
   const stateID = await db.queryAsync('INSERT INTO states (name, initials) VALUES (?, ?)', ['California', 'CA']).then(res => res[0].insertId);
   let basePointID = 0;
 
@@ -34,6 +35,7 @@ const seedData = async (db) => {
     }
   }
 
+  await db.endTransaction();
   console.log('Creating indices...');
   return db.queryAsync('CREATE INDEX POINT_IDX ON points (segment_key);')
     .then(res => db.queryAsync('CREATE INDEX STATE_IDX on segments (state_key);'))

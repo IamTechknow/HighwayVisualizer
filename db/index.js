@@ -33,4 +33,10 @@ const connectWithDB = (db) =>
       process.exit(0);
     });
 
+db.startTransaction = () => db.queryAsync('SET unique_checks=0;')
+  .then(() => db.queryAsync('START TRANSACTION;'));
+
+db.endTransaction = () => db.queryAsync('SET unique_checks=1;')
+  .then(() => db.queryAsync('COMMIT;'));
+
 module.exports = {connectWithDB, getDB};
