@@ -36,7 +36,8 @@ const seedData = async (db) => {
 
   console.log('Creating indices...');
   return db.queryAsync('CREATE INDEX POINT_IDX ON points (segment_key);')
-    .then(res => db.queryAsync('CREATE INDEX SEGMENT_IDX on segments (route_num(4), direction(1));'));
+    .then(res => db.queryAsync('CREATE INDEX STATE_IDX on segments (state_key);'))
+    .then(res => db.queryAsync('CREATE INDEX SEGMENT_IDX on segments (route_num(3), direction(1));'));
 };
 
 // Check if the database is empty before populating it with mock data.
