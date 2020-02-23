@@ -106,8 +106,8 @@ class Models {
   }
 
   static createUserSegment(db, userId, userSegments) {
-    userSegments = userSegments.map(obj => `(${userId}, ${obj.segmentId}, ${obj.clinched ? 1 : 0}, ${obj.startId}, ${obj.endId})`);
-    return db.queryAsync(`INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ${userSegments.join()};`)
+    const userSegArgs = userSegments.map(seg => [userId, seg.segmentId, seg.clinched ? 1 : 0, seg.startId, seg.endId]);
+    return db.queryAsync('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [userSegArgs])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }

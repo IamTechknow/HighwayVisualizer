@@ -21,8 +21,6 @@ const routePrefixes = require('./routePrefixes.js');
 const shapefile = require('shapefile');
 const Utils = require('./Utils.js');
 
-const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
-
 // Codes defined in Chapter 4 of the HPMS Field Manual
 const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
 const INTERSTATE_FACILITY_SYSTEM = 1;
@@ -100,7 +98,7 @@ const getTypeWithProperties = (properties, stateName) => {
 const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
-  let stateID = await db.queryAsync(`INSERT INTO ${STATES} (name, initials) VALUES ("${stateName}", "${stateInitials}");`).then(res => res[0].insertId);
+  let stateID = await db.queryAsync('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
   let allData = {
     [TYPE_ENUM.INTERSTATE]: {},
     [TYPE_ENUM.US_HIGHWAY]: {},
@@ -166,14 +164,15 @@ const seedData = async (db, args) => {
       });
 
       const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
-      const routeNum = `'${route}'`, oppositeDir = dir === 'E' ? 'W' : 'S';
+      const routeNum = `${route}`, oppositeDir = dir === 'E' ? 'W' : 'S';
       for (let i = 0; i < finalArray.length; i += 1) {
         const routeDir = finalArray[i][0].properties.Facility_T === NON_INVENTORY_FACILITY_CODE
-          ? `'${oppositeDir}'`
-          : `'${dir}'`;
+          ? `${oppositeDir}`
+          : `${dir}`;
         const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
-        const segmentID = await db.queryAsync(`INSERT INTO ${SEGMENTS} (route_num, type, segment_num, direction, state_key, len, base) VALUES (${routeNum}, ${type}, ${i}, ${routeDir}, ${stateID}, ${coords.length}, ${basePointID});`).then(res => res[0].insertId);
-        await Utils.insertSegment(db, SEGMENTS, POINTS, segmentID, coords);
+        const queryArgs = [routeNum, type, i, routeDir, stateID, coords.length, basePointID];
+        const segmentID = await db.queryAsync('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
+        await Utils.insertSegment(db, segmentID, coords);
         basePointID += coords.length;
       }
     }

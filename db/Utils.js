@@ -32,11 +32,11 @@ class Utils {
     return metersTraveled;
   }
 
-  static insertSegment = async (db, segmentsTable, pointsTable, segmentID, coords) => {
+  static insertSegment = async (db, segmentID, coords) => {
     const items = coords.map(tup => [segmentID, tup[1], tup[0]]);
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-    await db.queryAsync(`UPDATE ${segmentsTable} SET len_m = ${lenInMeters} WHERE id = ${segmentID};`);
-    await db.queryAsync(`INSERT INTO ${pointsTable} (segment_key, lat, lon) VALUES ?;`, [items]);
+    await db.queryAsync('UPDATE segments SET len_m = ? WHERE id = ?;', [lenInMeters, segmentID]);
+    await db.queryAsync('INSERT INTO points (segment_key, lat, lon) VALUES ?;', [items]);
     console.log(`Seeded segment with ID ${segmentID} with ${items.length} points, length = ${lenInMeters}m`);
   }
 }
