@@ -29,6 +29,7 @@ const INTERSTATE_FACILITY_SYSTEM = 1;
 const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
 
 const isNonMainlineInterstate = (feature) =>
+  feature.geometry.coordinates.length !== 0 &&
   (feature.properties.Route_Name !== '' || feature.properties.Route_Numb !== 0) &&
   feature.properties.F_System === INTERSTATE_FACILITY_SYSTEM &&
   feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
