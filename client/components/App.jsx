@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Map, TileLayer, Polyline, Marker } from 'react-leaflet';
 
+import APIClient from './APIClient';
 import Highways from './Highways';
 import RouteDrawer from './RouteDrawer';
 
@@ -35,71 +36,22 @@ export default class CreateApp extends React.Component {
     this.highwayData = new Highways();
   }
 
-  static getUsers() {
-    return fetch(`/api/users`)
-      .then(res => res.json());
-  }
-
-  static getStates() {
-    return fetch(`/api/states`)
-      .then(res => res.json());
-  }
-
-  // Get segments then organize them by route numbers
-  // Use a set to maintain whether or not the route number and direction
-  // is repeated. If it is, push to array, otherwise add to new array
-  static getSegments(stateId) {
-    return fetch(`/api/segments/${stateId}`)
-      .then(res => res.json());
-  }
-
-  static getSegment(segmentId) {
-    return fetch(`/api/points/${segmentId}`)
-      .then(res => res.json());
-  }
-
-  static getRoute(stateId, routeNum, type, dir) {
-    const query = `?stateId=${stateId}&dir=${dir}`;
-    return fetch(`/api/points/${type}/${routeNum}/${query}`)
-      .then(res => res.json());
-  }
-
-  static parseSegments(rawSegments) {
-    let set = new Set();
-    let organized = [];
-    let count = -1;
-
-    for (let seg of rawSegments) {
-      const key = `${seg.routeNum}${seg.dir}_${seg.type}`;
-
-      if (set.has(key)) {
-        organized[count].push(seg);
-      } else {
-        set.add(key);
-        organized.push([seg]);
-        count += 1;
-      }
-    }
-
-    return organized;
-  }
-
   // Load all data from API endpoints
   componentDidMount() {
     const stateId = 1;
-    CreateApp.getStates()
+    APIClient.getStates()
       .then(states => {
         this.setState({ states, stateId: states[0].id });
-        return CreateApp.getSegments(states[0].id);
+        return APIClient.getSegments(states[0].id);
       })
       .then(rawSegments => {
         this.highwayData.buildStateSegmentsData(rawSegments);
         const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
-        this.setState({ segments: CreateApp.parseSegments(rawSegments) });
-        return CreateApp.getSegment(rawSegments[0].id)
+        this.setState({ segments: APIClient.parseRawSegments(rawSegments) });
+        return APIClient.getSegment(rawSegments[0].id)
           .then(segmentData => {
             this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id);
-            return CreateApp.getUsers();
+            return APIClient.getUsers();
           });
       })
       .then(users => {
@@ -176,7 +128,7 @@ export default class CreateApp extends React.Component {
     const {id, routeNum, type, dir} = segmentOfRoute;
     event.stopPropagation();
 
-    CreateApp.getRoute(stateId, routeNum, type, dir)
+    APIClient.getRoute(stateId, routeNum, type, dir)
       .then(segments => this.segmentPromiseDone(segments, routeNum, id));
 
     if (currMode === CLINCH) {
@@ -190,7 +142,7 @@ export default class CreateApp extends React.Component {
     const {currMode, stateId, states} = this.state;
     event.stopPropagation();
 
-    CreateApp.getSegment(segmentId)
+    APIClient.getSegment(segmentId)
       .then(segments => this.segmentPromiseDone(segments, routeStr, segmentId));
 
     if (currMode === CLINCH) {
@@ -218,12 +170,12 @@ export default class CreateApp extends React.Component {
 
   // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
-    CreateApp.getSegments(stateId).then(rawSegments => {
+    APIClient.getSegments(stateId).then(rawSegments => {
       this.highwayData.buildStateSegmentsData(rawSegments);
-      return CreateApp.getSegment(rawSegments[0].id)
+      return APIClient.getSegment(rawSegments[0].id)
         .then(segmentData => this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id))
         .then(() => this.setState({
-          segments: CreateApp.parseSegments(rawSegments),
+          segments: APIClient.parseRawSegments(rawSegments),
           stateId
         }));
     });
