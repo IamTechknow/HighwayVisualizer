@@ -17,6 +17,7 @@ const RouteDrawer = ({
   onClinchToggleFor,
   onFormSubmit,
   onResetUserSegments,
+  onRouteItemClick,
   onSegmentItemClick,
   onSendUserSegments,
   onSetMode,
@@ -144,12 +145,12 @@ const RouteDrawer = ({
           <Collapsible title="Segments" open="true">
             <ul>
               { segments && segments.map(obj => (
-                <li key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj[0].routeNum, obj[0].routeNum, obj[0].dir, true, obj[0].type);}}>
+                <li key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`} className="clickable" onClick={(event) => {onRouteItemClick(event, obj[0]);}}>
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>
                       {obj.map((seg, i) => (
-                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false, seg.type);}}>{`Segment ${i + 1}`}</li>
+                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false);}}>{`Segment ${i + 1}`}</li>
                       ))}
                     </ul>
                   )}
@@ -174,9 +175,9 @@ const RouteDrawer = ({
             :
             <ul>
               {
-                searchResults.map(obj => (
-                  <li key={obj.id} className="clickable" onClick={(event) => {onSegmentItemClick(event, obj.routeNum, obj.routeNum, obj.dir, true, obj.type);}}>
-                    {getRouteName(obj)}
+                searchResults.map(firstSeg => (
+                  <li key={firstSeg.id} className="clickable" onClick={(event) => {onRouteItemClick(event, firstSeg);}}>
+                    {getRouteName(firstSeg)}
                   </li>
                 ))
               }
@@ -196,6 +197,7 @@ RouteDrawer.propTypes = {
   onClinchToggleFor: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onResetUserSegments: PropTypes.func.isRequired,
+  onRouteItemClick: PropTypes.func.isRequired,
   onSegmentItemClick: PropTypes.func.isRequired,
   onSendUserSegments: PropTypes.func.isRequired,
   onSetMode: PropTypes.func.isRequired,

@@ -20,6 +20,7 @@ export default class CreateApp extends React.Component {
 
     this.getRouteName = this.getRouteName.bind(this);
     this.onStateClick = this.onStateClick.bind(this);
+    this.onRouteItemClick = this.onRouteItemClick.bind(this);
     this.onSegmentClick = this.onSegmentClick.bind(this);
     this.onSegmentItemClick = this.onSegmentItemClick.bind(this);
     this.onResetUserSegments = this.onResetUserSegments.bind(this);
@@ -52,26 +53,14 @@ export default class CreateApp extends React.Component {
       .then(res => res.json());
   }
 
-  // If getAll, then the state and route number should be provided,
-  // otherwise provide the route ID of the segment.
-  // Route direction is only used if non-main direction segments exist for a state.
-  static getSegment(segmentId, dir, getAll, stateId, type, shouldUseRouteDir = false) {
-    let query = dir || getAll ? '?' : '';
-    if (dir && shouldUseRouteDir) {
-      query += `dir=${dir}`;
-    }
+  static getSegment(segmentId) {
+    return fetch(`/api/points/${segmentId}`)
+      .then(res => res.json());
+  }
 
-    if (getAll) {
-      if (dir) {
-        query += '&';
-      }
-      query += `getAll=${getAll}&stateId=${stateId}`;
-      if (type) {
-        query += `&type=${type}`;
-      }
-    }
-
-    return fetch(`/api/points/${segmentId}${query}`)
+  static getRoute(stateId, routeNum, type, dir) {
+    const query = `?stateId=${stateId}&dir=${dir}`;
+    return fetch(`/api/points/${type}/${routeNum}/${query}`)
       .then(res => res.json());
   }
 
@@ -107,7 +96,7 @@ export default class CreateApp extends React.Component {
         this.highwayData.buildStateSegmentsData(rawSegments);
         const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
         this.setState({ segments: CreateApp.parseSegments(rawSegments) });
-        return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, rawSegments[0].type, shouldUseDir)
+        return CreateApp.getSegment(rawSegments[0].id)
           .then(segmentData => {
             this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id);
             return CreateApp.getUsers();
@@ -182,22 +171,30 @@ export default class CreateApp extends React.Component {
     this.setState({ userSegments: [] });
   }
 
+  onRouteItemClick(event, segmentOfRoute) {
+    const {currMode, stateId, states} = this.state;
+    const {id, routeNum, type, dir} = segmentOfRoute;
+    event.stopPropagation();
+
+    CreateApp.getRoute(stateId, routeNum, type, dir)
+      .then(segments => this.segmentPromiseDone(segments, routeNum, id));
+
+    if (currMode === CLINCH) {
+      this.highwayData.addAllSegments(routeNum, type, dir);
+      this.setState({ userSegments: this.highwayData.userSegments });
+    }
+  }
+
   // Prevent events occurring twice
-  onSegmentItemClick(event, routeStr, segmentId, dir, getAll, type) {
+  onSegmentItemClick(event, routeStr, segmentId, dir, getAll) {
     const {currMode, stateId, states} = this.state;
     event.stopPropagation();
-    const shouldUseDir = this.highwayData.shouldUseRouteDir(states[stateId - 1].name);
 
-    CreateApp.getSegment(segmentId, dir, getAll, stateId, type, shouldUseDir)
+    CreateApp.getSegment(segmentId)
       .then(segments => this.segmentPromiseDone(segments, routeStr, segmentId));
 
-    // Create segment if clicked and clinch mode is set
     if (currMode === CLINCH) {
-      if (!getAll) {
-        this.highwayData.addFullSegment(routeStr, segmentId);
-      } else {
-        this.highwayData.addAllSegments(routeStr, dir);
-      }
+      this.highwayData.addFullSegment(routeStr, segmentId);
       this.setState({ userSegments: this.highwayData.userSegments });
     }
   }
@@ -223,8 +220,7 @@ export default class CreateApp extends React.Component {
   onStateClick(stateId) {
     CreateApp.getSegments(stateId).then(rawSegments => {
       this.highwayData.buildStateSegmentsData(rawSegments);
-      const shouldUseDir = this.highwayData.shouldUseRouteDir(this.state.states[stateId - 1].name);
-      return CreateApp.getSegment(rawSegments[0].id, rawSegments[0].dir, false, stateId, rawSegments[0].type, shouldUseDir)
+      return CreateApp.getSegment(rawSegments[0].id)
         .then(segmentData => this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id))
         .then(() => this.setState({
           segments: CreateApp.parseSegments(rawSegments),
@@ -310,6 +306,7 @@ export default class CreateApp extends React.Component {
           onClinchToggleFor={this.onClinchToggleFor}
           onFormSubmit={this.onFormSubmit}
           onResetUserSegments={this.onResetUserSegments}
+          onRouteItemClick={this.onRouteItemClick}
           onSegmentItemClick={this.onSegmentItemClick}
           onSendUserSegments={this.onSendUserSegments}
           onSetMode={this.onSetMode}

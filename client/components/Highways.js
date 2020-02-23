@@ -193,7 +193,7 @@ export default class Highways {
     this.addSegment(new UserSegment(routeNum, segmentId, 0, this.segmentData[segmentId].len, false));
   }
 
-  addAllSegments(routeNum, dir, type) {
+  addAllSegments(routeNum, type, dir) {
     for (let segmentId of this.idCache[type][routeNum + dir]) {
       this.addFullSegment(routeNum, segmentId);
     }
