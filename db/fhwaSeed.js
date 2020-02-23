@@ -24,7 +24,6 @@ const Utils = require('./Utils.js');
 const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 // Codes defined in Chapter 4 of the HPMS Field Manual
-const COUNTY_OWNER_CODE = 2, TOWN_OWNER_CODE = 3, CITY_OWNER_CODE = 4, PRIVATE_OWNER_CODE = 26;
 const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
 const INTERSTATE_FACILITY_SYSTEM = 1;
 const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
@@ -35,14 +34,12 @@ const isNonMainlineInterstate = (feature) =>
   feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
 
 const filterOutFeature = (feature) => {
-  if (feature.geometry.coordinates.length === 0) {
-    return true;
-  }
-  const { Facility_T, Ownership, Route_ID, Route_Name, Route_Numb, State_Code } = feature.properties;
+  const { Facility_T, Ownership, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code } = feature.properties;
 
   if (
-    Ownership === COUNTY_OWNER_CODE || Ownership === TOWN_OWNER_CODE ||
-    Ownership === CITY_OWNER_CODE || Ownership === PRIVATE_OWNER_CODE
+    Route_Sign !== TYPE_ENUM.INTERSTATE &&
+    Route_Sign !== TYPE_ENUM.US_HIGHWAY &&
+    Route_Sign !== TYPE_ENUM.STATE
   ) {
     return true;
   }
@@ -52,20 +49,9 @@ const filterOutFeature = (feature) => {
     return true;
   }
 
-  // Exclude county and gov routes in Maryland due to route duplication
+  // Exclude route names that end with a letter
   if (State_Code === MARYLAND_STATE_CODE) {
-    if (!Route_Name) {
-      return true;
-    }
-
-    if ((Route_Name[0] === 'M' && Route_Name[1] === 'U') || (Route_Name[0] === 'C' && Route_Name[1] === 'O')
-      || (Route_Name[0] === 'O' && Route_Name[1] === 'P') || (Route_Name[0] === 'G' && Route_Name[1] === 'V')
-      || (Route_Name[0] === 'S' && Route_Name[1] === 'R')) {
-      return true;
-    }
-
-    // Exclude non-mainline routes that end with a letter
-    if (Route_Name[Route_Name.length - 1] > '9') {
+    if (!Route_Name || Route_Name[Route_Name.length - 1] > '9') {
       return true;
     }
   }
@@ -75,8 +61,9 @@ const filterOutFeature = (feature) => {
     return false;
   }
 
-  // Exclude local roads, ramps
-  return Route_Numb === 0 || Facility_T === RAMP_FACILITY_CODE;
+  // Exclude features with no points, local roads, ramps
+  return feature.geometry.coordinates.length === 0
+    || Route_Numb === 0 || Facility_T === RAMP_FACILITY_CODE;
 };
 
 const calcDir = (left, right) => {
