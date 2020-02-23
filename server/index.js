@@ -59,26 +59,43 @@ app.get('/api/segments/:stateId', (req, res) => {
   });
 });
 
-// Expects route segment and direction. Distinguish between U (unrelinquished) and S segments
+// Returns all points for a specific segment
 app.get('/api/points/:segmentId', (req, res) => {
-  const getAll = req.query.getAll === "true";
+  let segmentInteger = req.params.segmentId ?
+    Number.parseInt(req.params.segmentId, 10) : undefined;
+
+  if (!segmentInteger) {
+    res.status(400).send('Segment ID is invalid');
+  } else {
+    Models.getPointsForSegment(db, segmentInteger)
+    .then((result) => {
+      res.status(200).type('application/json');
+      res.send(JSON.stringify(result));
+    }).catch((err) => {
+      res.status(500).send('Sorry, an error occurred!');
+    });
+  }
+});
+
+// Returns all segments for a specific route
+app.get('/api/points/:type/:routeNum', (req, res) => {
   const stateId = req.query.stateId ?
     Number.parseInt(req.query.stateId, 10) : undefined;
-  const type = req.query.type ?
-    Number.parseInt(req.query.type, 10) : undefined;
-  let routeInteger = req.params.segmentId;
-  if (/^\d+$/.test(routeInteger)) {
-    routeInteger = Number.parseInt(routeInteger, 10);
-  }
+  const type = req.params.type ?
+    Number.parseInt(req.params.type, 10) : undefined;
+  // Route numbers are strings that can have suffixes
+  const routeNum = req.params.routeNum;
 
-  if (getAll && !req.query.type) {
-    res.status(400).send('If getting points for an entire route, route type is required');
-  } else if (getAll && !req.query.stateId) {
-    res.status(400).send('If getting points for an entire route, a state ID must be provided');
+  if (!stateId) {
+    res.status(400).send('State ID must be provided');
+  } else if (!type) {
+    res.status(400).send('Route type must be provided');
   } else if (type < TYPE_ENUM.INTERSTATE || type > TYPE_ENUM.STATE) {
     res.status(400).send('Route type is invalid');
+  } else if (!routeNum) {
+    res.status(400).send('Route number is invalid');
   } else {
-    Models.getPointsBy(db, routeInteger, req.query.dir, getAll, stateId, type)
+    Models.getPointsForRoute(db, stateId, type, routeNum, req.query.dir)
     .then((result) => {
       res.status(200).type('application/json');
       res.send(JSON.stringify(result));

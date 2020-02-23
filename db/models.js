@@ -37,23 +37,18 @@ class Models {
     return segments;
   }
 
-  // Select all points for a segment. Returns a promise for a 2D array of segment arrays
-  // due to async keyword
-  static async getPointsBy(db, routeNum, dir, getAll, stateId, type) {
-    // Get all route_num keys. For each key, get the polyline.
-    let keys = [{id: routeNum}];
-    if (getAll) { // routeNum is not a segment ID. Direction is optional
-      const query = `SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
-      const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
-      keys = await db.queryAsync(query, args).then((result) => result[0]);
-    }
+  static async getPointsForSegment(db, segmentId) {
+    const query = 'SELECT lat, lon FROM points WHERE segment_key = ' + segmentId;
+    return Models.processPointQueries(db, [query, ''], [{id: segmentId}]);
+  }
 
-    // Use multiple queries to grab all the data at once!
-    let combinedQuery = [], segments = [];
-    for (let key of keys) { // Each Key is an object with our desired field
-      segments.push({id: key.id});
-      combinedQuery.push('SELECT lat, lon FROM points WHERE segment_key = ' + key.id);
-    }
+  static async getPointsForRoute(db, stateId, type, routeNum, dir) {
+    const keyQuery = `SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
+    const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
+    const keys = await db.queryAsync(keyQuery, args).then((result) => result[0]);
+
+    const segments = keys.map(key => { return {id: key.id}; });
+    const combinedQuery = keys.map(key => 'SELECT lat, lon FROM points WHERE segment_key = ' + key.id);
     combinedQuery.push(''); // Allow last semicolon to be added
     return Models.processPointQueries(db, combinedQuery, segments);
   }
