@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
 import React, { useMemo, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { FiMap, FiSearch, FiUser } from "react-icons/fi";
+import { FiMap, FiSearch, FiUser } from 'react-icons/fi';
 
+import Highways from './Highways';
 import Collapsible from './Collapsible';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
@@ -33,7 +33,10 @@ const RouteDrawer = ({
   const [searchResults, setSearchResults] = useState([]);
   const [isCollapsed, setCollapsed] = useState(false);
   const [selectedId, setSelectedId] = useState('segments');
-  const fullRoutes = useMemo(() => segments.flat().filter(routeObj => routeObj.segNum === 0), [segments]);
+  const fullRoutes = useMemo(
+    () => segments.flat().filter((routeObj) => routeObj.segNum === 0),
+    [segments],
+  );
 
   const onSearchSegments = (event) => {
     const query = event.target.value;
@@ -43,16 +46,15 @@ const RouteDrawer = ({
     }
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
-    const routeNum = queries.length > 1 ?
-      queries[queries.length - 1] :
-      queries.length === 1 ? queries[0] : null;
+    const routeNum = queries.length > 1
+      ? queries[queries.length - 1]
+      : queries.length === 1 ? queries[0] : null;
     let filteredSegments = fullRoutes;
     if (queries.length > 1) {
-      const highwayType = highwayData.getType(queries[0]);
-      filteredSegments = fullRoutes.filter(routeObj => routeObj.type === highwayType);
+      const highwayType = Highways.getType(queries[0]);
+      filteredSegments = fullRoutes.filter((routeObj) => routeObj.type === highwayType);
     }
-    const results =
-      filteredSegments.filter(routeObj => routeObj.routeNum.indexOf(routeNum) >= 0);
+    const results = filteredSegments.filter((routeObj) => routeObj.routeNum.indexOf(routeNum) >= 0);
     setSearchResults(results.slice(0, 30));
   };
 
@@ -85,9 +87,8 @@ const RouteDrawer = ({
           <Collapsible title="Users" open="true">
             <select value={currUserId} onChange={onUserChange} className="nameFormElement">
               <option key={-1} value={-1}>Select or create User</option>
-              { users &&
-                users.map((user) => (<option key={user.id} value={user.id}>{user.user}</option>))
-              }
+              { users
+                && users.map((user) => <option key={user.id} value={user.id}>{user.user}</option>)}
             </select>
 
             <form onSubmit={onFormSubmit}>
@@ -97,35 +98,33 @@ const RouteDrawer = ({
               </label>
               <br />
               <button type="submit">Create User</button>
-              { currUserId >= 0 &&
-                <a href={'/users/' + users[currUserId - 1].user}>View Stats</a>
-              }
+              { currUserId >= 0
+                && <a href={`/users/${users[currUserId - 1].user}`}>View Stats</a>}
             </form>
           </Collapsible>
 
           <Collapsible title="User Segments">
             <ul>
               {
-                userSegments &&
-                userSegments.map((userSeg, i) => (
-                  <div key={`userSegItem-${i}`} className="userSegRow">
+                userSegments
+                && userSegments.map((userSeg, i) => (
+                  <div key={userSeg.toString()} className="userSegRow">
                     <li>
-                      {`${highwayData.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
-                      <input type="checkbox" onClick={() => {onClinchToggleFor(i);}}/>
+                      {`${Highways.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
+                      <input type="checkbox" onClick={() => { onClinchToggleFor(i); }} />
                     </li>
                   </div>
                 ))
               }
             </ul>
 
-            { currUserId >= 0 && userSegments &&
-              <button type="button" onClick={onSendUserSegments}>Submit User Segments</button>
-            }
+            { currUserId >= 0 && userSegments
+              && <button type="button" onClick={onSendUserSegments}>Submit User Segments</button>}
             <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>
 
             {
-              submitData.success &&
-              <p>{`Successfully created ${submitData.entries} user segments`}</p>
+              submitData.success
+              && <p>{`Successfully created ${submitData.entries} user segments`}</p>
             }
           </Collapsible>
         </div>
@@ -134,23 +133,38 @@ const RouteDrawer = ({
         <div className="tabContent">
           <Collapsible title="States" open="true">
             <ul>
-              { states && states.map(obj => (
-                  <li key={obj.initials} className="clickable" onClick={() => {onStateClick(obj.id);}}>{obj.name}</li>
-                ))
-              }
+              { states && states.map((obj) => (
+                <li
+                  key={obj.initials}
+                  className="clickable"
+                  onClick={() => onStateClick(obj.id)}
+                >
+                  {obj.name}
+                </li>
+              ))}
             </ul>
           </Collapsible>
 
           {/* List each route and all route segments */}
           <Collapsible title="Segments" open="true">
             <ul>
-              { segments && segments.map(obj => (
-                <li key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`} className="clickable" onClick={(event) => {onRouteItemClick(event, obj[0]);}}>
+              { segments && segments.map((obj) => (
+                <li
+                  key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`}
+                  className="clickable"
+                  onClick={(event) => onRouteItemClick(event, obj[0])}
+                >
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
                     <ul>
                       {obj.map((seg, i) => (
-                        <li key={`segment-${seg.id}`} className="clickable" onClick={(event) => {onSegmentItemClick(event, seg.routeNum, seg.id, "", false);}}>{`Segment ${i + 1}`}</li>
+                        <li
+                          key={`segment-${seg.id}`}
+                          className="clickable"
+                          onClick={(event) => onSegmentItemClick(event, seg.routeNum, seg.id)}
+                        >
+                          {`Segment ${i + 1}`}
+                        </li>
                       ))}
                     </ul>
                   )}
@@ -162,38 +176,56 @@ const RouteDrawer = ({
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<FiSearch />}>
         <div className="tabContent">
-          <input type="text" size="50" className="nameFormElement" placeholder={`Search ${states[stateId - 1].name} segments by type and/or number...`} onChange={onSearchSegments} />
+          <input
+            type="text"
+            size="50"
+            className="nameFormElement"
+            placeholder={`Search ${states[stateId - 1].name} segments by type and/or number...`}
+            onChange={onSearchSegments}
+          />
           {
-            !searchResults.length ?
-            <div>
-              <h3>Search hints:</h3>
-              <ul>
-                <li>Try typing a more of a route number to get more specific results</li>
-                <li>To filter by Interstates and US Highways, type I or US and number separated by space or dash</li>
-              </ul>
-            </div>
-            :
-            <ul>
-              {
-                searchResults.map(firstSeg => (
-                  <li key={firstSeg.id} className="clickable" onClick={(event) => {onRouteItemClick(event, firstSeg);}}>
+            !searchResults.length
+              ? (
+                <div>
+                  <h3>Search hints:</h3>
+                  <ul>
+                    <li>Try typing a more of a route number to get more specific results</li>
+                    <li>
+                      {
+                        `To filter by Interstates and US Highways, 
+                        type I or US and number separated by space or dash`
+                      }
+                    </li>
+                  </ul>
+                </div>
+              )
+              : (
+                <ul>
+                  {
+                searchResults.map((firstSeg) => (
+                  <li
+                    key={firstSeg.id}
+                    className="clickable"
+                    onClick={(event) => onRouteItemClick(event, firstSeg)}
+                  >
                     {getRouteName(firstSeg)}
                   </li>
                 ))
               }
-            </ul>
+                </ul>
+              )
           }
         </div>
       </SidebarTab>
     </Sidebar>
-  )
+  );
 };
 
 RouteDrawer.propTypes = {
   currMode: PropTypes.number.isRequired,
-  currUserId: PropTypes.number,
+  currUserId: PropTypes.number.isRequired,
   getRouteName: PropTypes.func.isRequired,
-  highwayData: PropTypes.object,
+  highwayData: PropTypes.instanceOf(Highways).isRequired,
   onClinchToggleFor: PropTypes.func.isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   onResetUserSegments: PropTypes.func.isRequired,
@@ -212,7 +244,7 @@ RouteDrawer.propTypes = {
         type: PropTypes.number.isRequired,
       }),
     ),
-  ),
+  ).isRequired,
   stateId: PropTypes.number.isRequired,
   states: PropTypes.arrayOf(
     PropTypes.shape({
@@ -220,7 +252,7 @@ RouteDrawer.propTypes = {
       initials: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
     }),
-  ),
+  ).isRequired,
   submitData: PropTypes.shape({
     entries: PropTypes.number,
     success: PropTypes.bool,
@@ -230,13 +262,13 @@ RouteDrawer.propTypes = {
       routeNum: PropTypes.string.isRequired,
       segmentId: PropTypes.number.isRequired,
     }),
-  ),
+  ).isRequired,
   users: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
       user: PropTypes.string.isRequired,
     }),
-  ),
+  ).isRequired,
 };
 
 export default RouteDrawer;

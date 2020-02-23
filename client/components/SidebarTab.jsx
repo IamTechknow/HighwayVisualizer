@@ -1,17 +1,17 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import ReactDOM from 'react-dom';
 
 // Sidebar implementation for latest version of leaflet-sidebar
-const SidebarTab = ({children, id, active = false, header, onClose}) => {
+const SidebarTab = ({
+  children, id, active = false, header, onClose,
+}) => {
   const activeClass = active ? 'active' : '';
-  const closeIcon = 'X';
   return (
     <div id={id} className={`leaflet-sidebar-pane ${activeClass}`}>
       <h1 className="leaflet-sidebar-header">
         {header}
-        <div className="leaflet-sidebar-close" onClick={onClose}>
-          {closeIcon}
+        <div className="leaflet-sidebar-close" onClick={onClose} role="button" tabIndex="-1">
+          X
         </div>
       </h1>
       {children}
@@ -29,6 +29,7 @@ SidebarTab.propTypes = {
 
 SidebarTab.defaultProps = {
   active: false,
+  onClose: () => {},
 };
 
 export default SidebarTab;

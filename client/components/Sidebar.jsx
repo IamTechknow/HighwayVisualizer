@@ -1,6 +1,5 @@
 import PropTypes from 'prop-types';
 import React from 'react';
-import ReactDOM from 'react-dom';
 import { MapComponent } from 'react-leaflet';
 
 // Sidebar implementation for latest version of leaflet-sidebar
@@ -8,22 +7,24 @@ export default class Sidebar extends MapComponent {
   onClose(e) {
     e.preventDefault();
     e.stopPropagation();
-    this.props.onClose && this.props.onClose();
+    this.props.onClose();
   }
 
   onToggle(e, tabId) {
     e.preventDefault();
     e.stopPropagation();
-    this.props.onToggle && this.props.onToggle(tabId);
+    this.props.onToggle(tabId);
   }
 
   renderTab(tab) {
-    const {disabled, icon, id, selected} = tab.props;
+    const {
+      disabled, icon, id, selected,
+    } = tab.props;
     const activeText = id === selected ? ' active' : '';
     const disabledText = disabled ? ' disabled' : '';
     return (
       <li className={activeText + disabledText} key={id}>
-        <a href={'#' + id} role="tab" onClick={e => disabled || this.onToggle(e, id)}>
+        <a href={`#${id}`} role="tab" onClick={(e) => disabled || this.onToggle(e, id)}>
           {icon}
         </a>
       </li>
@@ -32,18 +33,18 @@ export default class Sidebar extends MapComponent {
 
   renderPanes(children) {
     const { closeIcon, selected, position } = this.props;
-    return React.Children.map(children, p =>
-      React.cloneElement(p, {
-        onClose: this.onClose.bind(this),
-        closeIcon,
-        active: p.props.id === selected,
-        position: position || 'left',
-      })
-    );
+    return React.Children.map(children, (p) => React.cloneElement(p, {
+      onClose: this.onClose.bind(this),
+      closeIcon,
+      active: p.props.id === selected,
+      position: position || 'left',
+    }));
   }
 
   render() {
-    const { children, collapsed = false, id, position = 'left' } = this.props;
+    const {
+      children, collapsed = false, id, position = 'left',
+    } = this.props;
     const positionClass = `leaflet-sidebar-${position}`;
     const collapsedClass = collapsed ? 'collapsed' : '';
     const tabs = React.Children.toArray(children);
@@ -52,9 +53,9 @@ export default class Sidebar extends MapComponent {
         id={id}
         className={`leaflet-sidebar leaflet-touch ${positionClass} ${collapsedClass}`}
       >
-        <div className='leaflet-sidebar-tabs'>
-          <ul role='tablist'>
-            {tabs.map(t => this.renderTab(t))}
+        <div className="leaflet-sidebar-tabs">
+          <ul role="tablist">
+            {tabs.map((t) => this.renderTab(t))}
           </ul>
         </div>
         <div className="leaflet-sidebar-content">

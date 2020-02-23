@@ -12,7 +12,8 @@ export default class UserSegment {
   }
 
   toString() {
-    return '';
+    const { endId, segmentId, startId } = this;
+    return `userSeg-${segmentId}-${startId}-${endId}`;
   }
 }
 

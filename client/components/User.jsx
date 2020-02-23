@@ -1,7 +1,7 @@
+/* eslint-disable no-nested-ternary */
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import ReactDOM from 'react-dom';
-import { FiUser } from "react-icons/fi";
+import { FiUser } from 'react-icons/fi';
 import { Map, TileLayer, Polyline } from 'react-leaflet';
 
 import Sidebar from './Sidebar';
@@ -9,7 +9,7 @@ import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 
-const UserApp = ({match}) => {
+const UserApp = ({ match }) => {
   const [isCollapsed, setCollapsed] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -18,9 +18,8 @@ const UserApp = ({match}) => {
   const [stats, setStats] = useState([]);
   const [userSegments, setUserSegments] = useState([]);
 
-  const getUserSegmentsFor = (userId) =>
-    fetch(`/api/user_segments/${userId}`)
-      .then(res => res.json());
+  const getUserSegmentsFor = (userId) => fetch(`/api/user_segments/${userId}`)
+    .then((res) => res.json());
 
   const onSidebarToggle = (id) => {
     if (selectedId === id) {
@@ -33,7 +32,7 @@ const UserApp = ({match}) => {
   };
 
   useEffect(() => {
-    getUserSegmentsFor(match.params.user).then(result => {
+    getUserSegmentsFor(match.params.user).then((result) => {
       // Update boolean variables last because this is not simultaneous state update
       setUserSegments(result.userSegments);
       setStats(result.stats);
@@ -45,7 +44,7 @@ const UserApp = ({match}) => {
   if (!loaded) {
     return (
       <div>
-        <h3>{`Getting ${match.params.user}\'s segments...`}</h3>
+        <h3>{`Getting ${match.params.user}'s segments...`}</h3>
       </div>
     );
   }
@@ -66,12 +65,16 @@ const UserApp = ({match}) => {
       <Map className="mapStyle" center={userSegments[0].points[0]} zoom={7} zoomControl={false}>
         <TileLayer
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url='http://{s}.tile.osm.org/{z}/{x}/{y}.png'
+          url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
 
-        { userSegments &&
-          userSegments.map((userSeg, i) => <Polyline key={`userSeg-${i}`} positions={userSeg.points} color={ userSeg.clinched ? "lime" : "yellow" } /> )
-        }
+        { userSegments && userSegments.map((userSeg) => (
+          <Polyline
+            key={userSeg.toString()}
+            positions={userSeg.points}
+            color={userSeg.clinched ? 'lime' : 'yellow'}
+          />
+        ))}
       </Map>
       <Sidebar
         id="sidebar"
@@ -82,10 +85,10 @@ const UserApp = ({match}) => {
       >
         <SidebarTab id="users" header="User Stats" icon={<FiUser />}>
           <div id="tabContent">
-            <h3>{`${match.params.user}\'s traveling statistics`}</h3>
+            <h3>{`${match.params.user}'s traveling statistics`}</h3>
 
             <p>Unit conversion</p>
-            <select onChange={event => setScale(Number.parseFloat(event.target.value, 10))}>
+            <select onChange={(event) => setScale(Number.parseFloat(event.target.value, 10))}>
               <option value={METERS}>Meters</option>
               <option value={KM}>Kilometers</option>
               <option value={MILES}>Miles</option>
@@ -97,23 +100,26 @@ const UserApp = ({match}) => {
                   <th>State</th>
                   <th>Route</th>
                   <th>Segment</th>
-                  <th>{`Traveled (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
-                  <th>{`Total (${ scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi' })`}</th>
+                  <th>{`Traveled (${scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi'})`}</th>
+                  <th>{`Total (${scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi'})`}</th>
                   <th>Percentage</th>
                 </tr>
               </thead>
               <tbody>
                 {
-                  stats.map((stat) =>
+                  stats.map((stat) => (
                     <tr key={`${stat.state}_${stat.route}_${stat.segment}`}>
                       <td>{stat.state}</td>
                       <td>{stat.route}</td>
                       <td>{stat.segment}</td>
                       <td>{(stat.traveled / scale).toFixed(2)}</td>
                       <td>{(stat.total / scale).toFixed(2)}</td>
-                      <td>{stat.percentage}%</td>
+                      <td>
+                        {stat.percentage}
+                        %
+                      </td>
                     </tr>
-                  )
+                  ))
                 }
               </tbody>
             </table>
@@ -122,7 +128,7 @@ const UserApp = ({match}) => {
       </Sidebar>
     </div>
   );
-}
+};
 
 UserApp.propTypes = {
   match: PropTypes.shape({
