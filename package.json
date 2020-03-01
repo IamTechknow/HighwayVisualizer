@@ -3,7 +3,8 @@
   "version": "0.0.1",
   "description": "Visualize a map diary",
   "scripts": {
-    "start": "node --inspect server",
+    "start": "env NODE_ENV=production; node server",
+    "debug": "node --inspect server",
     "react": "webpack --debug --output-pathinfo --watch",
     "build": "webpack --mode production --devtool=false",
     "reset": "node db/seed.js",
@@ -49,6 +50,7 @@
     "eslint-plugin-react": "^7.18.3",
     "eslint-plugin-react-hooks": "^2.5.0",
     "file-loader": "^5.1.0",
+    "morgan": "^1.9.1",
     "postcss-loader": "^3.0.0",
     "shapefile": "^0.6.6",
     "style-loader": "^1.1.3",

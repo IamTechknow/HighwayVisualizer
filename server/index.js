@@ -1,5 +1,6 @@
 const compression = require('compression');
 const express = require('express');
+const morgan = require('morgan');
 const path = require('path');
 const TYPE_ENUM = require('../db/routeEnum.js');
 const Models = require('../db/models.js');
@@ -13,6 +14,9 @@ app.use(compression({threshold: 8192}));
 app.use(express.static(path.resolve(__dirname, '../public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+if (process.env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 // Allow CORS and caching for endpoints
 const headerMiddleware = function(req, res, next) {
