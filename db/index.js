@@ -18,8 +18,12 @@ const getDB = () => db;
 
 const connectWithDB = (db) =>
   db.connectAsync()
-    .then(() => console.log(`Connected to ${DATABASE} database as ID ${db.threadId}`))
     .then(() => db.queryAsync(`USE ${DATABASE}`))
+    .then(() => {
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Connected to ${DATABASE} database as ID ${db.threadId}`);
+      }
+    })
     .catch((err) => {
       console.error(err);
       if (err.code === 'ER_BAD_DB_ERROR') {

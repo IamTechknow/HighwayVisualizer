@@ -146,4 +146,8 @@ app.post('/api/user_segments/new', (req, res) => {
 });
 
 DB.connectWithDB(db)
-  .then(() => app.listen(PORT, () => { console.log(`Listening at Port ${PORT}`); }));
+  .then(() => app.listen(PORT, () => console.log(`Listening at Port ${PORT}`)))
+  .then((server) => process.on('SIGINT', () => {
+    server.close();
+    db.end();
+  }));
