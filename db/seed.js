@@ -5,45 +5,47 @@ const database = 'highways', STATES = 'states', SEGMENTS = 'segments', POINTS = 
   USERS = 'users', USER_SEGMENTS = 'user_segments';
 const db = DB.getDB();
 
+const TABLE_QUERIES = [
+  `DROP DATABASE IF EXISTS ${database};`,
+  `CREATE DATABASE ${database};`,
+  `USE ${database};`,
+  `CREATE TABLE IF NOT EXISTS ${STATES} (
+    id TINYINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    name TEXT NOT NULL,
+    initials CHAR(2) NOT NULL);`,
+  `CREATE TABLE IF NOT EXISTS ${SEGMENTS} (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    route_num CHAR(4) NOT NULL,
+    type TINYINT UNSIGNED NOT NULL,
+    segment_num TINYINT UNSIGNED NOT NULL,
+    direction CHAR(1) NOT NULL,
+    state_key TINYINT UNSIGNED NOT NULL,
+    len MEDIUMINT UNSIGNED NOT NULL DEFAULT 0,
+    len_m FLOAT NOT NULL DEFAULT 0.0,
+    base INT UNSIGNED NOT NULL);`,
+  `CREATE TABLE IF NOT EXISTS ${POINTS} (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    segment_key MEDIUMINT UNSIGNED NOT NULL,
+    lat DOUBLE NOT NULL,
+    lon DOUBLE NOT NULL);`,
+  `CREATE TABLE IF NOT EXISTS ${USERS} (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user TEXT NOT NULL);`,
+  `CREATE TABLE IF NOT EXISTS ${USER_SEGMENTS} (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    user_id MEDIUMINT UNSIGNED NOT NULL,
+    segment_id MEDIUMINT UNSIGNED NOT NULL,
+    clinched BOOL NOT NULL,
+    start_id INT UNSIGNED NOT NULL,
+    end_id INT UNSIGNED NOT NULL);`
+];
+
 db.connectAsync()
   .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}, seeding database...`))
-  .then(() => db.queryAsync(`DROP DATABASE IF EXISTS ${database}`))
-  .then(() => db.queryAsync(`CREATE DATABASE ${database}`))
-  .then(() => db.queryAsync(`USE ${database}`))
-  .then(() => db.queryAsync(
-  `CREATE TABLE IF NOT EXISTS ${STATES} (
-    id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    name TEXT NOT NULL,
-    initials TEXT NOT NULL);`))
-  .then(() => db.queryAsync(
-  `CREATE TABLE IF NOT EXISTS ${SEGMENTS} (
-    id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    route_num TEXT NOT NULL,
-    type INTEGER NOT NULL,
-    segment_num INTEGER NOT NULL,
-    direction TEXT NOT NULL,
-    state_key INTEGER NOT NULL,
-    len INTEGER NOT NULL DEFAULT 0,
-    len_m DOUBLE NOT NULL DEFAULT 0.0,
-    base INTEGER NOT NULL);`))
-  .then(() => db.queryAsync(
-  `CREATE TABLE IF NOT EXISTS ${POINTS} (
-    id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    segment_key INTEGER NOT NULL,
-    lat DOUBLE NOT NULL,
-    lon DOUBLE NOT NULL);`))
-  .then(() => db.queryAsync(
-  `CREATE TABLE IF NOT EXISTS ${USERS} (
-    id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user TEXT NOT NULL);`))
-  .then(() => db.queryAsync(
-  `CREATE TABLE IF NOT EXISTS ${USER_SEGMENTS} (
-    id INTEGER NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
-    segment_id INTEGER NOT NULL,
-    clinched INTEGER NOT NULL,
-    start_id INTEGER NOT NULL,
-    end_id INTEGER NOT NULL);`))
-  .then(() => seedData(db))
+  .then(() => db.queryAsync(TABLE_QUERIES.join(' ')))
+  .then(() => process.argv[2] === '--seed' ? seedData(db) : undefined)
   .then(() => db.end())
-  .catch(err => {console.error(err); db.end();});
+  .catch(err => {
+    console.error(err);
+    db.end();
+  });
