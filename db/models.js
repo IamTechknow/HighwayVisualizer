@@ -38,7 +38,7 @@ class Models {
   }
 
   static async getPointsForSegment(db, segmentId) {
-    const query = 'SELECT lat, lon FROM points WHERE segment_key = ' + segmentId;
+    const query = 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + segmentId;
     return Models.processPointQueries(db, [query, ''], [{id: segmentId}]);
   }
 
@@ -48,7 +48,7 @@ class Models {
     const keys = await db.queryAsync(keyQuery, args).then((result) => result[0]);
 
     const segments = keys.map(key => { return {id: key.id}; });
-    const combinedQuery = keys.map(key => 'SELECT lat, lon FROM points WHERE segment_key = ' + key.id);
+    const combinedQuery = keys.map(key => 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + key.id);
     combinedQuery.push(''); // Allow last semicolon to be added
     return Models.processPointQueries(db, combinedQuery, segments);
   }
