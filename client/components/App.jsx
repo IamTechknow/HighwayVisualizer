@@ -43,15 +43,17 @@ export default class CreateApp extends React.Component {
   componentDidMount() {
     APIClient.getStates()
       .then((states) => {
-        this.setState({ states, stateId: states[0].id });
-        return APIClient.getSegments(states[0].id);
+        const {id} = states[0];
+        this.setState({ states, stateId: id });
+        return APIClient.getSegments(id);
       })
       .then((rawSegments) => {
         this.highwayData.buildStateSegmentsData(rawSegments);
         this.setState({ segments: APIClient.parseRawSegments(rawSegments) });
-        return APIClient.getSegment(rawSegments[0].id)
+        const { id, routeNum } = rawSegments[0];
+        return APIClient.getSegment(id)
           .then((segmentData) => {
-            this.segmentPromiseDone(segmentData, rawSegments[0].routeNum, rawSegments[0].id);
+            this.segmentPromiseDone(segmentData, routeNum, id);
             return APIClient.getUsers();
           });
       })
@@ -180,10 +182,11 @@ export default class CreateApp extends React.Component {
   // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
     APIClient.getSegments(stateId).then((rawSegments) => {
+      const { id , routeNum } = rawSegments[0];
       this.highwayData.buildStateSegmentsData(rawSegments);
-      return APIClient.getSegment(rawSegments[0].id)
+      return APIClient.getSegment(id)
         .then((segmentData) => this.segmentPromiseDone(
-          segmentData, rawSegments[0].routeNum, rawSegments[0].id,
+          segmentData, routeNum, id,
         ))
         .then(() => this.setState({
           segments: APIClient.parseRawSegments(rawSegments),
@@ -200,23 +203,25 @@ export default class CreateApp extends React.Component {
 
   getRouteName(segmentObj) {
     const { states, stateId } = this.state;
+    const currState = states[stateId - 1].name;
 
     // One exception for D.C. Route 295
-    const routeName = states[stateId - 1].name === 'District' && segmentObj.type === 4
+    const routeName = currState === 'District' && segmentObj.type === 4
       ? `D.C. Route ${segmentObj.routeNum}`
       : `${Highways.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
-    return Highways.shouldUseRouteDir(states[stateId - 1].name)
+    return Highways.shouldUseRouteDir(currState)
       ? `${routeName} ${segmentObj.dir}`
       : routeName;
   }
 
   // Process array of route segments. There will always be at least one
   segmentPromiseDone(segmentData, routeNum, segmentId) {
-    const { dir, type } = this.highwayData.segmentData[segmentData[0].id];
+    const firstSegment = segmentData[0];
+    const { dir, type } = this.highwayData.segmentData[firstSegment.id];
     const [midSegmentId, midPointIdx] = segmentData.length > 1
       ? this.highwayData.getCenterOfRoute(routeNum + dir, type)
-      : [0, Math.floor(segmentData[0].points.length / 2)];
-    const centerTup = segmentData[midSegmentId].points[midPointIdx];
+      : [0, Math.floor(firstSegment.points.length / 2)];
+    const [centerLat, centerLon] = segmentData[midSegmentId].points[midPointIdx];
     this.startMarker = undefined;
 
     this.setState({
@@ -224,8 +229,8 @@ export default class CreateApp extends React.Component {
       segmentId,
       segmentData,
       startMarker: this.startMarker,
-      lat: centerTup[0],
-      lon: centerTup[1],
+      lat: centerLat,
+      lon: centerLon,
     });
   }
 
@@ -242,7 +247,8 @@ export default class CreateApp extends React.Component {
     if (!users) { // Don't render until all data loaded
       return null;
     }
-    const { dir, type } = this.highwayData.segmentData[segmentData[0].id];
+    const firstSegment = segmentData[0];
+    const { dir, type } = this.highwayData.segmentData[firstSegment.id];
     const wholeRouteSelected = segmentData.length > 1
       || this.highwayData.idCache[type][routeNum + dir].length === 1;
     const zoom = this.highwayData.getZoomForSegmentId(
