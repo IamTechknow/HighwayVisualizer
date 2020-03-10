@@ -1,9 +1,10 @@
 import PropTypes from 'prop-types';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { FiMap, FiSearch, FiUser } from 'react-icons/fi';
 
 import Highways from './Highways';
 import Collapsible from './Collapsible';
+import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
@@ -30,33 +31,8 @@ const RouteDrawer = ({
   userSegments,
   users,
 }) => {
-  const [searchResults, setSearchResults] = useState([]);
   const [isCollapsed, setCollapsed] = useState(false);
   const [selectedId, setSelectedId] = useState('segments');
-  const fullRoutes = useMemo(
-    () => segments.flat().filter((routeObj) => routeObj.segNum === 0),
-    [segments],
-  );
-
-  const onSearchSegments = (event) => {
-    const query = event.target.value;
-    if (!query) {
-      setSearchResults([]);
-      return;
-    }
-    const dashSplit = query.split('-');
-    const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
-    const routeNum = queries.length > 1
-      ? queries[queries.length - 1]
-      : queries.length === 1 ? queries[0] : null;
-    let filteredSegments = fullRoutes;
-    if (queries.length > 1) {
-      const highwayType = Highways.getType(queries[0]);
-      filteredSegments = fullRoutes.filter((routeObj) => routeObj.type === highwayType);
-    }
-    const results = filteredSegments.filter((routeObj) => routeObj.routeNum.indexOf(routeNum) >= 0);
-    setSearchResults(results.slice(0, 30));
-  };
 
   return (
     <Sidebar
@@ -175,47 +151,12 @@ const RouteDrawer = ({
         </div>
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<FiSearch />}>
-        <div className="tabContent">
-          <input
-            type="text"
-            size="50"
-            className="nameFormElement"
-            placeholder={`Search ${states[stateId - 1].name} segments by type and/or number...`}
-            onChange={onSearchSegments}
-          />
-          {
-            !searchResults.length
-              ? (
-                <div>
-                  <h3>Search hints:</h3>
-                  <ul>
-                    <li>Try typing a more of a route number to get more specific results</li>
-                    <li>
-                      {
-                        `To filter by Interstates and US Highways, 
-                        type I or US and number separated by space or dash`
-                      }
-                    </li>
-                  </ul>
-                </div>
-              )
-              : (
-                <ul>
-                  {
-                searchResults.map((firstSeg) => (
-                  <li
-                    key={firstSeg.id}
-                    className="clickable"
-                    onClick={(event) => onRouteItemClick(event, firstSeg)}
-                  >
-                    {getRouteName(firstSeg)}
-                  </li>
-                ))
-              }
-                </ul>
-              )
-          }
-        </div>
+        <SearchResults
+          getRouteName={getRouteName}
+          onRouteItemClick={onRouteItemClick}
+          segments={segments}
+          stateName={states[stateId - 1].name}
+        />
       </SidebarTab>
     </Sidebar>
   );
