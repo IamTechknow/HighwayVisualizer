@@ -145,6 +145,10 @@ export default class Highways {
     return this.segmentData[segmentId].segNum + 1;
   }
 
+  getSegmentIds(type, routeNumAndDir) {
+    return this.idCache[type][routeNumAndDir];
+  }
+
   /*
     Assumptions made for binary search:
     - The route is generally travelling in a certain direction
@@ -239,14 +243,14 @@ export default class Highways {
   }
 
   addAllSegments(routeNum, type, dir) {
-    this.idCache[type][routeNum + dir].forEach((segmentId) => {
+    this.getSegmentIds(type, routeNum + dir).forEach((segmentId) => {
       this.addFullSegment(routeNum, segmentId);
     });
   }
 
   // Calculate # of points, then iterate thru array to get center, and return coordinates
   getCenterOfRoute(routeNumAndDir, type) {
-    const segmentIds = this.idCache[type][routeNumAndDir];
+    const segmentIds = this.getSegmentIds(type, routeNumAndDir);
     const numPoints = segmentIds.map((segmentId) => this.segmentData[segmentId].len);
     const totalNum = numPoints.reduce((accum, curr) => accum + curr, 0);
 

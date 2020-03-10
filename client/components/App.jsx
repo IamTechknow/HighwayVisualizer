@@ -250,7 +250,7 @@ export default class CreateApp extends React.Component {
     const firstSegment = segmentData[0];
     const { dir, type } = this.highwayData.segmentData[firstSegment.id];
     const wholeRouteSelected = segmentData.length > 1
-      || this.highwayData.idCache[type][routeNum + dir].length === 1;
+      || this.highwayData.getSegmentIds(type, routeNum + dir).length === 1;
     const zoom = this.highwayData.getZoomForSegmentId(
       wholeRouteSelected ? routeNum + dir : segmentId,
       wholeRouteSelected,
