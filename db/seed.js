@@ -2,7 +2,7 @@ const DB = require('.');
 const seedData = require('./fixtures.js');
 
 const database = 'highways', STATES = 'states', SEGMENTS = 'segments', POINTS = 'points',
-  USERS = 'users', USER_SEGMENTS = 'user_segments';
+  USERS = 'users', USER_SEGMENTS = 'user_segments', CONCURRENCIES = 'concurrencies';
 const db = DB.getDB();
 
 const TABLE_QUERIES = [
@@ -37,7 +37,16 @@ const TABLE_QUERIES = [
     segment_id MEDIUMINT UNSIGNED NOT NULL,
     clinched BOOL NOT NULL,
     start_id INT UNSIGNED NOT NULL,
-    end_id INT UNSIGNED NOT NULL);`
+    end_id INT UNSIGNED NOT NULL);`,
+  `CREATE TABLE IF NOT EXISTS ${CONCURRENCIES} (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    route_num1 CHAR(4) NOT NULL,
+    route_num2 CHAR(4) NOT NULL,
+    first_seg MEDIUMINT UNSIGNED NOT NULL,
+    last_seg MEDIUMINT UNSIGNED NOT NULL,
+    rte2_seg MEDIUMINT UNSIGNED NOT NULL,
+    start_pt INT UNSIGNED NOT NULL,
+    end_pt INT UNSIGNED NOT NULL);`,
 ];
 
 db.connectAsync()
