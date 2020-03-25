@@ -167,17 +167,21 @@ export default class Highways {
     let lo = 0, hi = points.length - 1;
     for (let i = 0; i < POINTS_BINSEARCH_ITERATIONS; i += 1) {
       const mid = Math.trunc((hi + lo) / 2);
+      const latMid = points[mid].lat, lngMid = points[mid].lng;
+      const radXMid = Highways.toRadians(latMid), radYMid = Highways.toRadians(lngMid);
       const startDistance = Highways.calcHavensine(points[lo], radX2, radY2);
       const midDistance = Highways.calcHavensine(points[mid], radX2, radY2);
       const endDistance = Highways.calcHavensine(points[hi], radX2, radY2);
+      const startToMidDist = Highways.calcHavensine(points[lo], radXMid, radYMid);
+      const midToEndDist = Highways.calcHavensine(points[hi], radXMid, radYMid);
       if (startDistance <= midDistance && startDistance <= endDistance) {
         hi = mid;
       } else if (
-        midDistance <= startDistance && midDistance <= endDistance && startDistance <= endDistance
+        midDistance <= startDistance && midDistance <= endDistance && endDistance >= midToEndDist
       ) {
         hi = mid;
       } else if (
-        midDistance <= startDistance && midDistance <= endDistance && startDistance > endDistance
+        midDistance <= startDistance && midDistance <= endDistance && startDistance >= startToMidDist
       ) {
         lo = mid;
       } else {

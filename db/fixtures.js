@@ -8,9 +8,9 @@ const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 const seedData = async (db) => {
   const features = await shapefile.read(CA_DATA, CA_DB).then(collection => collection.features);
+  let basePointID = 0;
   await db.startTransaction();
   const stateID = await db.queryAsync('INSERT INTO states (name, initials) VALUES (?, ?)', ['California', 'CA']).then(res => res[0].insertId);
-  let basePointID = 0;
 
   // Can't use Promise.all as we need to insert synchronously
   for (let feature of features) {
