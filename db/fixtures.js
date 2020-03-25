@@ -1,3 +1,4 @@
+const {getRouteConcurrenciesForState} = require('./routeConcurrencies.js');
 const TYPE_ENUM = require('./routeEnum.js');
 const routePrefixes = require('./routePrefixes.js');
 const shapefile = require('shapefile');
@@ -34,12 +35,21 @@ const seedData = async (db) => {
       basePointID += len;
     }
   }
-
-  await db.endTransaction();
   console.log('Creating indices...');
-  return db.queryAsync('CREATE INDEX POINT_IDX ON points (segment_key);')
+  await db.queryAsync('CREATE INDEX POINT_IDX ON points (segment_key);')
     .then(res => db.queryAsync('CREATE INDEX STATE_IDX on segments (state_key);'))
     .then(res => db.queryAsync('CREATE INDEX SEGMENT_IDX on segments (route_num(3), direction(1));'));
+  console.log('Creating concurrencies...');
+  const concurrencyData = await getRouteConcurrenciesForState(db, 'California')
+    .then((concurrencies) => concurrencies.filter(obj => obj.success).map(data => {
+      const { route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end } = data;
+      return [route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end];
+    }));
+  await db.queryAsync(
+    'INSERT INTO concurrencies (route_num1, route_num2, first_seg, last_seg, rte2_seg, start_pt, end_pt) VALUES ?;',
+    [concurrencyData],
+  );
+  return db.endTransaction();
 };
 
 // Check if the database is empty before populating it with mock data.

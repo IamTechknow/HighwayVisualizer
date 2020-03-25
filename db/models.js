@@ -43,11 +43,13 @@ class Models {
   }
 
   static async getPointsForRoute(db, stateId, type, routeNum, dir) {
-    const keyQuery = `SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
+    const keyQuery = `SELECT id, direction as dir FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
     const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
     const keys = await db.queryAsync(keyQuery, args).then((result) => result[0]);
 
-    const segments = keys.map(key => { return {id: key.id}; });
+    const segments = keys.map(key => {
+      return dir !== undefined ? {id: key.id} : {dir: key.dir, id: key.id};
+    });
     const combinedQuery = keys.map(key => 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + key.id);
     combinedQuery.push(''); // Allow last semicolon to be added
     return Models.processPointQueries(db, combinedQuery, segments);
