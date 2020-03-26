@@ -1,7 +1,6 @@
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
 const POINTS_BINSEARCH_ITERATIONS = 2;
-const CONCURRENCY_THRESHOLD = 200; // in meters
 
 class Utils {
   static toRadians (angle) {
@@ -85,22 +84,6 @@ class Utils {
     }
 
     return { idx: closest, d: shortestDistance };
-  }
-
-  static getPossibleConcurrency (route1, route2, seg1, seg2, route2Seg) {
-    const startPoint = seg1.points[seg1.points.length - 1], endPoint = seg2.points[0];
-    const closestToStart = Utils.findClosestSegmentPoint(route2Seg.points, startPoint);
-    const closestToEnd = Utils.findClosestSegmentPoint(route2Seg.points, endPoint);
-    return {
-      success: closestToStart.d < CONCURRENCY_THRESHOLD && closestToEnd.d < CONCURRENCY_THRESHOLD,
-      route1,
-      route2,
-      route1FirstID: seg1.id,
-      route1SecondID: seg2.id,
-      route2segmentID: route2Seg.id,
-      start: closestToStart.idx,
-      end: closestToEnd.idx,
-    };
   }
 }
 

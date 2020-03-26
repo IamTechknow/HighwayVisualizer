@@ -59,6 +59,9 @@ class Models {
     const segmentQuery = 'SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND direction = ?';
     const rte1_segments = await db.queryAsync(segmentQuery, [routeNum, stateId, dir])
       .then((result) => result[0].map((seg) => seg.id));
+    if (rte1_segments.length === 0) {
+      return [];
+    }
     const concurrencies = await db.queryAsync('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1_segments])
       .then((result) => result[0]);
     if (concurrencies.length === 0) {
