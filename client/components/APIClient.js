@@ -26,6 +26,12 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
+  static getConcurrenyPoints(stateId, routeNum, dir) {
+    const query = `?stateId=${stateId}&dir=${dir}`;
+    return fetch(`/api/concurrencies/${routeNum}${query}`)
+      .then((res) => res.json());
+  }
+
   static parseRawSegments(rawSegments) {
     const set = new Set();
     const organized = [];

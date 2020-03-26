@@ -135,7 +135,9 @@ export default class CreateApp extends React.Component {
     event.stopPropagation();
 
     APIClient.getRoute(stateId, routeNum, type, dir)
-      .then((segments) => this.segmentPromiseDone(segments, routeNum, id));
+      .then((segments) => this.segmentPromiseDone(segments, routeNum, id))
+      .then(() => APIClient.getConcurrenyPoints(stateId, routeNum, dir))
+      .then((concurrentSegments) => this.setState({ concurrentSegments }));
     if (currMode === CLINCH) {
       this.highwayData.addAllSegments(routeNum, type, dir);
       this.setState({ userSegments: this.highwayData.userSegments });
@@ -225,6 +227,7 @@ export default class CreateApp extends React.Component {
     this.startMarker = undefined;
 
     this.setState({
+      concurrentSegments: [],
       routeNum,
       segmentId,
       segmentData,
@@ -237,7 +240,7 @@ export default class CreateApp extends React.Component {
   render() {
     const {
       lat, lon, states, stateId, routeNum, segmentId,
-      segments, segmentData, userSegments, users,
+      segments, segmentData, concurrentSegments, userSegments, users,
       currUserId, currMode, startMarker, submitData,
     } = this.state;
     const liveSegs = segmentData
@@ -269,6 +272,9 @@ export default class CreateApp extends React.Component {
               onClick={(event) => this.onSegmentClick(i, seg.id, event)}
               positions={seg.points}
             />
+          ))}
+          { concurrentSegments && concurrentSegments.map((seg) => (
+            <Polyline key={`concurrency-${seg.id}`} positions={seg.points} />
           ))}
           {/* Show unsubmitted user segments if selected route and segment is the same */}
           { userSegments && userSegments.map(
