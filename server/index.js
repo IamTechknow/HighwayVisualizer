@@ -109,6 +109,28 @@ app.get('/api/points/:type/:routeNum', (req, res) => {
   }
 });
 
+// Returns all concurrent segment portions of a route
+app.get('/api/concurrencies/:routeNum', (req, res) => {
+  const stateId = req.query.stateId ?
+    Number.parseInt(req.query.stateId, 10) : undefined;
+  const routeNum = req.params.routeNum;
+
+  if (!stateId) {
+    res.status(400).send('State ID must be provided');
+  } else if (!routeNum) {
+    res.status(400).send('Route number is invalid');
+  } else {
+    Models.getPointsForConcurrencies(db, stateId, routeNum, req.query.dir)
+    .then((result) => {
+      res.status(200).type('application/json');
+      res.send(JSON.stringify(result));
+    }).catch((err) => {
+      console.error(err);
+      res.status(500).send('Sorry, an error occurred!');
+    });
+  }
+});
+
 app.get('/api/user_segments/:user', (req, res) => {
   Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {

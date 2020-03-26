@@ -55,6 +55,31 @@ class Models {
     return Models.processPointQueries(db, combinedQuery, segments);
   }
 
+  static async getPointsForConcurrencies(db, stateId, routeNum, dir) {
+    const segmentQuery = 'SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND direction = ?';
+    const rte1_segments = await db.queryAsync(segmentQuery, [routeNum, stateId, dir])
+      .then((result) => result[0].map((seg) => seg.id));
+    const concurrencies = await db.queryAsync('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1_segments])
+      .then((result) => result[0]);
+    if (concurrencies.length === 0) {
+      return [];
+    }
+
+    const rte2_segments = await db.queryAsync('SELECT id, base FROM segments WHERE id IN (?)', [concurrencies.map((con) => con.rte2_seg)])
+      .then((result) => result[0]);
+    const segmentBaseMap = {};
+    rte2_segments.forEach((seg) => {
+      segmentBaseMap[seg.id] = seg.base;
+    });
+    const segments = concurrencies.map((con) => {return {id: con.rte2_seg};});
+    const combinedQuery = concurrencies.map((con) =>
+      `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points
+       WHERE segment_key = ${con.rte2_seg} AND id >= ${segmentBaseMap[con.rte2_seg] + con.start_pt}
+       AND id <= ${segmentBaseMap[con.rte2_seg] + con.end_pt}`
+    );
+    return Models.processPointQueries(db, combinedQuery, segments);
+  }
+
   // Helper function to get point data from user segments
   static async getPointsByUser(db, userSegs) {
     const queries = [];
