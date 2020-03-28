@@ -18,6 +18,7 @@ const concurrencies = {
     '26': ['12'],
     '33': ['5', '140', '150'],
     '35': ['92', '280'],
+    '38': ['18'],
     '41': ['46'],
     '46': ['101'],
     '49': ['20', '140'],
@@ -83,7 +84,7 @@ const wrongWay = {
 };
 
 const getRouteConcurrenciesForState = async (db, stateName) => {
-  const stateID = await db.queryAsync('SELECT id FROM states WHERE name = ? LIMIT 1', [stateName])
+  const stateID = await db.query('SELECT id FROM states WHERE name = ? LIMIT 1', [stateName])
     .then((result) => result[0][0].id);
   const results = await processConcurrencyMap(db, stateID, stateName, concurrencies);
   const wrongWayResults = await processConcurrencyMap(db, stateID, stateName, wrongWay, true);
@@ -145,7 +146,7 @@ const getPossibleConcurrency = (route1, route2, seg1, seg2, route2Seg, wrongWay)
     start: wrongWay ? closestToEnd.idx : closestToStart.idx,
     end: wrongWay ? closestToStart.idx : closestToEnd.idx,
   };
-}
+};
 
 module.exports = {
   getRouteConcurrenciesForState,

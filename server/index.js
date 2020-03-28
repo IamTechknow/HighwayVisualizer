@@ -8,7 +8,7 @@ const DB = require('../db');
 
 const PORT = 80;
 const app = express();
-const db = DB.getDB();
+let db;
 
 app.use(compression({threshold: 8192}));
 app.use(express.static(path.resolve(__dirname, '../public')));
@@ -19,7 +19,7 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Allow CORS and caching for endpoints
-const headerMiddleware = function(req, res, next) {
+const headerMiddleware = (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   res.header("Cache-Control", "public, max-age=86400");
@@ -167,8 +167,11 @@ app.post('/api/user_segments/new', (req, res) => {
   });
 });
 
-DB.connectWithDB(db)
-  .then(() => app.listen(PORT, () => console.log(`Listening at Port ${PORT}`)))
+DB.getDB()
+  .then((client) => {
+    db = client;
+    return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
+  })
   .then((server) => process.on('SIGINT', () => {
     server.close();
     db.end();

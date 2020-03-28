@@ -6,20 +6,20 @@ const stateCache = {};
 // Static methods for database interactions
 class Models {
   static getStates(db) {
-    return db.queryAsync('SELECT * FROM states;')
+    return db.query('SELECT * FROM states;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
   // Select by sorting the segments by route number
   static getSegmentsBy(db, stateId) {
-    return db.queryAsync('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned);', [stateId])
+    return db.query('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned);', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
   static async processPointQueries(db, queries, segments) {
-    let result = await db.queryAsync(queries.join('; '))
+    let result = await db.query(queries.join('; '))
       .then((result) => result[0])
       .then((result) => {
         if (Array.isArray(result[0])) { // Data Packet or array?
@@ -45,7 +45,7 @@ class Models {
   static async getPointsForRoute(db, stateId, type, routeNum, dir) {
     const keyQuery = `SELECT id, direction as dir FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
     const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
-    const keys = await db.queryAsync(keyQuery, args).then((result) => result[0]);
+    const keys = await db.query(keyQuery, args).then((result) => result[0]);
 
     const segments = keys.map(key => {
       return dir !== undefined ? {id: key.id} : {dir: key.dir, id: key.id};
@@ -57,18 +57,18 @@ class Models {
 
   static async getPointsForConcurrencies(db, stateId, routeNum, dir) {
     const segmentQuery = 'SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND direction = ?';
-    const rte1_segments = await db.queryAsync(segmentQuery, [routeNum, stateId, dir])
+    const rte1_segments = await db.query(segmentQuery, [routeNum, stateId, dir])
       .then((result) => result[0].map((seg) => seg.id));
     if (rte1_segments.length === 0) {
       return [];
     }
-    const concurrencies = await db.queryAsync('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1_segments])
+    const concurrencies = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1_segments])
       .then((result) => result[0]);
     if (concurrencies.length === 0) {
       return [];
     }
 
-    const rte2_segments = await db.queryAsync('SELECT id, base FROM segments WHERE id IN (?)', [concurrencies.map((con) => con.rte2_seg)])
+    const rte2_segments = await db.query('SELECT id, base FROM segments WHERE id IN (?)', [concurrencies.map((con) => con.rte2_seg)])
       .then((result) => result[0]);
     const segmentBaseMap = {};
     rte2_segments.forEach((seg) => {
@@ -89,7 +89,7 @@ class Models {
 
     for (let obj of userSegs) {
       // Get the base point ID for the segment, then calculate the start and end IDs
-      const base = await db.queryAsync('SELECT base FROM segments WHERE id = ?;', [obj.segment_id]).then((result) => result[0][0].base);
+      const base = await db.query('SELECT base FROM segments WHERE id = ?;', [obj.segment_id]).then((result) => result[0][0].base);
       const start_id = base + obj.start_id, end_id = base + obj.end_id;
       const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + obj.segment_id;
       queries.push(queryBase + ` AND id >= ${start_id} AND id <= ${end_id}`);
@@ -103,16 +103,16 @@ class Models {
   }
 
   static getUsers(db) {
-    return db.queryAsync('SELECT * FROM users;')
+    return db.query('SELECT * FROM users;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
 
   static getUserSegmentsBy(db, username) {
-    return db.queryAsync('SELECT * FROM users WHERE user = ?;', [username])
+    return db.query('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
         if (result[0].length) {
-          return db.queryAsync('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
+          return db.query('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
             .then((userSegResult) => userSegResult[0].length ? Models.getPointsByUser(db, userSegResult[0]) : false)
         } else {
           return false;
@@ -123,13 +123,13 @@ class Models {
 
   // Check if the user already exists
   static createUser(db, username) {
-    return db.queryAsync('SELECT * FROM users WHERE user = ?;', [username])
+    return db.query('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
         if (result[0].length) {
           return { success: false, userId: result[0][0].id };
         }
 
-        return db.queryAsync('INSERT INTO users (user) VALUES (?);', [username])
+        return db.query('INSERT INTO users (user) VALUES (?);', [username])
           .then((result) => { return { success: true, userId: result[0].insertId }; });
       })
       .catch((err) => { console.error(err); });
@@ -137,7 +137,7 @@ class Models {
 
   static createUserSegment(db, userId, userSegments) {
     const userSegArgs = userSegments.map(seg => [userId, seg.segmentId, seg.clinched ? 1 : 0, seg.startId, seg.endId]);
-    return db.queryAsync('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [userSegArgs])
+    return db.query('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [userSegArgs])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
@@ -147,12 +147,12 @@ class Models {
 
     for (let seg of userSegments) {
       let metersTraveled = Utils.calcSegmentDistance(seg.points);
-      let segment = await db.queryAsync('SELECT * FROM segments WHERE id = ?', [seg.segment_id]).then((result) => result[0][0]);
+      let segment = await db.query('SELECT * FROM segments WHERE id = ?', [seg.segment_id]).then((result) => result[0][0]);
       let total = segment.len_m;
 
       let state;
       if (!stateCache[segment.state_key]) {
-        stateCache[segment.state_key] = await db.queryAsync('SELECT * FROM states WHERE id = ?', [segment.state_key]).then((result) => result[0][0].initials);
+        stateCache[segment.state_key] = await db.query('SELECT * FROM states WHERE id = ?', [segment.state_key]).then((result) => result[0][0].initials);
       }
       state = stateCache[segment.state_key];
 

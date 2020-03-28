@@ -99,13 +99,13 @@ const seedData = async (db, args) => {
   const [stateName, stateInitials, SHP_FILE, DBF_FILE] = args.slice(2);
   let features = await shapefile.read(SHP_FILE, DBF_FILE).then(collection => collection.features);
   await db.startTransaction();
-  let stateID = await db.queryAsync('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
+  let stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
   let allData = {
     [TYPE_ENUM.INTERSTATE]: {},
     [TYPE_ENUM.US_HIGHWAY]: {},
     [TYPE_ENUM.STATE]: {}
   };
-  let basePointID = await db.queryAsync('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
+  let basePointID = await db.query('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
 
   for (let feature of features) {
     if (filterOutFeature(feature)) {
@@ -172,7 +172,7 @@ const seedData = async (db, args) => {
           : `${dir}`;
         const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
         const queryArgs = [routeNum, type, i, routeDir, stateID, coords.length, basePointID];
-        const segmentID = await db.queryAsync('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
+        const segmentID = await db.query('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
         await Utils.insertSegment(db, segmentID, coords);
         basePointID += coords.length;
       }
@@ -193,11 +193,12 @@ if (process.argv.length === 6 && (!process.argv[4].includes('.shp') || !process.
   return;
 }
 
-const db = DB.getDB();
-DB.connectWithDB(db)
-  .then(() => seedData(db, process.argv))
-  .then(() => db.end())
-  .catch(err => {
-    console.log(err);
-    db.end();
-  });
+console.log(`Seeding database...`);
+DB.getDB()
+  .then((client) => seedData(client, process.argv).then(() => client)
+    .catch(err => {
+      console.error(err);
+      client.end();
+    })
+  )
+  .then((db) => db.end());

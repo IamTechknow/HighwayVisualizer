@@ -3,7 +3,6 @@ const seedData = require('./fixtures.js');
 
 const database = 'highways', STATES = 'states', SEGMENTS = 'segments', POINTS = 'points',
   USERS = 'users', USER_SEGMENTS = 'user_segments', CONCURRENCIES = 'concurrencies';
-const db = DB.getDB();
 
 const TABLE_QUERIES = [
   `DROP DATABASE IF EXISTS ${database};`,
@@ -48,13 +47,15 @@ const TABLE_QUERIES = [
     start_pt INT UNSIGNED NOT NULL,
     end_pt INT UNSIGNED NOT NULL);`,
 ];
-
-db.connectAsync()
-  .then(() => console.log(`Connected to ${database} database as ID ${db.threadId}, seeding database...`))
-  .then(() => db.queryAsync(TABLE_QUERIES.join(' ')))
-  .then(() => process.argv[2] === '--seed' ? seedData(db) : undefined)
-  .then(() => db.end())
-  .catch(err => {
-    console.error(err);
-    db.end();
-  });
+console.log(`Seeding database...`);
+DB.getDB()
+  .then((client) => client.query(TABLE_QUERIES.join(' ')).then(() => client))
+  .then((db) => process.argv[2] === '--seed'
+    ? seedData(db).then(() => db)
+      .catch(err => {
+        console.error(err);
+        db.end();
+      })
+    : db
+  )
+  .then((db) => db.end());
