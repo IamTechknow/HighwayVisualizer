@@ -128,16 +128,18 @@ export default class CreateApp extends React.Component {
   }
 
   onRouteItemClick(event, segmentOfRoute) {
-    const { currMode, stateId } = this.state;
+    const { currMode, stateId, states } = this.state;
     const {
       id, routeNum, type, dir,
     } = segmentOfRoute;
     event.stopPropagation();
 
-    APIClient.getRoute(stateId, routeNum, type, dir)
-      .then((segments) => this.segmentPromiseDone(segments, routeNum, id))
-      .then(() => APIClient.getConcurrenyPoints(stateId, routeNum, dir))
-      .then((concurrentSegments) => this.setState({ concurrentSegments }));
+    const routePromise = APIClient.getRoute(stateId, routeNum, type, dir)
+      .then((segments) => this.segmentPromiseDone(segments, routeNum, id));
+    if (states[stateId - 1].name === 'California') {
+      routePromise.then(() => APIClient.getConcurrenyPoints(stateId, routeNum, dir))
+        .then((concurrentSegments) => this.setState({ concurrentSegments }));
+    }
     if (currMode === CLINCH) {
       this.highwayData.addAllSegments(routeNum, type, dir);
       this.setState({ userSegments: this.highwayData.userSegments });

@@ -13,7 +13,7 @@ class Models {
 
   // Select by sorting the segments by route number
   static getSegmentsBy(db, stateId) {
-    return db.query('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned);', [stateId])
+    return db.query('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned), id;', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
