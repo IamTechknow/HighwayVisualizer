@@ -18,14 +18,15 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Allow CORS and caching for endpoints
+// Allow CORS for endpoints, caching in prod
 const headerMiddleware = (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Cache-Control", "public, max-age=86400");
+  if (process.env.NODE_ENV === 'production') {
+    res.header("Cache-Control", "public, max-age=86400");
+  }
   next();
 };
-
 app.use(headerMiddleware);
 
 app.get('/users/:user', (req, res) => {
