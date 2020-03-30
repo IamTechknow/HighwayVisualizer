@@ -162,8 +162,9 @@ app.post('/api/user_segments/new', (req, res) => {
   res.status(201).type('application/json');
   Models.createUserSegment(db, req.body.userId, req.body.userSegments)
   .then((result) => {
-    res.send(JSON.stringify({ success: true, entries: req.body.userSegments.length }));
+    res.send(JSON.stringify({ success: true, entries: result.affectedRows }));
   }).catch((err) => {
+    console.error(err);
     res.send(JSON.stringify({ success: false, entries: 0 }));
   });
 });

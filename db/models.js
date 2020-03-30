@@ -135,9 +135,31 @@ class Models {
       .catch((err) => { console.error(err); });
   }
 
-  static createUserSegment(db, userId, userSegments) {
+  // Creates user segments from input and from concurrencies
+  static async createUserSegment(db, userId, userSegments) {
     const userSegArgs = userSegments.map(seg => [userId, seg.segmentId, seg.clinched ? 1 : 0, seg.startId, seg.endId]);
-    return db.query('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [userSegArgs])
+    const userSegmentMap = userSegments.reduce((accum, seg) => { return {...accum, [seg.segmentId]: seg}; }, {});
+    const segmentDataMap = await db.query('SELECT * FROM segments WHERE id IN (?);', [Object.keys(userSegmentMap)])
+      .then(result => result[0])
+      .then(data =>
+        data.reduce((accum, curr) => { return {...accum, [curr.id]: curr}; }, {})
+      );
+    const concurrencyData = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?);', [Object.keys(userSegmentMap)])
+      .then(result => result[0]);
+
+    const additionalSegments = [];
+    for (let concurrency of concurrencyData) {
+      const isMainlineWithMainline = concurrency.first_seg < concurrency.last_seg;
+      const segmentId = isMainlineWithMainline ? concurrency.first_seg : concurrency.last_seg;
+      const secondId = isMainlineWithMainline ? concurrency.last_seg : concurrency.first_seg;
+      if (
+        userSegmentMap[segmentId].endId === segmentDataMap[segmentId].len &&
+        userSegmentMap[secondId] && userSegmentMap[secondId].startId === 0
+      ) {
+        additionalSegments.push([userId, concurrency.rte2_seg, 0, concurrency.start_pt, concurrency.end_pt]);
+      }
+    }
+    return db.query('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [userSegArgs.concat(additionalSegments)])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
