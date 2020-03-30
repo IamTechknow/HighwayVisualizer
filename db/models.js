@@ -183,7 +183,7 @@ class Models {
       total = ~~(total * 100) / 100;
       const percentage = ~~((metersTraveled / total) * 10000) / 100
 
-      stats.push({ state, route: segment.routeNum, segment: segment.segment_num + 1, traveled: metersTraveled, total, percentage });
+      stats.push({ state, route: segment.route_num, segment: segment.segment_num + 1, traveled: metersTraveled, total, percentage });
     }
 
     return stats;
