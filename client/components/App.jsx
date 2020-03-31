@@ -252,13 +252,16 @@ export default class CreateApp extends React.Component {
       return null;
     }
     const firstSegment = segmentData[0];
-    const { dir, type, len } = this.highwayData.segmentData[firstSegment.id];
+    const { dir, type } = this.highwayData.segmentData[firstSegment.id];
     const wholeRouteSelected = segmentData.length > 1
       || this.highwayData.getSegmentIds(type, routeNum + dir).length === 1;
     const zoom = this.highwayData.getZoomForSegmentId(
       wholeRouteSelected ? routeNum + dir : segmentId,
       wholeRouteSelected,
     );
+    const popupSeg = popupCoords !== undefined
+      ? this.highwayData.segmentData[popupCoords.segmentId]
+      : undefined;
 
     return (
       <div>
@@ -296,7 +299,7 @@ export default class CreateApp extends React.Component {
           { popupCoords &&
             <Popup position={popupCoords}>
               <span id='startPopup'>{this.getRouteName(this.highwayData.segmentData[firstSegment.id])}</span> <br />
-              <strong>{`Point ${popupCoords.idx + 1} of ${len}`}</strong> <br />
+              <strong>{`Segment ${popupSeg.segNum}, Point ${popupCoords.idx + 1} of ${popupSeg.len}`}</strong> <br />
               <span>(Clicking on the segment again will create a user segment for travel stats)</span> <br />
               <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>
             </Popup>
