@@ -197,7 +197,7 @@ export default class Highways {
       }
     }
 
-    return Object.assign(points[closest], { idx: closest, segmentId });
+    return Object.assign({ idx: closest, segmentId }, points[closest]);
   }
 
   clearUserSegments() {

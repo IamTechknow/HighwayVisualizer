@@ -1,6 +1,6 @@
 import React from 'react';
 import {
-  Map, TileLayer, Polyline, Marker,
+  Map, TileLayer, Polyline, Popup,
 } from 'react-leaflet';
 
 import APIClient from './APIClient';
@@ -34,8 +34,7 @@ export default class CreateApp extends React.Component {
     this.onClinchToggleFor = this.onClinchToggleFor.bind(this);
     this.onSetMode = this.onSetMode.bind(this);
 
-    this.startMarker = undefined;
-    this.endMarker = undefined;
+    this.popupCoords = undefined;
     this.highwayData = new Highways();
   }
 
@@ -164,20 +163,20 @@ export default class CreateApp extends React.Component {
     const { routeNum, segmentData } = this.state;
     const segLatLng = this.highwayData.findSegmentPoint(event.target, event.latlng, segmentId);
 
-    if (!this.startMarker) {
-      this.startMarker = segLatLng;
-      this.setState({ startMarker: this.startMarker });
+    if (!this.popupCoords) {
+      this.popupCoords = segLatLng;
+      this.setState({ popupCoords: this.popupCoords });
     } else {
       this.highwayData.addNewUserSegments(
-        this.startMarker,
+        this.popupCoords,
         segLatLng,
         routeNum,
         segmentId,
         segmentData,
       );
-      this.startMarker = undefined;
+      this.popupCoords = undefined;
       this.setState({
-        startMarker: this.startMarker,
+        popupCoords: this.popupCoords,
         userSegments: this.highwayData.userSegments,
       });
     }
@@ -226,14 +225,14 @@ export default class CreateApp extends React.Component {
       ? this.highwayData.getCenterOfRoute(routeNum + dir, type)
       : [0, Math.floor(firstSegment.points.length / 2)];
     const [centerLat, centerLon] = segmentData[midSegmentId].points[midPointIdx];
-    this.startMarker = undefined;
+    this.popupCoords = undefined;
 
     this.setState({
       concurrentSegments: [],
       routeNum,
       segmentId,
       segmentData,
-      startMarker: this.startMarker,
+      popupCoords: this.popupCoords,
       lat: centerLat,
       lon: centerLon,
     });
@@ -243,7 +242,7 @@ export default class CreateApp extends React.Component {
     const {
       lat, lon, states, stateId, routeNum, segmentId,
       segments, segmentData, concurrentSegments, userSegments, users,
-      currUserId, currMode, startMarker, submitData,
+      currUserId, currMode, popupCoords, submitData, mapZoomLevel,
     } = this.state;
     const liveSegs = segmentData
       ? Highways.getMapForLiveIds(segmentData)
@@ -253,7 +252,7 @@ export default class CreateApp extends React.Component {
       return null;
     }
     const firstSegment = segmentData[0];
-    const { dir, type } = this.highwayData.segmentData[firstSegment.id];
+    const { dir, type, len } = this.highwayData.segmentData[firstSegment.id];
     const wholeRouteSelected = segmentData.length > 1
       || this.highwayData.getSegmentIds(type, routeNum + dir).length === 1;
     const zoom = this.highwayData.getZoomForSegmentId(
@@ -294,7 +293,14 @@ export default class CreateApp extends React.Component {
               />
               ),
           )}
-          { startMarker && <Marker position={startMarker} /> }
+          { popupCoords &&
+            <Popup position={popupCoords}>
+              <span id='startPopup'>{this.getRouteName(this.highwayData.segmentData[firstSegment.id])}</span> <br />
+              <strong>{`Point ${popupCoords.idx + 1} of ${len}`}</strong> <br />
+              <span>(Clicking on the segment again will create a user segment for travel stats)</span> <br />
+              <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>
+            </Popup>
+          }
         </Map>
         <RouteDrawer
           currMode={currMode}

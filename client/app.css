@@ -41,6 +41,10 @@ body {
   margin-top: 8px;
 }
 
+#startPopup {
+  font-size: 24pt;
+}
+
 /* Collapsible selectors */
 /* Join the two selectors to hide checkboxes for collapsibles */
 input[type='checkbox'].toggle {
