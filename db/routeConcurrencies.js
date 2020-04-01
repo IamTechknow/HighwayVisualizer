@@ -48,7 +48,7 @@ const concurrencies = {
   },
 };
 
-// North-South / North-West / East-South / West-East concurrencies
+// North-South / North-West / East-South / East-West concurrencies
 const wrongWay = {
   California: {
     '2': ['101'],

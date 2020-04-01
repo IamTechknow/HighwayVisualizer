@@ -1,7 +1,7 @@
 # HighwayVisualizer
 
 ## Instructions
-Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Set the `NODE_ENV` environment variable to `production`. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window and run `npm run seed`. Then start another terminal window, and run `npm run start` and `npm run react`. Now you may go to localhost to access the site!
+Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window and run `npm run seed && npm run build && npm run start`. Now you may go to localhost to access the site!
 
 ## Video
 A video of this project based on the commit tagged `mvp` may be found [here](https://youtu.be/i92g7lDWulA).
@@ -21,4 +21,4 @@ User Stories:
 
 ## Attributions
   * The geodata for California's state highway system was used. It may be found [here](https://gisdata-caltrans.opendata.arcgis.com/datasets/77f2d7ba94e040a78bfbe36feb6279da_0).
-  * Geodata for each state may be found [here](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm).
+  * Geodata for each state may be found [here](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles_2017.cfm).
