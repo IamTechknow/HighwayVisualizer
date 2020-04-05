@@ -111,7 +111,7 @@ const RouteDrawer = ({
             <ul>
               { states && states.map((obj) => (
                 <li
-                  key={obj.initials}
+                  key={`state_${obj.id}`}
                   className="clickable"
                   onClick={() => onStateClick(obj.id)}
                 >
