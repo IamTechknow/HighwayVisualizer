@@ -1,11 +1,11 @@
 const fetch = require('node-fetch');
 
 // JSON response contains layers and tables field
-const queryFeatureLayers = (serviceURL) => fetch(serviceURL + '/layers?f=json')
+const queryLayers = (serviceURL) => fetch(serviceURL + '/layers?f=json')
   .then(res => res.json())
   .then(root => root.layers);
 
-const queryLayerFields = (serviceURL, layerId) => queryFeatureLayers(serviceURL)
+const queryLayerFields = (serviceURL, layerId) => queryLayers(serviceURL)
   .then(layerArray => layerArray[layerId].fields);
 
 const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) => {
@@ -20,13 +20,13 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
     .then(root => root.objectIds || root.error);
 };
 
-const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', geometryPrecision = 7) => {
+const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', requestGeoJSON = false, geometryPrecision = 7) => {
   const queryParams = {
     objectIds: ids.join(','),
     geometryPrecision,
     outFields,
     outSR: '4326',
-    f: 'json',
+    f: requestGeoJSON ? 'geojson' : 'json',
   };
   const queryStr = stringifyQuery(queryParams);
   const url = `${serviceURL}/${layerId}/query/?${queryStr}`;
@@ -43,21 +43,46 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
   if (!Array.isArray(whereFilters) || !Array.isArray(conjunctions)) {
     throw Error('Either whereFilters or conjunctions is not an array');
   }
-  if (conjunctions.length !== whereFilters.length - 1) {
+  let openingParens = 0, closingParens = 0;
+  conjunctions.forEach(conjunction => {
+    if (conjunction === '(') {
+      openingParens += 1;
+    } else if (conjunction === ')') {
+      closingParens += 1;
+    }
+  });
+  if (openingParens !== closingParens) {
+    throw Error(`Expected all parenthesis to be closed in conjunctions for query`);
+  }
+  const numConjunctions = conjunctions.length - openingParens - closingParens;
+  if (numConjunctions !== whereFilters.length - 1) {
     throw Error(`Expected ${whereFilters.length - 1} conjunctions for query`);
   }
   conjunctions.forEach((conjunction) => {
-    if (conjunction !== 'AND' && conjunction !== 'OR') {
-      throw Error('Found conjunction that is not AND or OR');
+    switch (conjunction) {
+      case 'AND': case 'OR': case '(': case ')':
+        break;
+
+      default:
+        throw Error('Found conjunction that is not parenthesis, AND or OR');
     }
   });
-  return whereFilters
-    .map((filterObj) => {
-      const {field, op, value, esriType} = filterObj;
-      validateFilter(field, op, value, esriType);
-      return `${field} ${op} ${value}`;
-    })
-    .reduce((accum, clause, i) => `${accum} ${conjunctions[i - 1]} ${clause}`);
+
+  const clauses = whereFilters.map((filterObj) => {
+    const {field, op, value, esriType} = filterObj;
+    validateFilter(field, op, value, esriType);
+    return `${field} ${op} ${value}`;
+  });
+  let rightParensSeen = 0;
+  for (let i = 0; i < conjunctions.length; i += 1) {
+    if (conjunctions[i] === ')') {
+      rightParensSeen += 1;
+      clauses[i - rightParensSeen] = `${clauses[i - rightParensSeen]} ${conjunctions[i]}`;
+    } else {
+      clauses[i - rightParensSeen] = `${conjunctions[i]} ${clauses[i - rightParensSeen]}`;
+    }
+  }
+  return clauses.join(' ');
 };
 
 const validateFilter = (field, op, value, esriType) => {
@@ -72,7 +97,7 @@ const validateFilter = (field, op, value, esriType) => {
       }
       break;
     case '<=': case '>=': case '<': case '>': case '=':
-    case '!=': case '<>': case 'LIKE': case 'IS': case 'IS_NOT':
+    case '!=': case '<>': case 'LIKE': case 'IS': case 'IS NOT':
       break;
     case 'AND':
     case 'OR':
@@ -92,6 +117,7 @@ const validateFilter = (field, op, value, esriType) => {
   }
   if (
     (esriType === 'esriFieldTypeInteger' || esriType === 'esriFieldTypeOID') &&
+    value !== 'null' &&
     isNaN(parseInt(value, 10))
   ) {
     throw Error('Value is not an integer');
@@ -99,7 +125,7 @@ const validateFilter = (field, op, value, esriType) => {
 };
 
 module.exports = {
-  queryFeatureLayers,
+  queryLayers,
   queryLayerFields,
   queryLayerFeatureIDs,
   queryLayerFeaturesWithIDs,
