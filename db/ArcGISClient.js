@@ -21,18 +21,35 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
 };
 
 const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', requestGeoJSON = false, geometryPrecision = 7) => {
-  const queryParams = {
-    objectIds: ids.join(','),
-    geometryPrecision,
-    outFields,
-    outSR: '4326',
-    f: requestGeoJSON ? 'geojson' : 'json',
-  };
-  const queryStr = stringifyQuery(queryParams);
-  const url = `${serviceURL}/${layerId}/query/?${queryStr}`;
-  console.log(url);
-  return fetch(url).then(res => res.json())
-    .then(root => root.features || root.error);
+  const idSubsets = [];
+  for (let i = 0; i < ids.length; i += 100) {
+    idSubsets.push(
+      ids.length - i > 100 ? ids.slice(i, i + 100) : ids.slice(i, ids.length)
+    );
+  }
+
+  const promises = idSubsets.map((idSubset) => {
+    const queryParams = {
+      objectIds: idSubset.join(','),
+      geometryPrecision,
+      outFields,
+      outSR: '4326',
+      f: requestGeoJSON ? 'geojson' : 'json',
+    };
+    const queryStr = stringifyQuery(queryParams);
+    const url = `${serviceURL}/${layerId}/query/?${queryStr}`;
+    return fetch(url).then(res => res.json());
+  });
+  return Promise.all(promises).then((chunks) => {
+    const anyErrors = chunks.filter(chunk => chunk.error);
+    const allFeatures = chunks.filter(chunk => chunk.features)
+      .reduce((accum, chunk) => accum.concat(chunk.features), []);
+    return {
+      error: anyErrors.length > 0 ? anyErrors[0].error : null,
+      features: allFeatures,
+      type: 'FeatureCollection',
+    };
+  });
 };
 
 const stringifyQuery = (queryParams) => Object.keys(queryParams)
