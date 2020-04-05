@@ -132,7 +132,7 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
 
     const [Route_Name, Route_Numb, Route_Sign] = getPropertyFields(
       feature.properties,
-      isShapefileData ? ['Route_Name', 'Route_Numb', 'Route_Sign'] : ['route_name', 'route_number', 'route_sign'],
+      isShapefileData ? ['Route_Name', 'Route_Numb', 'Route_Sign'] : ['route_name', 'route_number', 'route_signing'],
     );
     const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
       ? Number(Route_Name.substring(2))
