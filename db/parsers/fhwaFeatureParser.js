@@ -24,14 +24,20 @@ const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
 const INTERSTATE_FACILITY_SYSTEM = 1;
 const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
 
-const isNonMainlineInterstate = (feature) =>
-  feature.geometry.coordinates.length !== 0 &&
-  (feature.properties.Route_Name !== '' || feature.properties.Route_Numb !== 0) &&
-  feature.properties.F_System === INTERSTATE_FACILITY_SYSTEM &&
-  feature.properties.Facility_T === NON_INVENTORY_FACILITY_CODE;
-
+const isNonMainlineInterstate = (feature, isShapefileData) => {
+  const [Route_Name, Route_Numb, F_System, Facility_T] = getPropertyFields(
+    feature.properties,
+    isShapefileData
+      ? ['Route_Name', 'Route_Numb', 'F_System', 'Facility_T']
+      : ['route_name', 'route_number', 'f_system', 'facility_type'],
+  );
+  return feature.geometry.coordinates.length !== 0 &&
+    (Route_Name !== '' || Route_Numb !== 0) &&
+    F_System === INTERSTATE_FACILITY_SYSTEM &&
+    Facility_T === NON_INVENTORY_FACILITY_CODE;
+};
 const filterOutFeature = (feature) => {
-  const { Facility_T, Ownership, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code } = feature.properties;
+  const { Facility_T, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code } = feature.properties;
 
   if (
     Route_Sign !== TYPE_ENUM.INTERSTATE &&
@@ -75,23 +81,30 @@ const calcDir = (left, right) => {
 };
 
 // Account for features with Route_Sign = 1 (unsigned)
-const getTypeWithProperties = (properties, stateName) => {
-  const { F_System, Route_Name, Route_Numb } = properties;
+const getTypeWithProperties = (properties, stateName, isShapefileData) => {
+  const [ F_System, Route_Name, Route_Numb ] = getPropertyFields(
+    properties,
+    isShapefileData
+      ? ['F_System', 'Route_Name', 'Route_Numb']
+      : ['f_system', 'route_name', 'route_number'],
+  );
   const routeNum = Route_Numb !== 0 ? Route_Numb : Number(Route_Name.substring(2));
   const typeEnum = routePrefixes[stateName][routeNum];
 
-  if (!typeEnum) { // Default unsigned routes to state routes
-    return TYPE_ENUM.STATE;
-  } else if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
+  if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
     return TYPE_ENUM.STATE;
   } else if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === TYPE_ENUM.US_HIGHWAY) {
     return TYPE_ENUM.STATE;
   }
-
-  return typeEnum;
+  return typeEnum || TYPE_ENUM.STATE;
 };
 
-const seedFeatures = async (db, features, stateName, stateInitials) => {
+// Field names are shortened in shapefiles, so grab them programatically and destructure to common format
+const getPropertyFields = (properties, fieldNames) => {
+  return fieldNames.map(field => properties[field]);
+};
+
+const seedFeatures = async (db, features, stateName, stateInitials, isShapefileData = true) => {
   await db.startTransaction();
   let stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
   let allData = {
@@ -99,20 +112,28 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
     [TYPE_ENUM.US_HIGHWAY]: {},
     [TYPE_ENUM.STATE]: {}
   };
-  let basePointID = await db.query('SELECT COUNT(*) FROM points;').then(res => res[0][0]['COUNT(*)']); // get current points table count
+  let basePointID = await db.query('SELECT COUNT(*) FROM points;')
+    .then(res => res[0][0]['COUNT(*)']);
+  const filteredFeatures = isShapefileData
+    ? features.filter(feature => !filterOutFeature(feature))
+    : features.filter(feature => feature.geometry);
+  if (filteredFeatures.length === 0) {
+    console.error('No features filtered in. Please validate parameters. Exiting...');
+    await db.endTransaction();
+    return;
+  }
 
-  for (let feature of features) {
-    if (filterOutFeature(feature)) {
-      continue;
-    }
-
+  for (let feature of filteredFeatures) {
     // HACK: Be wary if a multi line feature occurs. There is one in the DC shapefile even though it shouldn't be there. Sanitize it
     if (feature.geometry.type === 'MultiLineString') {
       console.log('Found multi line string, sanitizing...');
       feature.geometry.coordinates = feature.geometry.coordinates[0];
     }
 
-    const { Route_Name, Route_Numb, Route_Sign } = feature.properties;
+    const [Route_Name, Route_Numb, Route_Sign] = getPropertyFields(
+      feature.properties,
+      isShapefileData ? ['Route_Name', 'Route_Numb', 'Route_Sign'] : ['route_name', 'route_number', 'route_sign'],
+    );
     const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
       ? Number(Route_Name.substring(2))
       : Route_Numb;
@@ -131,26 +152,30 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
   // The Route ID can be a number string, in other cases it is alphanumeric
   for (let type in allData) {
     const segmentsByType = allData[type];
+    const routeIDKey = isShapefileData ? 'Route_ID' : 'route_id';
+    const beginKey = isShapefileData ? 'Begin_Poin' : 'begin_point';
+    const facilityTypeKey = isShapefileData ? 'Facility_T' : 'facility_type';
+
     for (let route in segmentsByType) {
       segmentsByType[route] = segmentsByType[route].sort((left, right) => {
-        return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
+        return left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]);
       });
 
       segmentsByType[route] = segmentsByType[route].sort((left, right) => {
-        if (left.properties.Route_ID === right.properties.Route_ID) {
-          return left.properties.Begin_Poin - right.properties.Begin_Poin;
+        if (left.properties[routeIDKey] === right.properties[routeIDKey]) {
+          return left.properties[beginKey] - right.properties[beginKey];
         }
-
-        return left.properties.Route_ID.localeCompare(right.properties.Route_ID);
+        return left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]);
       });
 
       // Put all the route IDs into a new object. Then sort them
       let routeIds = {};
       for (let feature of segmentsByType[route]) {
-        if (routeIds[feature.properties.Route_ID]) {
-          routeIds[feature.properties.Route_ID].push(feature);
+        const routeID = feature.properties[routeIDKey];
+        if (routeIds[routeID]) {
+          routeIds[routeID].push(feature);
         } else {
-          routeIds[feature.properties.Route_ID] = [feature];
+          routeIds[routeID] = [feature];
         }
       }
 
@@ -161,7 +186,7 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
       const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
       const routeNum = `${route}`, oppositeDir = dir === 'E' ? 'W' : 'S';
       for (let i = 0; i < finalArray.length; i += 1) {
-        const routeDir = finalArray[i][0].properties.Facility_T === NON_INVENTORY_FACILITY_CODE
+        const routeDir = finalArray[i][0].properties[facilityTypeKey] === NON_INVENTORY_FACILITY_CODE
           ? `${oppositeDir}`
           : `${dir}`;
         const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
