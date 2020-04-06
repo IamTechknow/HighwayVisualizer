@@ -22,3 +22,4 @@ User Stories:
 ## Attributions
   * The geodata for California's state highway system was used. It may be found [here](https://gisdata-caltrans.opendata.arcgis.com/datasets/77f2d7ba94e040a78bfbe36feb6279da_0).
   * Geodata for each state may be found [here](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles_2017.cfm).
+  * The JSDoc style guide used may be found [here](https://github.com/shri/JSDoc-Style-Guide).

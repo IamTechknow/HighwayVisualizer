@@ -1,12 +1,37 @@
-const R = 6371e3; // Mean radius of Earth in meters
+/**
+ * @fileOverview Contains utility methods to work with points and segments in the form of a static
+ *               class. These methods may be used in other modules and classes.
+ */
+
+/** @constant {number} */
+const R = 6371e3;
+
+/** @constant {number} */
 const FACTOR = Math.PI / 180;
+
+/** @constant {number} */
 const POINTS_BINSEARCH_ITERATIONS = 2;
 
+/** Utility class used to calculate or insert data */
 class Utils {
+  /**
+   * Convert an angle from degrees to radians.
+   * @param {number} angle - The angle in degrees from -180 to 180.
+   * @return {number} The angle in radians.
+   */
   static toRadians (angle) {
     return angle * FACTOR;
   }
 
+  /**
+   * Calculates the "great-circle" distance of two points using the haversine formula.
+   * Vincenty's formulae gives a result accurate to 0.5 mm.
+   *
+   * @param {number[]} point - Array containing the first latitude and longitude.
+   * @param {number} radX2 - The angle in radians of the second latitude from -180 to 180.
+   * @param {number} radY2 - The angle in radians of the second longitude from -180 to 180.
+   * @return {number} The distance between two points presented by the parameters in meters.
+   */
   static calcHavensine(point, radX2, radY2) {
     const [lat, lng] = point;
 
@@ -23,8 +48,12 @@ class Utils {
     return R * c;
   }
 
-  // Apply haversine formula to calculate the 'great-circle' distance of polyline
-  // Vincenty's formulae gives a result accurate to 0.5 mm
+  /**
+   * Calculates the total "great-circle" distance of a polyline by using calcHavensine().
+   * @param {Array[]} seg - An array containing geographical points represented by arrays.
+   *        Each subarray contains the latitude and longitude of a point.
+   * @return {number} The total distance of the polyline in meters.
+   */
   static calcSegmentDistance(seg) {
     let metersTraveled = 0;
     for (let i = 0; i < seg.length - 1; i += 1) {
@@ -34,6 +63,17 @@ class Utils {
     return metersTraveled;
   }
 
+  /**
+   * Inserts a polyline into a MySQL database by creating records a segment's coordinates
+   * and updating the segment's record with the calculated segment's distance in meters.
+   * Logs the result the segment is inserted.
+   *
+   * @async
+   * @param {object} db - A database client that can perform queries from the mysql2 module.
+   * @param {number} segmentID - Row ID of the segment to insert.
+   * @param {Array[]} coords - An array containing geographical points represented by arrays.
+   *        Each subarray contains the longitude and latitude of a point, in that order.
+   */
   static insertSegment = async (db, segmentID, coords) => {
     const items = coords.map(tup => [segmentID, tup[1], tup[0]]);
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
@@ -42,6 +82,17 @@ class Utils {
     console.log(`Seeded segment with ID ${segmentID} with ${items.length} points, length = ${lenInMeters}m`);
   }
 
+  /**
+   * Given a segment and a origin coordinate of comparsion, calculate the point on the segment
+   * closest to the origin. Utilizes a binary search technique to quickly find the point.
+   *
+   * @param {Array[]} points - An array containing geographical points represented by arrays.
+   *        Each subarray contains the latitude and longitude of a point.
+   * @param {number[]} origin - An array containing the latitude and longitude of the point to
+   *        compare.
+   * @return {object} An object with idx and d fields representing the closest point in the
+   *         segment relative to the origin, and the distance in meters.
+   */
   static findClosestSegmentPoint(points, origin) {
     let shortestDistance = Number.MAX_VALUE;
     let closest;
@@ -87,4 +138,5 @@ class Utils {
   }
 }
 
+/** @module Utils */
 module.exports = Utils;
