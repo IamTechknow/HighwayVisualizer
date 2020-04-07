@@ -1,27 +1,23 @@
-/*
-  General approach to parse FHWA features:
-
-  For all features
-	  decide whether to filter out
-	  Push feature object into an array which is a value with route number as key
-
-  For each key in the object
-    Sort array by begin_poin then route_id with comparator? Also in the comparator record all route ids into a set
-
-	For each route, Determine the direction and ordering of the coordinates
-    Make a new object and place each feature to an array whose key is the route ID
-
-  Convert the object to an array and Sort the arrays of the object by checking the coordinates for the first and last elements of both arrays
-  (for simplicity, skip all IDs ending with A)
-*/
+/**
+ * @fileOverview Parses a GeoJSON feature collection originating from either a FHWA Shapefile
+ *               or ArcGIS server. The parsing differs depending on the data source.
+ *               For Shapefiles, filtering and shortened field names are used.
+ *
+ * @requires /db/routeEnum.js:routeEnum
+ * @requires /db/routePrefixes.js:routePrefixes
+ * @requires /db/Utils.js:Utils
+ */
 
 const TYPE_ENUM = require('../routeEnum.js');
 const routePrefixes = require('../routePrefixes.js');
 const Utils = require('../Utils.js');
 
 // Codes defined in Chapter 4 of the HPMS Field Manual
+/** @constant {number} */
 const DC_STATE_CODE = 11, MARYLAND_STATE_CODE = 24;
+/** @constant {number} */
 const INTERSTATE_FACILITY_SYSTEM = 1;
+/** @constant {number} */
 const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
 
 const isNonMainlineInterstate = (feature, isShapefileData) => {
@@ -36,6 +32,7 @@ const isNonMainlineInterstate = (feature, isShapefileData) => {
     F_System === INTERSTATE_FACILITY_SYSTEM &&
     Facility_T === NON_INVENTORY_FACILITY_CODE;
 };
+
 const filterOutFeature = (feature) => {
   const { Facility_T, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code } = feature.properties;
 
@@ -99,11 +96,47 @@ const getTypeWithProperties = (properties, stateName, isShapefileData) => {
   return typeEnum || TYPE_ENUM.STATE;
 };
 
-// Field names are shortened in shapefiles, so grab them programatically and destructure to common format
+// Field names are shortened in shapefiles, so grab and destructure to common format
 const getPropertyFields = (properties, fieldNames) => {
   return fieldNames.map(field => properties[field]);
 };
 
+/**
+ * Seeds the GeoJSON features to the MySQL database, creating records for the state,
+ * all segments, and all coordinate points. Does not return anything, rather it will
+ * use the given database client to query and insert data.
+ *
+ * Each FHWA feature consists of some fraction of a route segment and does not come in any
+ * apparent order. A combination of mapping and sort is used to create the route segments.
+ * If the features are indicated as coming from an ArcGIS server, they are assumed to be
+ * filtered by the REST API and have lowercase field names that are not truncated.
+ * The general algorithm to process all features is:
+ *
+ * For all features
+ * 	 Decide whether to filter out
+ * 	 Push feature object into an array which is a value with route number as key
+ *
+ * For each key in the object
+ *   Sort array by begin_poin then route_id with comparator.
+ *      In the comparator record all route ids into a set
+ *
+ * For each route, Determine the direction and ordering of the coordinates
+ *   Make a new object and place each feature to an array whose key is the route ID
+ *
+ * Convert the object to an array and Sort the arrays of the object by checking the coordinates
+ * for the first and last elements of both arrays
+ *
+ * Note that FHWA features do not indicate direction except for interstates. The direction for
+ * each segment is approximated and defaults to the mainline directions, north or east.
+ *
+ * @async
+ * @param {object} db - A database client that can perform queries from the mysql2 module.
+ * @param {object[]} features - An array with all GeoJSON features to process into database
+          records.
+ * @param {string} stateName - The name of the US state the features belong to.
+ * @param {string} stateInitials - The state's initials.
+ * @param {boolean} isShapefileData - Whether the features was processed from a shapefile.
+ */
 const seedFeatures = async (db, features, stateName, stateInitials, isShapefileData = true) => {
   await db.startTransaction();
   let stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
@@ -200,4 +233,5 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
   await db.endTransaction();
 };
 
+/** @module fhwaFeatureParser */
 module.exports = seedFeatures;

@@ -66,7 +66,7 @@ class Utils {
   /**
    * Inserts a polyline into a MySQL database by creating records a segment's coordinates
    * and updating the segment's record with the calculated segment's distance in meters.
-   * Logs the result the segment is inserted.
+   * Logs the result of the inserted segment.
    *
    * @async
    * @param {object} db - A database client that can perform queries from the mysql2 module.

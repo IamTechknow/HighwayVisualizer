@@ -1,4 +1,17 @@
-// Values used in Route Qualifier attribute in FHWA HPMS shapefile
+/**
+ * @fileOverview Defines an enum for Interstate, U.S. Route, and state highways.
+ */
+
+/**
+ * Route signing enum module. These values are defined in Chapter 4 of the HPMS Field Manual,
+ * Item 18. A FHWA feature may use these values in the route_signing field. Also used internally
+ * for all segment database records.
+ *
+ * @readonly
+ * @enum {number}
+ * @module routeEnum
+ * @see {@link https://www.fhwa.dot.gov/policyinformation/hpms/fieldmanual/page05.cfm HPMS Reference}
+ */
 module.exports = Object.freeze({
   INTERSTATE: 2,
   US_HIGHWAY: 3,

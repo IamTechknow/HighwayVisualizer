@@ -1,13 +1,47 @@
+/**
+ * @fileOverview Module with functions to interact with any ArcGIS Feature Server REST API.
+ *               May be used to query layer information, layer fields, feature IDs, and features.
+ *               Contains some input validation for function parameters.
+ *
+ * @requires NPM:node-fetch
+ */
 const fetch = require('node-fetch');
 
-// JSON response contains layers and tables field
+/**
+ * Retrieves layer information from the layers endpoint of an ArcGIS feature server URL.
+ * @param {string} serviceURL - The ArcGIS feature server URL.
+ * @return {Promise} Returns a Promise that resolves with an array of layer objects,
+ *         each descripting fields, capabilities, and metadata.
+ */
 const queryLayers = (serviceURL) => fetch(serviceURL + '/layers?f=json')
   .then(res => res.json())
   .then(root => root.layers);
 
+/**
+ * Retrieves the layer's fields in an ArcGIS feature server.
+ * @param {string} serviceURL - The ArcGIS feature server URL.
+ * @param {number} layerId - The integer ID of a layer starting at zero.
+ * @return {Promise} Returns a Promise that resolves with an array of field objects,
+ *         each describing the field name, alias, and type.
+ */
 const queryLayerFields = (serviceURL, layerId) => queryLayers(serviceURL)
   .then(layerArray => layerArray[layerId].fields);
 
+/**
+ * Queries for features of an ArcGIS feature layer with a where filter clause,
+ * but request for the IDs only. The where filters and conjunctions will be validated.
+ *
+ * @param {string} serviceURL - The ArcGIS feature server URL.
+ * @param {number} layerId - The integer ID of a layer starting at zero.
+ * @param {Object[]} whereFilters - Array with filter objects for the where clause.
+ * @param {string} whereFilters[].field - The field to apply an operator with a value.
+ * @param {string} whereFilters[].op - The operator to apply to a value on a field.
+ * @param {string} whereFilters[].value - A value that a record can take on for a field.
+ *                 It can be of ESRI field type and also a null string.
+ * @param {string} whereFilters[].esriType - The field type for the value. Used for validation.
+ * @param {string[]} conjunctions - Array containing modifiers to the where clause.
+ * @return {Promise} Returns a Promise that resolves with an array of feature IDs for the layer.
+ */
 const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) => {
   const queryParams = {
     where: stringifyWhereFilters(whereFilters, conjunctions),
@@ -20,6 +54,23 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
     .then(root => root.objectIds || root.error);
 };
 
+/**
+ * Queries for an ArcGIS feature layer's features in JSON or GeoJSON format.
+ * Can support a large number of IDs by paginating the request to 100 features at a time,
+ * as well as GeoJSON format and a custom coordinate precision.
+ *
+ * @param {string} serviceURL - The ArcGIS feature server URL.
+ * @param {number} layerId - The integer ID of a layer starting at zero.
+ * @param {number[]} ids - An array of feature IDs from a call to queryLayerFeatureIDs().
+ * @param {string} outFields - A string with requested fields separated by commas. Defaults to all fields.
+ * @param {boolean} requestGeoJSON - Whether to request GeoJSON output. Defaults to false,
+ *        as the ArcGIS feature server version must be 10.4 and up.
+ * @param {number} geometryPrecision - Decimal precision for coordinate values.
+ *        Defaults to 7 digits for balanced accuracy and output size.
+ * @return {Promise} Returns a Promise that resolves with a GeoJSON feature collection object
+ *         that contains all features represented by the ids array parameter.
+ *         If any errors were encountered from a GeoJSON chunk, the error field will be non-null.
+ */
 const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', requestGeoJSON = false, geometryPrecision = 7) => {
   const idSubsets = [];
   for (let i = 0; i < ids.length; i += 100) {
@@ -85,6 +136,7 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
     }
   });
 
+  // Combine conjunctions with clauses. Right parenthesis need to be treated differently
   const clauses = whereFilters.map((filterObj) => {
     const {field, op, value, esriType} = filterObj;
     validateFilter(field, op, value, esriType);
@@ -102,6 +154,9 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
   return clauses.join(' ');
 };
 
+// Validates a filter, making assumptions based on the parameters.
+// For IN and NOT_IN, the value is checked to be a set.
+// String validation enforces quotations on string values.
 const validateFilter = (field, op, value, esriType) => {
   switch (op) {
     case 'IN':
@@ -141,6 +196,7 @@ const validateFilter = (field, op, value, esriType) => {
   }
 };
 
+/** @module ArcGISClient */
 module.exports = {
   queryLayers,
   queryLayerFields,

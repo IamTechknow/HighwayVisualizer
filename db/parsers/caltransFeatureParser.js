@@ -1,10 +1,37 @@
+/**
+ * @fileOverview Parses a GeoJSON feature collection originating from a Caltrans SHN shapefile.
+ *
+ * @requires /db/routeConcurrencies.js:routeConcurrencies
+ * @requires /db/routeEnum.js:routeEnum
+ * @requires /db/routePrefixes.js:routePrefixes
+ * @requires /db/Utils.js:Utils
+ */
+
 const {getRouteConcurrenciesForState} = require('../routeConcurrencies.js');
 const TYPE_ENUM = require('../routeEnum.js');
 const routePrefixes = require('../routePrefixes.js');
 const Utils = require('../Utils.js');
 
+/** @constant {string} */
 const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
+/**
+ * Seeds the GeoJSON features to the MySQL database, creating records for California,
+ * all segments, all coordinate points, and known highway concurrencies. Does not return anything,
+ * rather it will use the given database client to query and insert data. As this is meant to be the
+ * first dataset to be seeded, database indices will be created at the end.
+ *
+ * Features from a SHN shapefile indicate direction so segments of any direction are seeded.
+ * Each feature represents an entire route for a given direction, and some features consist of
+ * multiple polylines for a route.
+ *
+ * @async
+ * @param {object} db - A database client that can perform queries from the mysql2 module.
+ * @param {object[]} features - An array with all GeoJSON features to process into database
+          records.
+ * @param {string} stateName - The name of the US state the features belong to.
+ * @param {string} stateInitials - The state's initials.
+ */
 const seedFeatures = async (db, features, stateName, stateInitials) => {
   let basePointID = 0;
   await db.startTransaction();
@@ -53,6 +80,5 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
   return db.endTransaction();
 };
 
-// Check if the database is empty before populating it with mock data.
-// Remember that the results will be a 2D array, first element has actual results
+/** @module caltransFeatureParser */
 module.exports = seedFeatures;
