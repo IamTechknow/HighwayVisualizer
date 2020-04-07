@@ -1,8 +1,28 @@
+/**
+ * @fileOverview Module which serves as a static factory for a MySQL database connection.
+ *
+ * @requires NPM:mysql2
+ */
+
 const mysql = require('mysql2/promise');
 
+/** @constant {string} */
 const DATABASE = 'highways';
+/** @constant {string} */
 const AUTHENTICATION_FIX = 'https://stackoverflow.com/questions/50093144/mysql-8-0-client-does-not-support-authentication-protocol-requested-by-server';
 
+/**
+ * Connects to the highways MySQL database.
+ *
+ * Enables the multiple statements flag which is used to gather queried route segments
+ * into a single result array. If the connection fails for common reasons, console logs
+ * will print helpful messages. When the database connection is no longer to be used, the end
+ * method needs to be called to terminate the connection and the program.
+ *
+ * @return {Promise} Returns a Promise that resolves with a MySQL Connection object. It is
+ *         connected to the highways database and contains helper methods to start and stop
+ *         a transaction meant for inserting data in bulk.
+ */
 const getDB = () => mysql.createConnection({
   database: DATABASE,
   host: 'localhost',
@@ -30,4 +50,5 @@ const getDB = () => mysql.createConnection({
   process.exit(0);
 });
 
+/** @module DB */
 module.exports = {getDB};

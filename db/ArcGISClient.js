@@ -5,6 +5,7 @@
  *
  * @requires NPM:node-fetch
  */
+
 const fetch = require('node-fetch');
 
 /**
