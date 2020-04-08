@@ -1,12 +1,25 @@
+/**
+ * @fileOverview Module that contains data pertaining to route concurrencies
+ *               for certain states and a function to calculate them. Calculating
+ *               concurrencies can enable them to be shown in the application and
+ *               to be accounted for in submitted user segments.
+ *
+ * @requires /db/routeEnum.js:routeEnum
+ * @requires /db/routePrefixes.js:routePrefixes
+ * @requires /db/Utils.js:Utils
+ * @requires /db/Models.js:Models
+ */
 const TYPE_ENUM = require('./routeEnum.js');
 const routePrefixes = require('./routePrefixes.js');
 const Utils = require('./Utils.js');
 const Models = require('./Models.js');
 
+/** @constant {number} */
 const CONCURRENCY_THRESHOLD = 500; // in meters
 
 // Should be read as route "key" takes the discontinuity with routes "values"
 // Concurrencies with more than one route are not supported
+/** @constant {object} */
 const concurrencies = {
   California: {
     '1': ['101', '280'],
@@ -49,6 +62,7 @@ const concurrencies = {
 };
 
 // North-South / North-West / East-South / East-West concurrencies
+/** @constant {object} */
 const wrongWay = {
   California: {
     '2': ['101'],
@@ -83,6 +97,19 @@ const wrongWay = {
   },
 };
 
+/**
+ * Calculates selected highway concurrencies between two routes for a given state.
+ *
+ * Data returned is used to seed records on the concurrencies database table. Only California
+ * is supported currently until a way to calculate concurrencies from a GeoJSON feature collection
+ * is developed.
+ *
+ * @async
+ * @param {object} db - A database client that can perform queries from the mysql2 module.
+ * @param {string} stateName - The angle in radians of the second latitude from -180 to 180.
+ * @return {Promise} Returns a promise that resolves with an array of objects that contain
+ *         information on a possible concurrency between two highways.
+ */
 const getRouteConcurrenciesForState = async (db, stateName) => {
   const stateID = await db.query('SELECT id FROM states WHERE name = ? LIMIT 1', [stateName])
     .then((result) => result[0][0].id);
@@ -148,6 +175,7 @@ const getPossibleConcurrency = (route1, route2, seg1, seg2, route2Seg, wrongWay)
   };
 };
 
+/** @module routeConcurrencies */
 module.exports = {
   getRouteConcurrenciesForState,
 };
