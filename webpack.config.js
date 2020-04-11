@@ -1,17 +1,15 @@
-var path = require('path');
-var SRC_DIR = path.join(__dirname, '/client');
-var DIST_DIR = path.join(__dirname, '/public/dist');
+const path = require('path');
+const SRC_DIR = path.join(__dirname, '/client');
+const DIST_DIR = path.join(__dirname, '/public/dist');
 
 // Decide whether to use cssnano to minify CSS
 const getPlugins = (argv) => {
   const plugins = [
     require('autoprefixer')
   ];
-
   if (argv.mode === 'production') {
     plugins.push(require('cssnano'));
   }
-
   return plugins;
 }
 
@@ -22,10 +20,10 @@ module.exports = (env, argv) => ({
   cache: true,
   output: {
     filename: 'bundle.js',
-    path: DIST_DIR
+    path: DIST_DIR,
   },
   resolve: {
-    extensions: ['.js', '.jsx']
+    extensions: ['.js', '.jsx'],
   },
   module: {
     rules: [
@@ -34,7 +32,7 @@ module.exports = (env, argv) => ({
         include: SRC_DIR,
         use: {
           loader: 'babel-loader'
-        }
+        },
       },
       {
         test: /\.css$/,
@@ -42,12 +40,12 @@ module.exports = (env, argv) => ({
           loader: 'postcss-loader',
           options: {
             plugins: getPlugins(argv)
-          }
+          },
         }],
         include: [
           SRC_DIR,
           path.resolve(__dirname, "node_modules/leaflet")
-        ]
+        ],
       },
       {
         test: /\.(png)$/,
@@ -55,7 +53,7 @@ module.exports = (env, argv) => ({
         options: {
           outputPath: '..' // Put output files next to index.html
         },
-      }
-    ]
-  }
+      },
+    ],
+  },
 });

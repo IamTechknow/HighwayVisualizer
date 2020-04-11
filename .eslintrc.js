@@ -1,7 +1,7 @@
 module.exports = {
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
   },
   "extends": "airbnb",
   "parser": "babel-eslint",
@@ -12,5 +12,5 @@ module.exports = {
     "one-var": "off",
     "one-var-declaration-per-line": "off",
     "react/forbid-foreign-prop-types": "off",
-  }
+  },
 };

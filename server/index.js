@@ -1,3 +1,16 @@
+/**
+ * @fileOverview Express router to configure server instance and provide API endpoints
+ *
+ * @module routers/highwayvisualizer
+ * @requires NPM:compression
+ * @requires NPM:express
+ * @requires NPM:morgan
+ * @requires path
+ * @requires /db/routeEnum.js:routeEnum
+ * @requires /db/models.js:highwayDAO
+ * @requires /db/index.js:DB
+ */
+
 const compression = require('compression');
 const express = require('express');
 const morgan = require('morgan');
@@ -6,7 +19,15 @@ const TYPE_ENUM = require('../db/routeEnum.js');
 const Models = require('../db/models.js');
 const DB = require('../db');
 
+/** @constant {number} */
 const PORT = 80;
+
+/**
+ * Express router to mount API endpoints.
+ * @type {object}
+ * @const
+ * @memberof module:highwayvisualizer
+ */
 const app = express();
 let db;
 
@@ -18,7 +39,13 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
-// Allow CORS for endpoints, caching in prod
+/**
+ * Middleware function used by all endpoints which enables CORS and caching in prod environment.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {express.Response} res
+ * @param {express.NextFunction} next
+ */
 const headerMiddleware = (req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -27,14 +54,24 @@ const headerMiddleware = (req, res, next) => {
   }
   next();
 };
-app.use(headerMiddleware);
 
-app.get('/users/:user', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+/**
+ * Middleware function which directs users to the index page. Client sided routing renders the
+ * given user's highway statistics.
+ *
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+const usersRouter = (req, res) => res.sendFile(path.join(__dirname, '../public/index.html'));
 
-// R endpoints
-app.get('/api/states', (req, res) => {
+/**
+ * Middleware function which provides all available state highway systems to visualize.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+const statesAPIRouter = (req, res) => {
   Models.getStates(db)
   .then((result) => {
     res.status(200).type('application/json');
@@ -42,9 +79,15 @@ app.get('/api/states', (req, res) => {
   }).catch((err) => {
     res.status(500).send('Sorry, an error occurred!');
   });
-});
+};
 
-app.get('/api/users', (req, res) => {
+/**
+ * Middleware function which provides all created users.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {express.Response} res
+ */
+const usersAPIRouter = (req, res) => {
   Models.getUsers(db)
   .then((result) => {
     res.status(200).type('application/json');
@@ -52,9 +95,16 @@ app.get('/api/users', (req, res) => {
   }).catch((err) => {
     res.status(500).send('Sorry, an error occurred!');
   });
-});
+};
 
-app.get('/api/segments/:stateId', (req, res) => {
+/**
+ * Middleware function which provides all segments for a given state ID.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.params.stateId - The ID representing the state's highway system.
+ * @param {express.Response} res
+ */
+const segmentsPerStateAPIRouter = (req, res) => {
   Models.getSegmentsBy(db, req.params.stateId)
   .then((result) => {
     res.status(200).type('application/json');
@@ -62,10 +112,16 @@ app.get('/api/segments/:stateId', (req, res) => {
   }).catch((err) => {
     res.status(500).send('Sorry, an error occurred!');
   });
-});
+};
 
-// Returns all points for a specific segment
-app.get('/api/points/:segmentId', (req, res) => {
+/**
+ * Middleware function which provides all coordinates for a given segment ID.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.params.segmentId - The ID presenting the segment.
+ * @param {express.Response} res
+ */
+const pointsPerSegmentAPIRouter = (req, res) => {
   let segmentInteger = req.params.segmentId ?
     Number.parseInt(req.params.segmentId, 10) : undefined;
 
@@ -80,10 +136,19 @@ app.get('/api/points/:segmentId', (req, res) => {
       res.status(500).send('Sorry, an error occurred!');
     });
   }
-});
+};
 
-// Returns all segments for a specific route
-app.get('/api/points/:type/:routeNum', (req, res) => {
+/**
+ * Middleware function which provides all coordinates for a given route in a state.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.query.dir - The letter direction of the route.
+ * @param {string} req.query.stateId - The ID representing the state's highway system.
+ * @param {string} req.params.routeNum - The route's number, can be alphanumeric.
+ * @param {string} req.params.type - The HPMS route signing type.
+ * @param {express.Response} res
+ */
+const pointsPerRouteAPIRouter = (req, res) => {
   const stateId = req.query.stateId ?
     Number.parseInt(req.query.stateId, 10) : undefined;
   const type = req.params.type ?
@@ -108,10 +173,22 @@ app.get('/api/points/:type/:routeNum', (req, res) => {
       res.status(500).send('Sorry, an error occurred!');
     });
   }
-});
+};
 
-// Returns all concurrent segment portions of a route
-app.get('/api/concurrencies/:routeNum', (req, res) => {
+/**
+ * Middleware function which provides all known concurrencies for a given route in a state.
+ *
+ * This endpoint will provide concurrencies for the route that becomes discontinuious
+ * to the second route. Concurrencies involving more than two routes are not supported.
+ *
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.query.dir - The letter direction of the route.
+ * @param {string} req.query.stateId - The ID representing the state's highway system.
+ * @param {string} req.params.routeNum - The route's number, can be alphanumeric.
+ * @param {express.Response} res
+ */
+const concurrenciesPerRouteAPIRouter = (req, res) => {
   const stateId = req.query.stateId ?
     Number.parseInt(req.query.stateId, 10) : undefined;
   const routeNum = req.params.routeNum;
@@ -130,9 +207,16 @@ app.get('/api/concurrencies/:routeNum', (req, res) => {
       res.status(500).send('Sorry, an error occurred!');
     });
   }
-});
+};
 
-app.get('/api/user_segments/:user', (req, res) => {
+/**
+ * Middleware function which provides all user segments for a given user.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.params.user - The name of the user to query user segments on.
+ * @param {express.Response} res
+ */
+const userSegmentsAPIRouter = (req, res) => {
   Models.getUserSegmentsBy(db, req.params.user)
   .then((result) => {
     let retval = { loaded: true, notFound: result === false };
@@ -145,10 +229,16 @@ app.get('/api/user_segments/:user', (req, res) => {
   }).catch((err) => {
     res.status(500).send('Sorry, an error occurred!');
   });
-});
+};
 
-// C endpoints
-app.post('/api/newUser', (req, res) => {
+/**
+ * Middleware function which allows a new user to be created.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.body.user - The name for the new user.
+ * @param {express.Response} res
+ */
+const newUserAPIRouter = (req, res) => {
   Models.createUser(db, req.body.user)
   .then((result) => {
     res.status(201).type('application/json');
@@ -156,9 +246,17 @@ app.post('/api/newUser', (req, res) => {
   }).catch((err) => {
     res.status(500).send('Sorry, an error occurred!');
   });
-});
+};
 
-app.post('/api/user_segments/new', (req, res) => {
+/**
+ * Middleware function which allows a new user segment to be created.
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {string} req.body.userId - The ID representing the user.
+ * @param {string} req.body.userSegments - The user segment data to insert.
+ * @param {express.Response} res
+ */
+const newUserSegmentAPIRouter = (req, res) => {
   res.status(201).type('application/json');
   Models.createUserSegment(db, req.body.userId, req.body.userSegments)
   .then((result) => {
@@ -167,7 +265,22 @@ app.post('/api/user_segments/new', (req, res) => {
     console.error(err);
     res.send(JSON.stringify({ success: false, entries: 0 }));
   });
-});
+};
+
+app.use(headerMiddleware);
+
+app.get('/users/:user', usersRouter);
+
+app.get('/api/states', statesAPIRouter);
+app.get('/api/users', usersAPIRouter);
+app.get('/api/segments/:stateId', segmentsPerStateAPIRouter);
+app.get('/api/points/:segmentId', pointsPerSegmentAPIRouter);
+app.get('/api/points/:type/:routeNum', pointsPerRouteAPIRouter);
+app.get('/api/concurrencies/:routeNum', concurrenciesPerRouteAPIRouter);
+app.get('/api/user_segments/:user', userSegmentsAPIRouter);
+
+app.post('/api/newUser', newUserAPIRouter);
+app.post('/api/user_segments/new', newUserSegmentAPIRouter);
 
 DB.getDB()
   .then((client) => {

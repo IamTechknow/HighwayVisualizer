@@ -7,8 +7,9 @@
  * @requires /db/routeEnum.js:routeEnum
  * @requires /db/routePrefixes.js:routePrefixes
  * @requires /db/Utils.js:Utils
- * @requires /db/Models.js:Models
+ * @requires /db/Models.js:highwayDAO
  */
+
 const TYPE_ENUM = require('./routeEnum.js');
 const routePrefixes = require('./routePrefixes.js');
 const Utils = require('./Utils.js');
