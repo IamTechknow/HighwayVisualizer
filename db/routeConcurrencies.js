@@ -127,13 +127,13 @@ const processConcurrencyMap = async (db, stateID, stateName, concurrencyMap, wro
   for (let route in concurrencyMap[stateName]) {
     // Need the segments to come in increasing order of ID
     const route1Type = routePrefixes[stateName][route] || TYPE_ENUM.STATE;
-    let route1Segs = await Models.getPointsForRoute(db, stateID, route1Type, route);
-    route1Segs = route1Segs.sort((left, right) => left.id - right.id);
+    const route1Segs = await Models.getPointsForRoute(db, stateID, route1Type, route)
+      .then(segments => segments.sort((left, right) => left.id - right.id));
 
     for (let routeTwo of concurrencyMap[stateName][route]) {
       const route2Type = routePrefixes[stateName][routeTwo] || TYPE_ENUM.STATE;
-      let route2Segs = await Models.getPointsForRoute(db, stateID, route2Type, routeTwo);
-      route2Segs = route2Segs.sort((left, right) => left.id - right.id);
+      const route2Segs = await Models.getPointsForRoute(db, stateID, route2Type, routeTwo)
+        .then(segments => segments.sort((left, right) => left.id - right.id));
       for (let route2Seg of route2Segs) {
         for (let i = 0; i < route1Segs.length - 1; i += 1) {
           // Skip checking if route1 segments are out of sequence or the routes have opposite directions

@@ -1,7 +1,10 @@
 /**
  * @fileOverview The Data access object for the highways database. Contains solely of
  *               static methods that accepts the database client as the first parameter,
- *               thus utilizing dependency injection.
+ *               thus utilizing dependency injection. Note that all coordinate data is formatted
+ *               in LatLng order. GeoJSON was considered, but there is not much value in
+ *               refactoring the codebase to support LngLat coordinates in the frontend,
+ *               especially when only the LineString geometry type is used.
  *
  * @requires /db/Utils.js:Utils
  */
@@ -47,12 +50,11 @@ class Models {
    * The coordinates are truncated here because they cannot be easily truncated upon insertion.
    * This greatly reduces the size of the JSON response.
    *
-   * @async
    * @param {object} db - A database client that can perform queries from the mysql2 module.
    * @param {number} segmentId - The ID of the segment.
    * @return {Promise} Returns a promise that resolves with an array of coodinate objects.
    */
-  static async getPointsForSegment(db, segmentId) {
+  static getPointsForSegment(db, segmentId) {
     const query = 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + segmentId;
     return Models.processPointQueries(db, [query, ''], [{id: segmentId}]);
   }
