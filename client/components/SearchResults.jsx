@@ -50,7 +50,7 @@ const SearchResults = ({
             <div>
               <h3>Search hints:</h3>
               <ul>
-                <li>Try typing a more of a route number to get more specific results</li>
+                <li>Try typing more of a route number to get more specific results</li>
                 <li>
                   {
                     `To filter by Interstates and US Highways,

@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { FiMap, FiSearch, FiUser } from 'react-icons/fi';
+import { FiInfo, FiMap, FiSearch, FiUser } from 'react-icons/fi';
 
 import Highways from './Highways';
 import Collapsible from './Collapsible';
@@ -157,6 +157,23 @@ const RouteDrawer = ({
           segments={segments}
           stateName={states[stateId - 1].name}
         />
+      </SidebarTab>
+      <SidebarTab id="about" header="About HighwayVisualizer" icon={<FiInfo />}>
+        <div className="tabContent">
+          <h3>About</h3>
+          <p>
+            {
+              `HighwayVisualizer is a tool designed to render geodata of highway systems
+              in the United States and to allow users to create and view segments of
+              highways they have traveled on.`
+            }
+          </p>
+          <h3>Repository Info</h3>
+          <p>
+            The project's code repository and attributions may be found on&nbsp;
+            <a href="https://github.com/IamTechknow/HighwayVisualizer">Github</a>.
+          </p>
+        </div>
       </SidebarTab>
     </Sidebar>
   );
