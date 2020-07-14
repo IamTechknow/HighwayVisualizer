@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { FiInfo, FiMap, FiSearch, FiUser } from 'react-icons/fi';
+import { Info, Map, Search, User } from 'react-feather';
 
 import Highways from './Highways';
 import Collapsible from './Collapsible';
@@ -50,7 +50,7 @@ const RouteDrawer = ({
         setSelectedId(id);
       }}
     >
-      <SidebarTab id="users" header="User Settings" icon={<FiUser />}>
+      <SidebarTab id="users" header="User Settings" icon={<User size={16} />}>
         <div className="tabContent">
           <h3>
             { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
@@ -105,7 +105,7 @@ const RouteDrawer = ({
           </Collapsible>
         </div>
       </SidebarTab>
-      <SidebarTab id="segments" header="Segments" icon={<FiMap />}>
+      <SidebarTab id="segments" header="Segments" icon={<Map size={16} />}>
         <div className="tabContent">
           <Collapsible title="States" open="true">
             <ul>
@@ -150,7 +150,7 @@ const RouteDrawer = ({
           </Collapsible>
         </div>
       </SidebarTab>
-      <SidebarTab id="search" header="Search" icon={<FiSearch />}>
+      <SidebarTab id="search" header="Search" icon={<Search size={16} />}>
         <SearchResults
           getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
@@ -158,7 +158,7 @@ const RouteDrawer = ({
           stateName={states[stateId - 1].name}
         />
       </SidebarTab>
-      <SidebarTab id="about" header="About HighwayVisualizer" icon={<FiInfo />}>
+      <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={16} />}>
         <div className="tabContent">
           <h3>About</h3>
           <p>

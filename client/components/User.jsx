@@ -1,7 +1,7 @@
 /* eslint-disable no-nested-ternary */
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react';
-import { FiUser } from 'react-icons/fi';
+import { User } from 'react-feather';
 import { Map, TileLayer, Polyline } from 'react-leaflet';
 
 import Sidebar from './Sidebar';
@@ -83,7 +83,7 @@ const UserApp = ({ match }) => {
         onClose={() => setCollapsed(true)}
         onToggle={(id) => onSidebarToggle(id)}
       >
-        <SidebarTab id="users" header="User Stats" icon={<FiUser />}>
+        <SidebarTab id="users" header="User Stats" icon={<User size={16} />}>
           <div id="tabContent">
             <h3>{`${match.params.user}'s traveling statistics`}</h3>
 
