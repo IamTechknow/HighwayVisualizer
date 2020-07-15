@@ -73,12 +73,8 @@ const usersRouter = (req, res) => res.sendFile(path.join(__dirname, '../public/i
  */
 const statesAPIRouter = (req, res) => {
   Models.getStates(db)
-  .then((result) => {
-    res.status(200).type('application/json');
-    res.send(JSON.stringify(result));
-  }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
-  });
+    .then((result) => _sendOkJSON(result, res))
+    .catch((err) => _catchError(err, res));
 };
 
 /**
@@ -89,12 +85,8 @@ const statesAPIRouter = (req, res) => {
  */
 const usersAPIRouter = (req, res) => {
   Models.getUsers(db)
-  .then((result) => {
-    res.status(200).type('application/json');
-    res.send(JSON.stringify(result));
-  }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
-  });
+    .then((result) => _sendOkJSON(result, res))
+    .catch((err) => _catchError(err, res));
 };
 
 /**
@@ -106,12 +98,8 @@ const usersAPIRouter = (req, res) => {
  */
 const segmentsPerStateAPIRouter = (req, res) => {
   Models.getSegmentsBy(db, req.params.stateId)
-  .then((result) => {
-    res.status(200).type('application/json');
-    res.send(JSON.stringify(result));
-  }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
-  });
+    .then((result) => _sendOkJSON(result, res))
+    .catch((err) => _catchError(err, res));
 };
 
 /**
@@ -126,15 +114,11 @@ const pointsPerSegmentAPIRouter = (req, res) => {
     Number.parseInt(req.params.segmentId, 10) : undefined;
 
   if (!segmentInteger) {
-    res.status(400).send('Segment ID is invalid');
+    _sendErrorJSON('Segment ID is invalid', res);
   } else {
     Models.getPointsForSegment(db, segmentInteger)
-    .then((result) => {
-      res.status(200).type('application/json');
-      res.send(JSON.stringify(result));
-    }).catch((err) => {
-      res.status(500).send('Sorry, an error occurred!');
-    });
+      .then((result) => _sendOkJSON(result, res))
+      .catch((err) => _catchError(err, res));
   }
 };
 
@@ -157,21 +141,17 @@ const pointsPerRouteAPIRouter = (req, res) => {
   const routeNum = req.params.routeNum;
 
   if (!stateId) {
-    res.status(400).send('State ID must be provided');
+    _sendErrorJSON('State ID must be provided', res);
   } else if (!type) {
-    res.status(400).send('Route type must be provided');
+    _sendErrorJSON('Route type must be provided', res);
   } else if (type < TYPE_ENUM.INTERSTATE || type > TYPE_ENUM.STATE) {
-    res.status(400).send('Route type is invalid');
+    _sendErrorJSON('Route type is invalid', res);
   } else if (!routeNum) {
-    res.status(400).send('Route number is invalid');
+    _sendErrorJSON('Route number is invalid', res);
   } else {
     Models.getPointsForRoute(db, stateId, type, routeNum, req.query.dir)
-    .then((result) => {
-      res.status(200).type('application/json');
-      res.send(JSON.stringify(result));
-    }).catch((err) => {
-      res.status(500).send('Sorry, an error occurred!');
-    });
+      .then((result) => _sendOkJSON(result, res))
+      .catch((err) => _catchError(err, res));
   }
 };
 
@@ -194,18 +174,13 @@ const concurrenciesPerRouteAPIRouter = (req, res) => {
   const routeNum = req.params.routeNum;
 
   if (!stateId) {
-    res.status(400).send('State ID must be provided');
+    _sendErrorJSON('State ID must be provided', res);
   } else if (!routeNum) {
-    res.status(400).send('Route number is invalid');
+    _sendErrorJSON('Route number is invalid', res);
   } else {
     Models.getPointsForConcurrencies(db, stateId, routeNum, req.query.dir)
-    .then((result) => {
-      res.status(200).type('application/json');
-      res.send(JSON.stringify(result));
-    }).catch((err) => {
-      console.error(err);
-      res.status(500).send('Sorry, an error occurred!');
-    });
+      .then((result) => _sendOkJSON(result, res))
+      .catch((err) => _catchError(err, res));
   }
 };
 
@@ -218,17 +193,13 @@ const concurrenciesPerRouteAPIRouter = (req, res) => {
  */
 const userSegmentsAPIRouter = (req, res) => {
   Models.getUserSegmentsBy(db, req.params.user)
-  .then((result) => {
-    let retval = { loaded: true, notFound: result === false };
-    if (result) {
-      Object.assign(retval, result);
-    }
-
-    res.status(200).type('application/json');
-    res.send(JSON.stringify(retval));
-  }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
-  });
+    .then((result) => {
+      let retval = { loaded: true, notFound: result === false };
+      if (result) {
+        Object.assign(retval, result);
+      }
+      _sendOkJSON(retval, res);
+    }).catch((err) => _catchError(err, res));
 };
 
 /**
@@ -240,12 +211,8 @@ const userSegmentsAPIRouter = (req, res) => {
  */
 const newUserAPIRouter = (req, res) => {
   Models.createUser(db, req.body.user)
-  .then((result) => {
-    res.status(201).type('application/json');
-    res.send(JSON.stringify(result));
-  }).catch((err) => {
-    res.status(500).send('Sorry, an error occurred!');
-  });
+    .then((result) => _sendOkJSON(result, res, 201))
+    .catch((err) => _catchError(err, res));
 };
 
 /**
@@ -257,14 +224,21 @@ const newUserAPIRouter = (req, res) => {
  * @param {express.Response} res
  */
 const newUserSegmentAPIRouter = (req, res) => {
-  res.status(201).type('application/json');
   Models.createUserSegment(db, req.body.userId, req.body.userSegments)
-  .then((result) => {
-    res.send(JSON.stringify({ success: true, entries: result.affectedRows }));
-  }).catch((err) => {
-    console.error(err);
-    res.send(JSON.stringify({ success: false, entries: 0 }));
-  });
+    .then((result) => {
+      _sendOkJSON({ success: true, entries: result.affectedRows }, res, 201);
+    }).catch((err) => _catchError(err, res));
+};
+
+const _sendOkJSON = (obj, res, code = 200) =>
+  res.status(code).type('application/json').send(JSON.stringify(obj));
+
+const _sendErrorJSON = (message, res, code = 400) =>
+  res.status(code).type('application/json').send(JSON.stringify({ message }));
+
+const _catchError = (err, res) => {
+  console.error(err);
+  _sendErrorJSON('Sorry, an error occurred!', res, 500);
 };
 
 app.use(headerMiddleware);
