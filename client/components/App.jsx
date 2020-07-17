@@ -42,7 +42,7 @@ export default class CreateApp extends React.Component {
   componentDidMount() {
     APIClient.getStates()
       .then((states) => {
-        const {id} = states[0];
+        const { id } = states[0];
         this.setState({ states, stateId: id });
         return APIClient.getSegments(id);
       })
@@ -161,7 +161,7 @@ export default class CreateApp extends React.Component {
   // Keep track of clicked points
   onSegmentClick(i, segmentId, event) {
     const { routeNum, segmentData } = this.state;
-    const segLatLng = this.highwayData.findSegmentPoint(event.target, event.latlng, segmentId);
+    const segLatLng = Highways.findSegmentPoint(event.target, event.latlng, segmentId);
 
     if (!this.popupCoords) {
       this.popupCoords = segLatLng;
@@ -185,7 +185,7 @@ export default class CreateApp extends React.Component {
   // Rebuild highway data for the state and change the route
   onStateClick(stateId) {
     APIClient.getSegments(stateId).then((rawSegments) => {
-      const { id , routeNum } = rawSegments[0];
+      const { id, routeNum } = rawSegments[0];
       this.highwayData.buildStateSegmentsData(rawSegments);
       return APIClient.getSegment(id)
         .then((segmentData) => this.segmentPromiseDone(
@@ -242,7 +242,7 @@ export default class CreateApp extends React.Component {
     const {
       lat, lon, states, stateId, routeNum, segmentId,
       segments, segmentData, concurrentSegments, userSegments, users,
-      currUserId, currMode, popupCoords, submitData, mapZoomLevel,
+      currUserId, currMode, popupCoords, submitData,
     } = this.state;
     const liveSegs = segmentData
       ? Highways.getMapForLiveIds(segmentData)
@@ -296,14 +296,23 @@ export default class CreateApp extends React.Component {
               />
               ),
           )}
-          { popupCoords &&
+          { popupCoords
+            && (
             <Popup position={popupCoords}>
-              <span id='startPopup'>{this.getRouteName(this.highwayData.segmentData[firstSegment.id])}</span> <br />
-              <strong>{`Segment ${popupSeg.segNum}, Point ${popupCoords.idx + 1} of ${popupSeg.len}`}</strong> <br />
-              <span>(Clicking on the segment again will create a user segment for travel stats)</span> <br />
+              <span id="startPopup">{this.getRouteName(this.highwayData.segmentData[firstSegment.id])}</span>
+              {' '}
+              <br />
+              <strong>{`Segment ${popupSeg.segNum}, Point ${popupCoords.idx + 1} of ${popupSeg.len}`}</strong>
+              {' '}
+              <br />
+              <span>
+                (Clicking on the segment again will create a user segment for travel stats)
+              </span>
+              {' '}
+              <br />
               <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>
             </Popup>
-          }
+            )}
         </Map>
         <RouteDrawer
           currMode={currMode}

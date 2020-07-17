@@ -23,9 +23,7 @@ const SearchResults = ({
     }
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
-    const routeNum = queries.length > 1
-      ? queries[queries.length - 1]
-      : queries.length === 1 ? queries[0] : null;
+    const routeNum = queries.length > 0 ? queries[queries.length - 1] : null;
     let filteredSegments = fullRoutes;
     if (queries.length > 1) {
       const highwayType = Highways.getType(queries[0]);
@@ -68,6 +66,12 @@ const SearchResults = ({
                     key={firstSeg.id}
                     className="clickable"
                     onClick={(event) => onRouteItemClick(event, firstSeg)}
+                    onKeyDown={(event) => {
+                      if (event.keyCode === 13) {
+                        onRouteItemClick(event, firstSeg);
+                      }
+                    }}
+                    role="presentation"
                   >
                     {getRouteName(firstSeg)}
                   </li>

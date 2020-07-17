@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
-import { Info, Map, Search, User } from 'react-feather';
+import {
+  Info, Map, Search, User,
+} from 'react-feather';
 
 import Highways from './Highways';
 import Collapsible from './Collapsible';
@@ -8,7 +10,7 @@ import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
-const MANUAL = 0, CLINCH = 1;
+const MANUAL = 0, CLINCH = 1, KEY_ENTER = 13, ICON_SIZE = 16;
 
 const RouteDrawer = ({
   currMode,
@@ -50,7 +52,7 @@ const RouteDrawer = ({
         setSelectedId(id);
       }}
     >
-      <SidebarTab id="users" header="User Settings" icon={<User size={16} />}>
+      <SidebarTab id="users" header="User Settings" icon={<User size={ICON_SIZE} />}>
         <div className="tabContent">
           <h3>
             { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
@@ -105,7 +107,7 @@ const RouteDrawer = ({
           </Collapsible>
         </div>
       </SidebarTab>
-      <SidebarTab id="segments" header="Segments" icon={<Map size={16} />}>
+      <SidebarTab id="segments" header="Segments" icon={<Map size={ICON_SIZE} />}>
         <div className="tabContent">
           <Collapsible title="States" open="true">
             <ul>
@@ -114,6 +116,12 @@ const RouteDrawer = ({
                   key={`state_${obj.id}`}
                   className="clickable"
                   onClick={() => onStateClick(obj.id)}
+                  onKeyDown={(event) => {
+                    if (event.keyCode === KEY_ENTER) {
+                      onStateClick(obj.id);
+                    }
+                  }}
+                  role="presentation"
                 >
                   {obj.name}
                 </li>
@@ -129,6 +137,12 @@ const RouteDrawer = ({
                   key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`}
                   className="clickable"
                   onClick={(event) => onRouteItemClick(event, obj[0])}
+                  onKeyDown={(event) => {
+                    if (event.keyCode === KEY_ENTER) {
+                      onRouteItemClick(event, obj[0]);
+                    }
+                  }}
+                  role="presentation"
                 >
                   {getRouteName(obj[0])}
                   { obj.length > 1 && (
@@ -138,6 +152,12 @@ const RouteDrawer = ({
                           key={`segment-${seg.id}`}
                           className="clickable"
                           onClick={(event) => onSegmentItemClick(event, seg.routeNum, seg.id)}
+                          onKeyDown={(event) => {
+                            if (event.keyCode === KEY_ENTER) {
+                              onSegmentItemClick(event, seg.routeNum, seg.id);
+                            }
+                          }}
+                          role="presentation"
                         >
                           {`Segment ${i + 1}`}
                         </li>
@@ -150,7 +170,7 @@ const RouteDrawer = ({
           </Collapsible>
         </div>
       </SidebarTab>
-      <SidebarTab id="search" header="Search" icon={<Search size={16} />}>
+      <SidebarTab id="search" header="Search" icon={<Search size={ICON_SIZE} />}>
         <SearchResults
           getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
@@ -158,7 +178,7 @@ const RouteDrawer = ({
           stateName={states[stateId - 1].name}
         />
       </SidebarTab>
-      <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={16} />}>
+      <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>
         <div className="tabContent">
           <h3>About</h3>
           <p>
@@ -170,8 +190,9 @@ const RouteDrawer = ({
           </p>
           <h3>Repository Info</h3>
           <p>
-            The project's code repository and attributions may be found on&nbsp;
-            <a href="https://github.com/IamTechknow/HighwayVisualizer">Github</a>.
+            The project&apos;s code repository and attributions may be found on&nbsp;
+            <a href="https://github.com/IamTechknow/HighwayVisualizer">Github</a>
+            .
           </p>
         </div>
       </SidebarTab>

@@ -10,7 +10,13 @@ const SidebarTab = ({
     <div id={id} className={`leaflet-sidebar-pane ${activeClass}`}>
       <h1 className="leaflet-sidebar-header">
         {header}
-        <div className="leaflet-sidebar-close" onClick={onClose} role="button" tabIndex="-1">
+        <div
+          className="leaflet-sidebar-close"
+          onClick={onClose}
+          onKeyDown={onClose}
+          role="button"
+          tabIndex="-1"
+        >
           X
         </div>
       </h1>

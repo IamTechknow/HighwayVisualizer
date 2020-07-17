@@ -66,6 +66,57 @@ export default class Highways {
     return angle * FACTOR;
   }
 
+  /*
+    Assumptions made for binary search:
+    - The route is generally travelling in a certain direction
+      so points can be treated as a sorted array.
+    - Less likely to work for routes that travel circular, may need to debug comparsions
+  */
+  static findSegmentPoint(polyline, clicked, segmentId) {
+    const points = polyline.getLatLngs();
+    let shortestDist = Number.MAX_VALUE;
+    let closest;
+    const clickedLat = clicked.lat, clickedLng = clicked.lng;
+    const radX2 = Highways.toRadians(clickedLat), radY2 = Highways.toRadians(clickedLng);
+
+    // Binary search for desired range by comparing distances
+    // Not exhaustive to ensure point is found
+    let lo = 0, hi = points.length - 1;
+    for (let i = 0; i < POINTS_BINSEARCH_ITERATIONS; i += 1) {
+      const mid = Math.trunc((hi + lo) / 2);
+      const latMid = points[mid].lat, lngMid = points[mid].lng;
+      const radXMid = Highways.toRadians(latMid), radYMid = Highways.toRadians(lngMid);
+      const startDist = Highways.calcHavensine(points[lo], radX2, radY2);
+      const midDist = Highways.calcHavensine(points[mid], radX2, radY2);
+      const endDist = Highways.calcHavensine(points[hi], radX2, radY2);
+      const startToMidDist = Highways.calcHavensine(points[lo], radXMid, radYMid);
+      const midToEndDist = Highways.calcHavensine(points[hi], radXMid, radYMid);
+      if (startDist <= midDist && startDist <= endDist) {
+        hi = mid;
+      } else if (
+        midDist <= startDist && midDist <= endDist && endDist >= midToEndDist
+      ) {
+        hi = mid;
+      } else if (
+        midDist <= startDist && midDist <= endDist && startDist >= startToMidDist
+      ) {
+        lo = mid;
+      } else {
+        lo = mid;
+      }
+    }
+
+    for (let i = lo; i <= hi; i += 1) {
+      const d = Highways.calcHavensine(points[i], radX2, radY2);
+      if (d < shortestDist) {
+        shortestDist = d;
+        closest = i;
+      }
+    }
+
+    return { idx: closest, segmentId, ...points[closest] };
+  }
+
   constructor() {
     // Flatened map from segment ID to segment data
     this.segmentData = undefined;
@@ -147,57 +198,6 @@ export default class Highways {
 
   getSegmentIds(type, routeNumAndDir) {
     return this.idCache[type][routeNumAndDir];
-  }
-
-  /*
-    Assumptions made for binary search:
-    - The route is generally travelling in a certain direction
-      so points can be treated as a sorted array.
-    - Less likely to work for routes that travel circular, may need to debug comparsions
-  */
-  findSegmentPoint(polyline, clicked, segmentId) {
-    const points = polyline.getLatLngs();
-    let shortestDistance = Number.MAX_VALUE;
-    let closest;
-    const clickedLat = clicked.lat, clickedLng = clicked.lng;
-    const radX2 = Highways.toRadians(clickedLat), radY2 = Highways.toRadians(clickedLng);
-
-    // Binary search for desired range by comparing distances
-    // Not exhaustive to ensure point is found
-    let lo = 0, hi = points.length - 1;
-    for (let i = 0; i < POINTS_BINSEARCH_ITERATIONS; i += 1) {
-      const mid = Math.trunc((hi + lo) / 2);
-      const latMid = points[mid].lat, lngMid = points[mid].lng;
-      const radXMid = Highways.toRadians(latMid), radYMid = Highways.toRadians(lngMid);
-      const startDistance = Highways.calcHavensine(points[lo], radX2, radY2);
-      const midDistance = Highways.calcHavensine(points[mid], radX2, radY2);
-      const endDistance = Highways.calcHavensine(points[hi], radX2, radY2);
-      const startToMidDist = Highways.calcHavensine(points[lo], radXMid, radYMid);
-      const midToEndDist = Highways.calcHavensine(points[hi], radXMid, radYMid);
-      if (startDistance <= midDistance && startDistance <= endDistance) {
-        hi = mid;
-      } else if (
-        midDistance <= startDistance && midDistance <= endDistance && endDistance >= midToEndDist
-      ) {
-        hi = mid;
-      } else if (
-        midDistance <= startDistance && midDistance <= endDistance && startDistance >= startToMidDist
-      ) {
-        lo = mid;
-      } else {
-        lo = mid;
-      }
-    }
-
-    for (let i = lo; i <= hi; i += 1) {
-      const d = Highways.calcHavensine(points[i], radX2, radY2);
-      if (d < shortestDistance) {
-        shortestDistance = d;
-        closest = i;
-      }
-    }
-
-    return Object.assign({ idx: closest, segmentId }, points[closest]);
   }
 
   clearUserSegments() {
