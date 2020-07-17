@@ -121,11 +121,7 @@ export default class Highways {
     // Flatened map from segment ID to segment data
     this.segmentData = undefined;
     // Map route number and direction to segment IDs for each route signage type
-    this.idCache = {
-      [TYPE_ENUM.INTERSTATE]: {},
-      [TYPE_ENUM.US_HIGHWAY]: {},
-      [TYPE_ENUM.STATE]: {},
-    };
+    this.idCache = undefined;
     // User segment data
     this.userSegments = [];
     // Map route number to segment length
@@ -165,6 +161,11 @@ export default class Highways {
   }
 
   buildStateSegmentsData(raw) {
+    const initialIdCache = {
+      [TYPE_ENUM.INTERSTATE]: {},
+      [TYPE_ENUM.US_HIGHWAY]: {},
+      [TYPE_ENUM.STATE]: {},
+    };
     const segmentReducer = (accum, curr) => {
       accum[curr.id] = curr;
       return accum;
@@ -188,7 +189,7 @@ export default class Highways {
       return accum;
     };
     this.segmentData = raw.reduce(segmentReducer, {});
-    this.idCache = raw.reduce(idReducer, this.idCache);
+    this.idCache = raw.reduce(idReducer, initialIdCache);
     this.routeLengthMap = raw.reduce(lenReducer, {});
   }
 
