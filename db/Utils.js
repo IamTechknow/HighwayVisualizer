@@ -79,7 +79,6 @@ class Utils {
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
     await db.query('UPDATE segments SET len_m = ? WHERE id = ?;', [lenInMeters, segmentID]);
     await db.query('INSERT INTO points (segment_key, lat, lon) VALUES ?;', [items]);
-    console.log(`Seeded segment with ID ${segmentID} with ${items.length} points, length = ${lenInMeters}m`);
   }
 
   /**

@@ -15,6 +15,10 @@ const Utils = require('../Utils.js');
 /** @constant {string} */
 const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
+/** @constant {string} */
+const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
+  FEATURES_DONE_EVENT = 'featuresDone';
+
 /**
  * Seeds the GeoJSON features to the MySQL database, creating records for California,
  * all segments, all coordinate points, and known highway concurrencies. Does not return anything,
@@ -27,12 +31,13 @@ const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
  *
  * @async
  * @param {object} db - A database client that can perform queries from the mysql2 module.
+ * @param {object} emitter - An EventEmitter object to emit feature insertion events.
  * @param {object[]} features - An array with all GeoJSON features to process into database
           records.
  * @param {string} stateName - The name of the US state the features belong to.
  * @param {string} stateInitials - The state's initials.
  */
-const seedFeatures = async (db, features, stateName, stateInitials) => {
+const seedFeatures = async (db, emitter, features, stateName, stateInitials) => {
   let basePointID = 0;
   await db.startTransaction();
   const stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?)', [stateName, stateInitials]).then(res => res[0].insertId);
@@ -45,11 +50,14 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
     const insertStatement = 'INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?);';
     // The curve is either in a single array or multiple arrays
     if (feature.geometry.type !== 'LineString') {
-      for (let i = 0; i < feature.geometry.coordinates.length; i += 1) {
+      const numFeatures = feature.geometry.coordinates.length;
+      emitter.emit(FOUND_MULTI_EVENT, numFeatures);
+      for (let i = 0; i < numFeatures; i += 1) {
         const len = feature.geometry.coordinates[i].length;
         const queryArgs = [routeNum, type, i, dir, stateID, len, basePointID];
         const segmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
         await Utils.insertSegment(db, segmentID, feature.geometry.coordinates[i]);
+        emitter.emit(INSERTED_FEATURE_EVENT);
         basePointID += len;
       }
     } else {
@@ -57,9 +65,11 @@ const seedFeatures = async (db, features, stateName, stateInitials) => {
       const queryArgs = [routeNum, type, 0, dir, stateID, len, basePointID];
       const segmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
       await Utils.insertSegment(db, segmentID, feature.geometry.coordinates);
+      emitter.emit(INSERTED_FEATURE_EVENT);
       basePointID += len;
     }
   }
+  emitter.emit(FEATURES_DONE_EVENT);
   console.log('Creating indices...');
   const indexQueries = [
     'CREATE INDEX POINT_IDX ON points (segment_key);',

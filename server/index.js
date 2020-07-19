@@ -71,11 +71,10 @@ const usersRouter = (req, res) => res.sendFile(path.join(__dirname, '../public/i
  * @param {express.Request} req
  * @param {express.Response} res
  */
-const statesAPIRouter = (req, res) => {
+const statesAPIRouter = (req, res) =>
   Models.getStates(db)
     .then((result) => _sendOkJSON(result, res))
     .catch((err) => _catchError(err, res));
-};
 
 /**
  * Middleware function which provides all created users.
@@ -83,11 +82,10 @@ const statesAPIRouter = (req, res) => {
  * @param {express.Request} req
  * @param {express.Response} res
  */
-const usersAPIRouter = (req, res) => {
+const usersAPIRouter = (req, res) =>
   Models.getUsers(db)
     .then((result) => _sendOkJSON(result, res))
     .catch((err) => _catchError(err, res));
-};
 
 /**
  * Middleware function which provides all segments for a given state ID.
@@ -96,11 +94,10 @@ const usersAPIRouter = (req, res) => {
  * @param {string} req.params.stateId - The ID representing the state's highway system.
  * @param {express.Response} res
  */
-const segmentsPerStateAPIRouter = (req, res) => {
+const segmentsPerStateAPIRouter = (req, res) =>
   Models.getSegmentsBy(db, req.params.stateId)
     .then((result) => _sendOkJSON(result, res))
     .catch((err) => _catchError(err, res));
-};
 
 /**
  * Middleware function which provides all coordinates for a given segment ID.
@@ -191,7 +188,7 @@ const concurrenciesPerRouteAPIRouter = (req, res) => {
  * @param {string} req.params.user - The name of the user to query user segments on.
  * @param {express.Response} res
  */
-const userSegmentsAPIRouter = (req, res) => {
+const userSegmentsAPIRouter = (req, res) =>
   Models.getUserSegmentsBy(db, req.params.user)
     .then((result) => {
       let retval = { loaded: true, notFound: result === false };
@@ -200,7 +197,6 @@ const userSegmentsAPIRouter = (req, res) => {
       }
       _sendOkJSON(retval, res);
     }).catch((err) => _catchError(err, res));
-};
 
 /**
  * Middleware function which allows a new user to be created.
@@ -209,11 +205,10 @@ const userSegmentsAPIRouter = (req, res) => {
  * @param {string} req.body.user - The name for the new user.
  * @param {express.Response} res
  */
-const newUserAPIRouter = (req, res) => {
+const newUserAPIRouter = (req, res) =>
   Models.createUser(db, req.body.user)
     .then((result) => _sendOkJSON(result, res, 201))
     .catch((err) => _catchError(err, res));
-};
 
 /**
  * Middleware function which allows a new user segment to be created.
@@ -223,12 +218,11 @@ const newUserAPIRouter = (req, res) => {
  * @param {string} req.body.userSegments - The user segment data to insert.
  * @param {express.Response} res
  */
-const newUserSegmentAPIRouter = (req, res) => {
+const newUserSegmentAPIRouter = (req, res) =>
   Models.createUserSegment(db, req.body.userId, req.body.userSegments)
     .then((result) => {
       _sendOkJSON({ success: true, entries: result.affectedRows }, res, 201);
     }).catch((err) => _catchError(err, res));
-};
 
 const _sendOkJSON = (obj, res, code = 200) =>
   res.status(code).type('application/json').send(JSON.stringify(obj));
