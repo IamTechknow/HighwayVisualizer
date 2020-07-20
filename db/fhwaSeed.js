@@ -1,4 +1,6 @@
 const DB = require('.');
+const cliProgress = require('cli-progress');
+const EventEmitter = require('events');
 const fs = require('fs').promises;
 const shapefile = require('shapefile');
 const fhwaFeatureParser = require('./parsers/fhwaFeatureParser.js');
@@ -8,11 +10,28 @@ const ArcGISClient = require('./ArcGISClient.js');
 
 const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateName stateInitials [yearStarting2000]');
 
+const FILTERED_FEATURES_EVENT = 'filteredFeatures';
+const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
+
+let featuresInsertedCount = 0;
+const progressBar = new cliProgress.SingleBar({
+  format: ' {bar} {percentage}% | ETA: {eta}s | {value}/{total} features',
+}, cliProgress.Presets.shades_classic);
+const progressEmitter = new EventEmitter();
+progressEmitter.on(INSERTED_FEATURE_EVENT, (numFeaturesInRoute) => {
+  featuresInsertedCount += numFeaturesInRoute;
+  progressBar.update(featuresInsertedCount);
+});
+progressEmitter.on(FILTERED_FEATURES_EVENT, (numFeatures) => {
+  progressBar.start(numFeatures, 0);
+});
+progressEmitter.on(FEATURES_DONE_EVENT, () => progressBar.stop());
+
 const seedData = async (db, args) => {
   const [stateName, stateInitials, year] = args.slice(2);
   if (args.length !== 5) {
     return getDataFromFeatureServer(db, stateName)
-      .then(collection => fhwaFeatureParser(db, collection.features, stateName, stateInitials, false))
+      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials, false))
       .catch(err => console.error(err));
   }
 
@@ -27,11 +46,11 @@ const seedData = async (db, args) => {
   if (filesExist) {
     console.log(`Seeding database with shapefile...`);
     return shapefile.read(fileBuffers[0], fileBuffers[1])
-      .then(collection => fhwaFeatureParser(db, collection.features, stateName, stateInitials))
+      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials))
       .catch(err => console.error(err));
   }
   return getDataFromFeatureServer(db, stateName)
-    .then(collection => fhwaFeatureParser(db, collection.features, stateName, stateInitials, false))
+    .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials, false))
     .catch(err => console.error(err));
 };
 

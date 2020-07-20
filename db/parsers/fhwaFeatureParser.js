@@ -20,6 +20,11 @@ const INTERSTATE_FACILITY_SYSTEM = 1;
 /** @constant {number} */
 const RAMP_FACILITY_CODE = 4, NON_INVENTORY_FACILITY_CODE = 6;
 
+/** @constant {string} */
+const FILTERED_FEATURES_EVENT = 'filteredFeatures';
+/** @constant {string} */
+const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
+
 const isNonMainlineInterstate = (feature, isShapefileData) => {
   const [Route_Name, Route_Numb, F_System, Facility_T] = getPropertyFields(
     feature.properties,
@@ -131,13 +136,14 @@ const getPropertyFields = (properties, fieldNames) => {
  *
  * @async
  * @param {object} db - A database client that can perform queries from the mysql2 module.
+ * @param {object} emitter - An EventEmitter object to emit feature insertion events.
  * @param {object[]} features - An array with all GeoJSON features to process into database
           records.
  * @param {string} stateName - The name of the US state the features belong to.
  * @param {string} stateInitials - The state's initials.
  * @param {boolean} isShapefileData - Whether the features was processed from a shapefile.
  */
-const seedFeatures = async (db, features, stateName, stateInitials, isShapefileData = true) => {
+const seedFeatures = async (db, emitter, features, stateName, stateInitials, isShapefileData = true) => {
   await db.startTransaction();
   let stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
   let allData = {
@@ -145,8 +151,9 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
     [TYPE_ENUM.US_HIGHWAY]: {},
     [TYPE_ENUM.STATE]: {}
   };
-  let basePointID = await db.query('SELECT COUNT(*) FROM points;')
-    .then(res => res[0][0]['COUNT(*)']);
+  // Due to autoincrement of id, this is fastest way to get row count, assuming there are rows
+  let basePointID = await db.query('SELECT max(id) - min(id) + 1 FROM points;')
+    .then(res => res[0][0]['max(id) - min(id) + 1']) ?? 0;
   const filteredFeatures = isShapefileData
     ? features.filter(feature => !filterOutFeature(feature))
     : features.filter(feature => feature.geometry);
@@ -155,7 +162,6 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
     await db.endTransaction();
     return;
   }
-
   for (let feature of filteredFeatures) {
     // HACK: Be wary if a multi line feature occurs. There is one in the DC shapefile even though it shouldn't be there. Sanitize it
     if (feature.geometry.type === 'MultiLineString') {
@@ -183,6 +189,7 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
 
   // Sort first by Route ID, then to make it stable, sort by route ID and then begin_poin
   // The Route ID can be a number string, in other cases it is alphanumeric
+  emitter.emit(FILTERED_FEATURES_EVENT, filteredFeatures.length);
   for (let type in allData) {
     const segmentsByType = allData[type];
     const routeIDKey = isShapefileData ? 'Route_ID' : 'route_id';
@@ -228,8 +235,10 @@ const seedFeatures = async (db, features, stateName, stateInitials, isShapefileD
         await Utils.insertSegment(db, segmentID, coords);
         basePointID += coords.length;
       }
+      emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);
     }
   }
+  emitter.emit(FEATURES_DONE_EVENT);
   await db.endTransaction();
 };
 

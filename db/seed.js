@@ -46,6 +46,9 @@ const TABLE_QUERIES = [
     rte2_seg MEDIUMINT UNSIGNED NOT NULL,
     start_pt INT UNSIGNED NOT NULL,
     end_pt INT UNSIGNED NOT NULL);`,
+  'CREATE INDEX POINT_IDX ON points (segment_key);',
+  'CREATE INDEX STATE_IDX on segments (state_key);',
+  'CREATE INDEX SEGMENT_IDX on segments (route_num(3), direction(1));',
 ];
 console.log(`Seeding database...`);
 DB.getDB()

@@ -70,13 +70,6 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials) => 
     }
   }
   emitter.emit(FEATURES_DONE_EVENT);
-  console.log('Creating indices...');
-  const indexQueries = [
-    'CREATE INDEX POINT_IDX ON points (segment_key);',
-    'CREATE INDEX STATE_IDX on segments (state_key);',
-    'CREATE INDEX SEGMENT_IDX on segments (route_num(3), direction(1));',
-  ];
-  await db.query(indexQueries.join(' '));
   console.log('Creating concurrencies...');
   const concurrencyArrays = await getRouteConcurrenciesForState(db, 'California')
     .then((concurrencies) => concurrencies.filter(obj => obj.success).map(data => {
