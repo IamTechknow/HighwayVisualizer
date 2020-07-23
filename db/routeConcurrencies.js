@@ -13,7 +13,7 @@
 const TYPE_ENUM = require('./routeEnum.js');
 const routePrefixes = require('./routePrefixes.js');
 const Utils = require('./Utils.js');
-const Models = require('./Models.js');
+const Models = require('./models.js');
 
 /** @constant {number} */
 const CONCURRENCY_THRESHOLD = 500; // in meters

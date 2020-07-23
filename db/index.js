@@ -24,7 +24,6 @@ const AUTHENTICATION_FIX = 'https://stackoverflow.com/questions/50093144/mysql-8
  *         a transaction meant for inserting data in bulk.
  */
 const getDB = () => mysql.createConnection({
-  database: DATABASE,
   host: 'localhost',
   user: 'root',
   password: '',
@@ -36,7 +35,9 @@ const getDB = () => mysql.createConnection({
   // Add helper methods for bulk insertions
   db.startTransaction = () => db.query('SET unique_checks=0; START TRANSACTION;');
   db.endTransaction = () => db.query('SET unique_checks=1; COMMIT;');
-  return db;
+  // Handle first time run
+  return db.query(`CREATE DATABASE IF NOT EXISTS ${DATABASE}; use ${DATABASE};`)
+    .then(() => db);
 }).catch((err) => {
   if (err.code === 'ER_BAD_DB_ERROR') {
     console.error('highways DB not found. Did you run "npm run reset/seed" yet?');
