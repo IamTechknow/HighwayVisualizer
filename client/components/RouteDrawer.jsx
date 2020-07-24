@@ -175,7 +175,7 @@ const RouteDrawer = ({
           getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
           segments={segments}
-          stateName={states[stateId - 1].name}
+          stateName={highwayData.getState(stateId).name}
         />
       </SidebarTab>
       <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>

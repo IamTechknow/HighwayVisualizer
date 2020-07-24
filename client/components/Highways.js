@@ -51,17 +51,6 @@ export default class Highways {
     return classifications[input] ? classifications[input] : TYPE_ENUM.STATE;
   }
 
-  static shouldUseRouteDir(stateName) {
-    switch (stateName) {
-      case 'California':
-      case 'District':
-      case 'Maryland':
-        return true;
-      default:
-        return false;
-    }
-  }
-
   static toRadians(angle) {
     return angle * FACTOR;
   }
@@ -126,6 +115,8 @@ export default class Highways {
     this.userSegments = [];
     // Map route number to segment length
     this.routeLengthMap = undefined;
+    // Map state ID to object
+    this.stateCache = undefined;
   }
 
   getZoomForSegmentId(segmentId, isRouteNumber) {
@@ -266,5 +257,30 @@ export default class Highways {
       segmentIdIdx += 1;
     }
     return [segmentIdIdx, midPointIdx];
+  }
+
+  getState(stateId) {
+    if (!this.stateCache[stateId]) {
+      throw new Error(`State with ${stateId} not found!`);
+    }
+    return this.stateCache[stateId];
+  }
+
+  setStates(stateArr) {
+    this.stateCache = {};
+    for (let stateObj of stateArr) {
+      this.stateCache[stateObj['id']] = stateObj;
+    }
+  }
+
+  shouldUseRouteDir(stateId) {
+    switch (this.stateCache[stateId].name) {
+      case 'California':
+      case 'District':
+      case 'Maryland':
+        return true;
+      default:
+        return false;
+    }
   }
 }

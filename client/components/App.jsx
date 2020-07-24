@@ -44,6 +44,7 @@ export default class CreateApp extends React.Component {
       .then((states) => {
         const { id } = states[0];
         this.setState({ states, stateId: id });
+        this.highwayData.setStates(states);
         return APIClient.getSegments(id);
       })
       .then((rawSegments) => {
@@ -127,7 +128,7 @@ export default class CreateApp extends React.Component {
   }
 
   onRouteItemClick(event, segmentOfRoute) {
-    const { currMode, stateId, states } = this.state;
+    const { currMode, stateId } = this.state;
     const {
       id, routeNum, type, dir,
     } = segmentOfRoute;
@@ -135,7 +136,8 @@ export default class CreateApp extends React.Component {
 
     const routePromise = APIClient.getRoute(stateId, routeNum, type, dir)
       .then((segments) => this.segmentPromiseDone(segments, routeNum, id));
-    if (states[stateId - 1].name === 'California') {
+    const stateName = this.highwayData.getState(stateId).name;
+    if (stateName === 'California') {
       routePromise.then(() => APIClient.getConcurrenyPoints(stateId, routeNum, dir))
         .then((concurrentSegments) => this.setState({ concurrentSegments }));
     }
@@ -205,14 +207,14 @@ export default class CreateApp extends React.Component {
   }
 
   getRouteName(segmentObj) {
-    const { states, stateId } = this.state;
-    const currState = states[stateId - 1].name;
+    const { stateId } = this.state;
+    const stateName = this.highwayData.getState(stateId).name;
 
     // One exception for D.C. Route 295
-    const routeName = currState === 'District' && segmentObj.type === 4
+    const routeName = stateName === 'District' && segmentObj.type === 4
       ? `D.C. Route ${segmentObj.routeNum}`
       : `${Highways.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
-    return Highways.shouldUseRouteDir(currState)
+    return this.highwayData.shouldUseRouteDir(stateId)
       ? `${routeName} ${segmentObj.dir}`
       : routeName;
   }
