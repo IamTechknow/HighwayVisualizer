@@ -8,7 +8,7 @@ const TYPE_ENUM = require('./routeEnum.js');
 const {SOURCE_ENUM, getDataSourcesForState} = require('./sources.js');
 const ArcGISClient = require('./ArcGISClient.js');
 
-const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateName stateInitials [yearStarting2000]');
+const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateIdentifier "stateTitle" stateInitials [yearStarting2000]');
 
 const FILTERED_FEATURES_EVENT = 'filteredFeatures';
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
@@ -28,15 +28,15 @@ progressEmitter.on(FILTERED_FEATURES_EVENT, (numFeatures) => {
 progressEmitter.on(FEATURES_DONE_EVENT, () => progressBar.stop());
 
 const seedData = async (db, args) => {
-  const [stateName, stateInitials, year] = args.slice(2);
-  if (args.length !== 5) {
-    return getDataFromFeatureServer(db, stateName)
-      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials, false))
+  const [stateIdentifier, stateTitle, stateInitials, year] = args.slice(2);
+  if (args.length !== 6) {
+    return getDataFromFeatureServer(db, stateIdentifier)
+      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials, false))
       .catch(err => console.error(err));
   }
 
   let filesExist = true;
-  let shpPath = stateName + year + '.shp', dbfPath = stateName + year + '.dbf';
+  let shpPath = stateIdentifier + year + '.shp', dbfPath = stateIdentifier + year + '.dbf';
   let fileBuffers;
   try {
     fileBuffers = await Promise.all([fs.readFile(shpPath), fs.readFile(dbfPath)]);
@@ -46,17 +46,17 @@ const seedData = async (db, args) => {
   if (filesExist) {
     console.log(`Seeding database with shapefile...`);
     return shapefile.read(fileBuffers[0], fileBuffers[1])
-      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials))
+      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials))
       .catch(err => console.error(err));
   }
-  return getDataFromFeatureServer(db, stateName)
-    .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateName, stateInitials, false))
+  return getDataFromFeatureServer(db, stateIdentifier)
+    .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials, false))
     .catch(err => console.error(err));
 };
 
-const getDataFromFeatureServer = async (db, stateName) => {
-  console.log(`Getting 2018 feature data for ${stateName}...`);
-  const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateName)[0];
+const getDataFromFeatureServer = async (db, stateIdentifier) => {
+  console.log(`Getting 2018 feature data for ${stateIdentifier}...`);
+  const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateIdentifier)[0];
   const layers = await ArcGISClient.queryLayers(serverURL);
   if (layers.length < 1) {
     console.err('No layers found in feature server, aborting');
@@ -110,8 +110,8 @@ const getDataFromFeatureServer = async (db, stateName) => {
   return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true);
 };
 
-if (process.argv.length < 4) {
-  console.log('State name, state initials are required.');
+if (process.argv.length < 6) {
+  console.log('State identifier, state title, state initials are required.');
   printUsage();
   return;
 }

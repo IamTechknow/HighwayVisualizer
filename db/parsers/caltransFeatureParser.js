@@ -34,13 +34,16 @@ const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMult
  * @param {object} emitter - An EventEmitter object to emit feature insertion events.
  * @param {object[]} features - An array with all GeoJSON features to process into database
           records.
- * @param {string} stateName - The name of the US state the features belong to.
+ * @param {string} stateName - The name of the US state the features belong to, presumably California.
  * @param {string} stateInitials - The state's initials.
  */
 const seedFeatures = async (db, emitter, features, stateName, stateInitials) => {
   let basePointID = 0;
   await db.startTransaction();
-  const stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?)', [stateName, stateInitials]).then(res => res[0].insertId);
+  const stateID = await db.query(
+    'INSERT INTO states (title, identifier, initials) VALUES (?, ?, ?)',
+    [stateName, stateName, stateInitials],
+  ).then(res => res[0].insertId);
 
   // Can't use Promise.all as we need to insert synchronously
   for (let feature of features) {

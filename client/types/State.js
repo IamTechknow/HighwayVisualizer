@@ -1,21 +1,23 @@
 import PropTypes from 'prop-types/prop-types';
 
 export default class State {
-  constructor(id, name, initials) {
+  constructor(id, identifier, title, initials) {
     this.id = id;
-    this.name = name;
+    this.identifier = identifier;
+    this.title = title;
     this.initials = initials;
 
     PropTypes.checkPropTypes(State.propTypes, this);
   }
 
   toString() {
-    return `${this.name} ${this.initials}`;
+    return `${this.title} ${this.initials}`;
   }
 }
 
 State.propTypes = {
   id: PropTypes.number.isRequired,
+  identifier: PropTypes.string.isRequired,
   initials: PropTypes.string.isRequired,
-  name: PropTypes.string.isRequired,
+  title: PropTypes.string.isRequired,
 };

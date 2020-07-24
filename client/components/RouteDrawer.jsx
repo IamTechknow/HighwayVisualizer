@@ -123,7 +123,7 @@ const RouteDrawer = ({
                   }}
                   role="presentation"
                 >
-                  {obj.name}
+                  {obj.title}
                 </li>
               ))}
             </ul>
@@ -175,7 +175,7 @@ const RouteDrawer = ({
           getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
           segments={segments}
-          stateName={highwayData.getState(stateId).name}
+          stateTitle={highwayData.getState(stateId).title}
         />
       </SidebarTab>
       <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>
@@ -228,8 +228,9 @@ RouteDrawer.propTypes = {
   states: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
+      identifier: PropTypes.string.isRequired,
       initials: PropTypes.string.isRequired,
-      name: PropTypes.string.isRequired,
+      title: PropTypes.string.isRequired,
     }),
   ).isRequired,
   submitData: PropTypes.shape({

@@ -274,7 +274,7 @@ export default class Highways {
   }
 
   shouldUseRouteDir(stateId) {
-    switch (this.stateCache[stateId].name) {
+    switch (this.stateCache[stateId].identifier) {
       case 'California':
       case 'District':
       case 'Maryland':

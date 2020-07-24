@@ -18,7 +18,7 @@ const SOURCE_ENUM = Object.freeze({
 });
 
 /** @constant {string[]} */
-const STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "New Hampshire", "New Jersey", "New Mexico", "New York", "North Carolina", "North Dakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "Puerto Rico", "Rhode Island", "South Carolina", "South Dakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "West Virginia", "Wisconsin", "Wyoming"];
+const STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "NewHampshire", "NewJersey", "NewMexico", "NewYork", "NorthCarolina", "NorthDakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "PuertoRico", "RhodeIsland", "SouthCarolina", "SouthDakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "WestVirginia", "Wisconsin", "Wyoming"];
 
 // Find more at opendata.arcgis.com
 /** @constant {object} */
@@ -42,24 +42,25 @@ const fhwaArcgisServers = STATES.reduce(
 );
 
 /**
- * Provides curated URLs for the requested US state and source type.
+ * Provides curated URLs for the requested US state identifier and source type.
  *
  * Known sources of data include the Caltrans GIS website and FHWA webpages
  * for shapefile downloads and ArcGIS Feature Servers.
  *
  * @param {number} sourceType - An enum value from the sourceEnum.
- * @param {string} state - One of the fifty US State names.
+ * @param {string} stateIdentifier - One of the fifty US State names.
  * @return {string[]} Returns an array with URLs for the state, or an empty array
  *         for an unknown state or if no sources are available for the given type.
  */
-const getDataSourcesForState = (sourceType, state) => {
+const getDataSourcesForState = (sourceType, stateIdentifier) => {
   if (sourceType === SOURCE_ENUM.SHAPEFILE) {
-    return [fhwaShapefileURLs[state]].concat(shapefileURLs[state] || []);
+    return [fhwaShapefileURLs[stateIdentifier]].concat(shapefileURLs[stateIdentifier] || []);
   }
   if (sourceType === SOURCE_ENUM.ARCGIS_FEATURE_SERVER) {
-    return [fhwaArcgisServers[state]].concat(otherArcgisServerURLs[state] || []);
+    return [fhwaArcgisServers[stateIdentifier]]
+      .concat(otherArcgisServerURLs[stateIdentifier] || []);
   }
-  throw new Error('Invalid data source type');
+  throw new Error('Invalid data source type for ' + stateIdentifier);
 };
 
 /** @module sources */

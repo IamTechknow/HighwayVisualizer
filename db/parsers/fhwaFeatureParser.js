@@ -83,7 +83,7 @@ const calcDir = (left, right) => {
 };
 
 // Account for features with Route_Sign = 1 (unsigned)
-const getTypeWithProperties = (properties, stateName, isShapefileData) => {
+const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => {
   const [ F_System, Route_Name, Route_Numb ] = getPropertyFields(
     properties,
     isShapefileData
@@ -91,7 +91,7 @@ const getTypeWithProperties = (properties, stateName, isShapefileData) => {
       : ['f_system', 'route_name', 'route_number'],
   );
   const routeNum = Route_Numb !== 0 ? Route_Numb : Number(Route_Name.substring(2));
-  const typeEnum = routePrefixes[stateName][routeNum];
+  const typeEnum = routePrefixes[stateIdentifier][routeNum];
 
   if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
     return TYPE_ENUM.STATE;
@@ -139,13 +139,17 @@ const getPropertyFields = (properties, fieldNames) => {
  * @param {object} emitter - An EventEmitter object to emit feature insertion events.
  * @param {object[]} features - An array with all GeoJSON features to process into database
           records.
- * @param {string} stateName - The name of the US state the features belong to.
+ * @param {string} stateIdentifier - The FHWA identifier of the US state the features belong to.
+ * @param {string} stateTitle - The name of the US state the features belong to.
  * @param {string} stateInitials - The state's initials.
  * @param {boolean} isShapefileData - Whether the features was processed from a shapefile.
  */
-const seedFeatures = async (db, emitter, features, stateName, stateInitials, isShapefileData = true) => {
+const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, stateInitials, isShapefileData = true) => {
   await db.startTransaction();
-  let stateID = await db.query('INSERT INTO states (name, initials) VALUES (?, ?);', [stateName, stateInitials]).then(res => res[0].insertId);
+  let stateID = await db.query(
+    'INSERT INTO states (identifier, title, initials) VALUES (?, ?, ?);',
+    [stateIdentifier, stateTitle, stateInitials],
+  ).then(res => res[0].insertId);
   let allData = {
     [TYPE_ENUM.INTERSTATE]: {},
     [TYPE_ENUM.US_HIGHWAY]: {},
@@ -178,7 +182,7 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, isS
       : Route_Numb;
     const type = Route_Sign > 1 ?
       Route_Sign :
-      getTypeWithProperties(feature.properties, stateName);
+      getTypeWithProperties(feature.properties, stateIdentifier);
 
     if (allData[type][routeNum]) {
       allData[type][routeNum].push(feature);

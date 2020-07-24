@@ -107,31 +107,31 @@ const wrongWay = {
  *
  * @async
  * @param {object} db - A database client that can perform queries from the mysql2 module.
- * @param {string} stateName - The angle in radians of the second latitude from -180 to 180.
+ * @param {string} identifier - The FHWA identifier used to represent a state.
  * @return {Promise} Returns a promise that resolves with an array of objects that contain
  *         information on a possible concurrency between two highways.
  */
-const getRouteConcurrenciesForState = async (db, stateName) => {
-  const stateID = await db.query('SELECT id FROM states WHERE name = ? LIMIT 1', [stateName])
+const getRouteConcurrenciesForState = async (db, identifier) => {
+  const stateID = await db.query('SELECT id FROM states WHERE identifier = ? LIMIT 1', [identifier])
     .then((result) => result[0][0].id);
-  const results = await processConcurrencyMap(db, stateID, stateName, concurrencies);
-  const wrongWayResults = await processConcurrencyMap(db, stateID, stateName, wrongWay, true);
+  const results = await processConcurrencyMap(db, stateID, identifier, concurrencies);
+  const wrongWayResults = await processConcurrencyMap(db, stateID, identifier, wrongWay, true);
   return results.concat(wrongWayResults);
 };
 
-const processConcurrencyMap = async (db, stateID, stateName, concurrencyMap, wrongWay = false) => {
+const processConcurrencyMap = async (db, stateID, identifier, concurrencyMap, wrongWay = false) => {
   const results = [];
-  if (!concurrencyMap[stateName]) {
+  if (!concurrencyMap[identifier]) {
     return results;
   }
-  for (let route in concurrencyMap[stateName]) {
+  for (let route in concurrencyMap[identifier]) {
     // Need the segments to come in increasing order of ID
-    const route1Type = routePrefixes[stateName][route] || TYPE_ENUM.STATE;
+    const route1Type = routePrefixes[identifier][route] || TYPE_ENUM.STATE;
     const route1Segs = await Models.getPointsForRoute(db, stateID, route1Type, route)
       .then(segments => segments.sort((left, right) => left.id - right.id));
 
-    for (let routeTwo of concurrencyMap[stateName][route]) {
-      const route2Type = routePrefixes[stateName][routeTwo] || TYPE_ENUM.STATE;
+    for (let routeTwo of concurrencyMap[identifier][route]) {
+      const route2Type = routePrefixes[identifier][routeTwo] || TYPE_ENUM.STATE;
       const route2Segs = await Models.getPointsForRoute(db, stateID, route2Type, routeTwo)
         .then(segments => segments.sort((left, right) => left.id - right.id));
       for (let route2Seg of route2Segs) {

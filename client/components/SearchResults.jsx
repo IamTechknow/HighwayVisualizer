@@ -7,7 +7,7 @@ const SearchResults = ({
   getRouteName,
   onRouteItemClick,
   segments,
-  stateName,
+  stateTitle,
 }) => {
   const [searchResults, setSearchResults] = useState([]);
   const fullRoutes = useMemo(
@@ -39,7 +39,7 @@ const SearchResults = ({
         type="text"
         size="50"
         className="nameFormElement"
-        placeholder={`Search ${stateName} segments by type and/or number...`}
+        placeholder={`Search ${stateTitle} segments by type and/or number...`}
         onChange={onSearchSegments}
       />
       {
@@ -97,7 +97,7 @@ SearchResults.propTypes = {
       }),
     ),
   ).isRequired,
-  stateName: PropTypes.string.isRequired,
+  stateTitle: PropTypes.string.isRequired,
 };
 
 export default SearchResults;

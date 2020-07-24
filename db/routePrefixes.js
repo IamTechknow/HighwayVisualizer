@@ -1,6 +1,6 @@
 /**
  * @fileOverview A module with curated route numbers with Interstate or U.S. Route route signing.
- *               Exports an object with state names as keys and object values. Each state object
+ *               Exports an object with state identifiers as keys and object values. Each state object
  *               provides the route signing enum value for certain route numbers. If a route number
  *               isn't specified here, its value defaults to the State enum value.
  *
