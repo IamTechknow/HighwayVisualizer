@@ -110,7 +110,7 @@ const getDataFromFeatureServer = async (db, stateIdentifier) => {
   return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true);
 };
 
-if (process.argv.length < 6) {
+if (process.argv.length < 5) {
   console.log('State identifier, state title, state initials are required.');
   printUsage();
   return;

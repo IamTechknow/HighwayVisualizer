@@ -16,6 +16,7 @@ export default class CreateApp extends React.Component {
     this.state = {
       currUserId: -1,
       currMode: MANUAL,
+      initFailed: false,
       lat: 37.5904827,
       lon: -122.9585187,
       submitData: {},
@@ -42,12 +43,20 @@ export default class CreateApp extends React.Component {
   componentDidMount() {
     APIClient.getStates()
       .then((states) => {
+        if (states.length === 0) {
+          this.setState({ initFailed: true });
+          return;
+        }
         const { id } = states[0];
         this.setState({ states, stateId: id });
         this.highwayData.setStates(states);
         return APIClient.getSegments(id);
       })
       .then((rawSegments) => {
+        if (!rawSegments || rawSegments.length === 0) {
+          this.setState({ initFailed: true });
+          return;
+        }
         this.highwayData.buildStateSegmentsData(rawSegments);
         this.setState({ segments: APIClient.parseRawSegments(rawSegments) });
         const { id, routeNum } = rawSegments[0];
@@ -59,6 +68,9 @@ export default class CreateApp extends React.Component {
       })
       .then((users) => {
         this.setState({ users });
+      })
+      .catch(() => {
+        this.setState({ initFailed: true });
       });
   }
 
@@ -242,17 +254,24 @@ export default class CreateApp extends React.Component {
 
   render() {
     const {
-      lat, lon, states, stateId, routeNum, segmentId,
+      initFailed, lat, lon, states, stateId, routeNum, segmentId,
       segments, segmentData, concurrentSegments, userSegments, users,
       currUserId, currMode, popupCoords, submitData,
     } = this.state;
-    const liveSegs = segmentData
-      ? Highways.getMapForLiveIds(segmentData)
-      : undefined;
+    if (initFailed) {
+      return (
+        <div>
+          <h3>
+            It appears the backend service is offline or data has not been loaded. Please try again later.
+          </h3>
+        </div>
+      );
+    }
 
     if (!users) { // Don't render until all data loaded
       return null;
     }
+
     const firstSegment = segmentData[0];
     const { dir, type } = this.highwayData.segmentData[firstSegment.id];
     const wholeRouteSelected = segmentData.length > 1
@@ -263,6 +282,9 @@ export default class CreateApp extends React.Component {
     );
     const popupSeg = popupCoords !== undefined
       ? this.highwayData.segmentData[popupCoords.segmentId]
+      : undefined;
+    const liveSegs = segmentData
+      ? Highways.getMapForLiveIds(segmentData)
       : undefined;
 
     return (
