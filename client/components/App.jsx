@@ -19,7 +19,7 @@ export default class CreateApp extends React.Component {
       initFailed: false,
       lat: 37.5904827,
       lon: -122.9585187,
-      submitData: {},
+      submitData: null,
       userSegments: [],
     };
 
@@ -45,7 +45,7 @@ export default class CreateApp extends React.Component {
       .then((states) => {
         if (states.length === 0) {
           this.setState({ initFailed: true });
-          return;
+          return null;
         }
         const { id } = states[0];
         this.setState({ states, stateId: id });
@@ -55,7 +55,7 @@ export default class CreateApp extends React.Component {
       .then((rawSegments) => {
         if (!rawSegments || rawSegments.length === 0) {
           this.setState({ initFailed: true });
-          return;
+          return null;
         }
         this.highwayData.buildStateSegmentsData(rawSegments);
         this.setState({ segments: APIClient.parseRawSegments(rawSegments) });
@@ -104,7 +104,7 @@ export default class CreateApp extends React.Component {
         if (res.success) {
           users.push({ id: res.userId, user });
         }
-        this.setState({ users, currUserId: res.userId });
+        this.setState({ users, currUserId: res.userId, submitData: res });
       });
   }
 
@@ -128,7 +128,7 @@ export default class CreateApp extends React.Component {
       .then((res) => {
         this.highwayData.clearUserSegments();
         this.setState({
-          submitData: { success: true, entries: res.entries },
+          submitData: res,
           userSegments: [],
         });
       });
@@ -262,7 +262,8 @@ export default class CreateApp extends React.Component {
       return (
         <div>
           <h3>
-            It appears the backend service is offline or data has not been loaded. Please try again later.
+            It appears the backend service is offline or data has not been loaded.
+            Please try again later.
           </h3>
         </div>
       );

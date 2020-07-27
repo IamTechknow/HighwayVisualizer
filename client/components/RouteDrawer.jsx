@@ -54,6 +54,7 @@ const RouteDrawer = ({
     >
       <SidebarTab id="users" header="User Settings" icon={<User size={ICON_SIZE} />}>
         <div className="tabContent">
+          { submitData && <h3>{submitData.message}</h3> }
           <h3>
             { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
             <span className="segRow">
@@ -99,11 +100,6 @@ const RouteDrawer = ({
             { currUserId >= 0 && userSegments
               && <button type="button" onClick={onSendUserSegments}>Submit User Segments</button>}
             <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>
-
-            {
-              submitData.success
-              && <p>{`Successfully created ${submitData.entries} user segments`}</p>
-            }
           </Collapsible>
         </div>
       </SidebarTab>
@@ -182,11 +178,17 @@ const RouteDrawer = ({
         <div className="tabContent">
           <h3>About</h3>
           <p>
-            {
-              `HighwayVisualizer is a tool designed to render geodata of highway systems
-              in the United States and to allow users to create and view segments of
-              highways they have traveled on.`
-            }
+            HighwayVisualizer is a tool designed to render geodata of highway systems
+            in the United States and to allow users to create and view segments of
+            highways they have traveled on.
+          </p>
+          <h3>Note on Travel Mapping</h3>
+          <p>
+            Neither this project nor the developer(s) of HighwayVisualizer are affilated
+            with the
+            {' '}
+            <a href="https://travelmapping.net/">Travel Mapping project</a>
+            which serves a similar purpose.
           </p>
           <h3>Repository Info</h3>
           <p>
@@ -234,9 +236,9 @@ RouteDrawer.propTypes = {
     }),
   ).isRequired,
   submitData: PropTypes.shape({
-    entries: PropTypes.number,
+    message: PropTypes.string,
     success: PropTypes.bool,
-  }).isRequired,
+  }),
   userSegments: PropTypes.arrayOf(
     PropTypes.shape({
       routeNum: PropTypes.string.isRequired,
@@ -249,6 +251,10 @@ RouteDrawer.propTypes = {
       user: PropTypes.string.isRequired,
     }),
   ).isRequired,
+};
+
+RouteDrawer.defaultProps = {
+  submitData: null,
 };
 
 export default RouteDrawer;

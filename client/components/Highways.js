@@ -268,9 +268,9 @@ export default class Highways {
 
   setStates(stateArr) {
     this.stateCache = {};
-    for (let stateObj of stateArr) {
-      this.stateCache[stateObj['id']] = stateObj;
-    }
+    stateArr.forEach((stateObj) => {
+      this.stateCache[stateObj.id] = stateObj;
+    });
   }
 
   shouldUseRouteDir(stateId) {

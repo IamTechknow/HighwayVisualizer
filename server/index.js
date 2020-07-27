@@ -207,7 +207,14 @@ const userSegmentsAPIRouter = (req, res) =>
  */
 const newUserAPIRouter = (req, res) =>
   Models.createUser(db, req.body.user)
-    .then((result) => _sendOkJSON(result, res, 201))
+    .then((result) => {
+      const payload = {
+        success: true,
+        message: `Success! You can create user segments for '${req.body.user}'`,
+        userId: result.userId,
+      };
+      _sendOkJSON(payload, res, 201);
+    })
     .catch((err) => _catchError(err, res));
 
 /**
@@ -221,7 +228,12 @@ const newUserAPIRouter = (req, res) =>
 const newUserSegmentAPIRouter = (req, res) =>
   Models.createUserSegment(db, req.body.userId, req.body.userSegments)
     .then((result) => {
-      _sendOkJSON({ success: true, entries: result.affectedRows }, res, 201);
+      const noun = result.affectedRows > 1 ? 'segments' : 'segment';
+      const payload = {
+        success: true,
+        message: `Successfully created ${result.affectedRows} user ${noun}!`,
+      };
+      _sendOkJSON(payload, res, 201);
     }).catch((err) => _catchError(err, res));
 
 const _sendOkJSON = (obj, res, code = 200) =>
