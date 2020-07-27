@@ -85,19 +85,10 @@ export default class CreateApp extends React.Component {
     event.preventDefault();
     const user = new FormData(event.target).get('userName');
     event.target.reset(); // clear input fields
-
     if (!user) { // Do not allow '' as a user
       return;
     }
-
-    fetch('/api/newUser', {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      body: JSON.stringify({ user }),
-    }).then((res) => res.json())
+    APIClient.postUser(user)
       .then((res) => {
         // If new user created, add to end of list. Otherwise just update selected user
         const { users } = this.state;
@@ -114,17 +105,7 @@ export default class CreateApp extends React.Component {
 
   onSendUserSegments() {
     const { currUserId } = this.state;
-    fetch('/api/user_segments/new', {
-      method: 'POST',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-      },
-      body: JSON.stringify({
-        userId: currUserId,
-        userSegments: this.highwayData.userSegments,
-      }),
-    }).then((res) => res.json())
+    APIClient.postUserSegments(currUserId, this.highwayData.userSegments)
       .then((res) => {
         this.highwayData.clearUserSegments();
         this.setState({

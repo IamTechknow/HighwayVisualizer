@@ -32,6 +32,25 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
+  static postUser(user) {
+    return APIClient.postUserData('/api/newUser', { user });
+  }
+
+  static postUserSegments(userId, userSegments) {
+    return APIClient.postUserData('/api/user_segments/new', { userId, userSegments });
+  }
+
+  static postUserData(endpoint, data) {
+    return fetch(endpoint, {
+      method: 'POST',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+      },
+      body: JSON.stringify(data),
+    }).then((res) => res.json());
+  }
+
   static parseRawSegments(rawSegments) {
     const set = new Set();
     const organized = [];
