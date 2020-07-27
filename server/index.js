@@ -208,9 +208,12 @@ const userSegmentsAPIRouter = (req, res) =>
 const newUserAPIRouter = (req, res) =>
   Models.createUser(db, req.body.user)
     .then((result) => {
+      const message = result.success
+        ? `Success! You can create user segments for '${req.body.user}'`
+        : `'${req.body.user}' already exists and is now selected`;
       const payload = {
-        success: true,
-        message: `Success! You can create user segments for '${req.body.user}'`,
+        success: result.success,
+        message,
         userId: result.userId,
       };
       _sendOkJSON(payload, res, 201);

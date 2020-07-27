@@ -95,7 +95,7 @@ export default class CreateApp extends React.Component {
         if (res.success) {
           users.push({ id: res.userId, user });
         }
-        this.setState({ users, currUserId: res.userId, submitData: res });
+        this.setState({ users, currUserId: res.userId ?? -1, submitData: res });
       });
   }
 
