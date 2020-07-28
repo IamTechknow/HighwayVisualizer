@@ -21,7 +21,7 @@ class Models {
    * @return {Promise} Returns a promise that resolves with an array of rows from the states table.
    */
   static getStates(db) {
-    return db.query('SELECT * FROM states;')
+    return db.execute('SELECT * FROM states;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
@@ -39,7 +39,7 @@ class Models {
    *         number of points, and total distance.
    */
   static getSegmentsBy(db, stateId) {
-    return db.query('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned), id;', [stateId])
+    return db.execute('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned), id;', [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
@@ -101,7 +101,7 @@ class Models {
    */
   static async getPointsForConcurrencies(db, stateId, routeNum, dir) {
     const segmentQuery = 'SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND direction = ?';
-    const rte1_segments = await db.query(segmentQuery, [routeNum, stateId, dir])
+    const rte1_segments = await db.execute(segmentQuery, [routeNum, stateId, dir])
       .then((result) => result[0].map((seg) => seg.id));
     if (rte1_segments.length === 0) {
       return [];
@@ -133,7 +133,7 @@ class Models {
    * @return {Promise} A promise that resolves with all existing usernames and their IDs.
    */
   static getUsers(db) {
-    return db.query('SELECT * FROM users;')
+    return db.execute('SELECT * FROM users;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
@@ -146,10 +146,10 @@ class Models {
    *         the data and an array of coordinates for each segment.
    */
   static getUserSegmentsBy(db, username) {
-    return db.query('SELECT * FROM users WHERE user = ?;', [username])
+    return db.execute('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
         if (result[0].length) {
-          return db.query('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
+          return db.execute('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
             .then((userSegResult) => userSegResult[0].length ? Models.getPointsByUser(db, userSegResult[0]) : false)
         } else {
           return false;
@@ -167,7 +167,7 @@ class Models {
    *         an existing user is returned.
    */
   static createUser(db, username) {
-    return db.query('SELECT * FROM users WHERE user = ?;', [username])
+    return db.execute('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
         if (result[0].length) {
           return { success: false, userId: result[0][0].id };
@@ -260,7 +260,7 @@ class Models {
 
     for (let obj of userSegs) {
       // Get the base point ID for the segment, then calculate the start and end IDs
-      const base = await db.query('SELECT base FROM segments WHERE id = ?;', [obj.segment_id]).then((result) => result[0][0].base);
+      const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [obj.segment_id]).then((result) => result[0][0].base);
       const start_id = base + obj.start_id, end_id = base + obj.end_id;
       const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + obj.segment_id;
       queries.push(queryBase + ` AND id >= ${start_id} AND id <= ${end_id}`);
@@ -284,12 +284,12 @@ class Models {
 
     for (let seg of userSegments) {
       let metersTraveled = Utils.calcSegmentDistance(seg.points);
-      let segment = await db.query('SELECT * FROM segments WHERE id = ?', [seg.segment_id]).then((result) => result[0][0]);
+      let segment = await db.execute('SELECT * FROM segments WHERE id = ?', [seg.segment_id]).then((result) => result[0][0]);
       let total = segment.len_m;
 
       let state;
       if (!stateCache[segment.state_key]) {
-        stateCache[segment.state_key] = await db.query('SELECT * FROM states WHERE id = ?', [segment.state_key]).then((result) => result[0][0].initials);
+        stateCache[segment.state_key] = await db.execute('SELECT * FROM states WHERE id = ?', [segment.state_key]).then((result) => result[0][0].initials);
       }
       state = stateCache[segment.state_key];
 

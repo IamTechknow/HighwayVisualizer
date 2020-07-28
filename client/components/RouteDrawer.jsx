@@ -188,7 +188,7 @@ const RouteDrawer = ({
             with the
             {' '}
             <a href="https://travelmapping.net/">Travel Mapping project</a>
-            which serves a similar purpose.
+            &nbsp;which serves a similar purpose.
           </p>
           <h3>Repository Info</h3>
           <p>

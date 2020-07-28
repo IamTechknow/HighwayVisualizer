@@ -205,12 +205,18 @@ const userSegmentsAPIRouter = (req, res) =>
  * @param {string} req.body.user - The name for the new user.
  * @param {express.Response} res
  */
-const newUserAPIRouter = (req, res) =>
-  Models.createUser(db, req.body.user)
+const newUserAPIRouter = (req, res) => {
+  const username = req.body.user;
+  if (!username.match(/^[a-z0-9_-]{3,16}$/ig)) {
+    const payload = {success: false, message: username + ' is not a valid username'};
+    _sendOkJSON(payload, res, 400); // need to send entire payload to response
+    return;
+  }
+  Models.createUser(db, username)
     .then((result) => {
       const message = result.success
-        ? `Success! You can create user segments for '${req.body.user}'`
-        : `'${req.body.user}' already exists and is now selected`;
+        ? `Success! You can create user segments for '${username}'`
+        : `'${username}' already exists and is now selected`;
       const payload = {
         success: result.success,
         message,
@@ -219,6 +225,7 @@ const newUserAPIRouter = (req, res) =>
       _sendOkJSON(payload, res, 201);
     })
     .catch((err) => _catchError(err, res));
+};
 
 /**
  * Middleware function which allows a new user segment to be created.
