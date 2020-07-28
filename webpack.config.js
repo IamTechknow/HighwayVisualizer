@@ -1,6 +1,7 @@
 const path = require('path');
+const webpack = require('webpack');
+
 const SRC_DIR = path.join(__dirname, '/client');
-const DIST_DIR = path.join(__dirname, '/public/dist');
 
 // Decide whether to use cssnano to minify CSS
 const getPlugins = (argv) => {
@@ -11,16 +12,18 @@ const getPlugins = (argv) => {
     plugins.push(require('cssnano'));
   }
   return plugins;
-}
+};
+
+// Allow absolute URL to be substituted through baseURI flag
+const getBaseURI = (argv) => JSON.stringify(argv.baseURI ?? 'http://localhost');
 
 module.exports = (env, argv) => ({
   entry: `${SRC_DIR}/index.jsx`,
-  devtool: 'source-map',
-  mode: 'development',
+  devtool: argv.mode === 'development' ? 'source-map' : false,
   cache: true,
   output: {
     filename: 'bundle.js',
-    path: DIST_DIR,
+    path: path.join(__dirname, '/public/dist'),
   },
   resolve: {
     extensions: ['.js', '.jsx'],
@@ -56,4 +59,9 @@ module.exports = (env, argv) => ({
       },
     ],
   },
+  plugins: [
+    new webpack.DefinePlugin({
+      __API__: getBaseURI(argv)
+    })
+  ],
 });

@@ -5,8 +5,8 @@
   "scripts": {
     "start": "set NODE_ENV=production&&node server",
     "debug": "node --inspect server",
-    "react": "webpack --debug --output-pathinfo --watch",
-    "build": "webpack --mode production --devtool=false",
+    "react": "webpack --mode development --output-pathinfo --watch",
+    "build": "webpack --mode production",
     "reset": "node db/seed.js",
     "seed": "node db/seed.js --seed",
     "lint": "eslint client/components client/components/*.jsx client/types"

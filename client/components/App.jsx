@@ -17,8 +17,6 @@ export default class CreateApp extends React.Component {
       currUserId: -1,
       currMode: MANUAL,
       initFailed: false,
-      lat: 37.5904827,
-      lon: -122.9585187,
       submitData: null,
       userSegments: [],
     };

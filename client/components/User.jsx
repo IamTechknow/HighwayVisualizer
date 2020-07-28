@@ -18,7 +18,7 @@ const UserApp = ({ match }) => {
   const [stats, setStats] = useState([]);
   const [userSegments, setUserSegments] = useState([]);
 
-  const getUserSegmentsFor = (userId) => fetch(`/api/user_segments/${userId}`)
+  const getUserSegmentsFor = (userId) => fetch(`${__API__}/api/user_segments/${userId}`)
     .then((res) => res.json());
 
   const onSidebarToggle = (id) => {

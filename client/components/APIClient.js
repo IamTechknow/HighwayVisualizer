@@ -1,34 +1,34 @@
 // Promise based utility client to interact with API endpoints
 export default class APIClient {
   static getUsers() {
-    return fetch('/api/users')
+    return fetch(__API__ + '/api/users')
       .then((res) => res.json());
   }
 
   static getStates() {
-    return fetch('/api/states')
+    return fetch(__API__ + '/api/states')
       .then((res) => res.json());
   }
 
   static getSegments(stateId) {
-    return fetch(`/api/segments/${stateId}`)
+    return fetch(`${__API__}/api/segments/${stateId}`)
       .then((res) => res.json());
   }
 
   static getSegment(segmentId) {
-    return fetch(`/api/points/${segmentId}`)
+    return fetch(`${__API__}/api/points/${segmentId}`)
       .then((res) => res.json());
   }
 
   static getRoute(stateId, routeNum, type, dir) {
     const query = `?stateId=${stateId}&dir=${dir}`;
-    return fetch(`/api/points/${type}/${routeNum}/${query}`)
+    return fetch(`${__API__}/api/points/${type}/${routeNum}/${query}`)
       .then((res) => res.json());
   }
 
   static getConcurrenyPoints(stateId, routeNum, dir) {
     const query = `?stateId=${stateId}&dir=${dir}`;
-    return fetch(`/api/concurrencies/${routeNum}${query}`)
+    return fetch(`${__API__}/api/concurrencies/${routeNum}${query}`)
       .then((res) => res.json());
   }
 
@@ -41,7 +41,7 @@ export default class APIClient {
   }
 
   static postUserData(endpoint, data) {
-    return fetch(endpoint, {
+    return fetch(__API__ + endpoint, {
       method: 'POST',
       mode: 'cors',
       headers: {
