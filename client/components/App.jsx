@@ -271,8 +271,8 @@ export default class CreateApp extends React.Component {
       <div>
         <Map className="mapStyle" center={[lat, lon]} zoom={zoom} zoomControl={false}>
           <TileLayer
-            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            url="http://{s}.tile.osm.org/{z}/{x}/{y}.png"
+            attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
           />
           { segmentData && segmentData.map((seg, i) => (
             <Polyline
