@@ -20,7 +20,7 @@ const Models = require('../db/models.js');
 const DB = require('../db');
 
 /** @constant {number} */
-const PORT = 80;
+const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
 
 /**
  * Express router to mount API endpoints.
@@ -275,7 +275,15 @@ app.post('/api/user_segments/new', newUserSegmentAPIRouter);
 DB.getDB()
   .then((client) => {
     db = client;
-    return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
+    let server = app;
+    if (process.env.NODE_ENV === 'production') {
+      const sslOptions = {
+        cert: fs.readFileSync(process.env.CERT_PATH),
+        key: fs.readFileSync(process.env.KEY_PATH),
+      };
+      server = https.createServer(sslOptions, app);
+    }
+    return server.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
   })
   .then((server) => process.on('SIGINT', () => {
     server.close();
