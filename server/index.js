@@ -15,6 +15,7 @@ const compression = require('compression');
 const express = require('express');
 const morgan = require('morgan');
 const path = require('path');
+const redis = require('redis');
 const TYPE_ENUM = require('../db/routeEnum.js');
 const Models = require('../db/models.js');
 const DB = require('../db');
@@ -30,6 +31,7 @@ const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
  */
 const app = express();
 let db;
+let redisClient;
 
 app.use(compression({threshold: 8192}));
 app.use(express.static(path.resolve(__dirname, '../public')));
@@ -56,6 +58,28 @@ const headerMiddleware = (req, res, next) => {
 };
 
 /**
+ * Middleware function used by most GET endpoints to cache API requests with Redis. If the request
+ * is not cached, the next middleware function runs and will cache the response JSON and code.
+ *
+ * @memberof module:highwayvisualizer
+ * @param {express.Request} req
+ * @param {express.Response} res
+ * @param {express.NextFunction} next
+ */
+const redisMiddleware = (req, res, next) => {
+  const keySuffix = req.originalUrl || req.url;
+  redisClient.get('__express__' + keySuffix, (err, reply) => {
+    if (reply) {
+      redisClient.get('__express_status__' + keySuffix, (err, code) => {
+        res.status(Number(code)).type('application/json').send(reply);
+      });
+    } else {
+      next();
+    }
+  });
+};
+
+/**
  * Middleware function which directs users to the index page. Client sided routing renders the
  * given user's highway statistics.
  *
@@ -73,7 +97,7 @@ const usersRouter = (req, res) => res.sendFile(path.join(__dirname, '../public/i
  */
 const statesAPIRouter = (req, res) =>
   Models.getStates(db)
-    .then((result) => _sendOkJSON(result, res))
+    .then((result) => _sendOkJSON(result, req, res))
     .catch((err) => _catchError(err, res));
 
 /**
@@ -84,7 +108,7 @@ const statesAPIRouter = (req, res) =>
  */
 const usersAPIRouter = (req, res) =>
   Models.getUsers(db)
-    .then((result) => _sendOkJSON(result, res))
+    .then((result) => _sendOkJSON(result, req, res))
     .catch((err) => _catchError(err, res));
 
 /**
@@ -96,7 +120,7 @@ const usersAPIRouter = (req, res) =>
  */
 const segmentsPerStateAPIRouter = (req, res) =>
   Models.getSegmentsBy(db, req.params.stateId)
-    .then((result) => _sendOkJSON(result, res))
+    .then((result) => _sendOkJSON(result, req, res))
     .catch((err) => _catchError(err, res));
 
 /**
@@ -111,10 +135,10 @@ const pointsPerSegmentAPIRouter = (req, res) => {
     Number.parseInt(req.params.segmentId, 10) : undefined;
 
   if (!segmentInteger) {
-    _sendErrorJSON('Segment ID is invalid', res);
+    _sendErrorJSON('Segment ID is invalid', req, res);
   } else {
     Models.getPointsForSegment(db, segmentInteger)
-      .then((result) => _sendOkJSON(result, res))
+      .then((result) => _sendOkJSON(result, req, res))
       .catch((err) => _catchError(err, res));
   }
 };
@@ -138,16 +162,16 @@ const pointsPerRouteAPIRouter = (req, res) => {
   const routeNum = req.params.routeNum;
 
   if (!stateId) {
-    _sendErrorJSON('State ID must be provided', res);
+    _sendErrorJSON('State ID must be provided', req, res);
   } else if (!type) {
-    _sendErrorJSON('Route type must be provided', res);
+    _sendErrorJSON('Route type must be provided', req, res);
   } else if (type < TYPE_ENUM.INTERSTATE || type > TYPE_ENUM.STATE) {
-    _sendErrorJSON('Route type is invalid', res);
+    _sendErrorJSON('Route type is invalid', req, res);
   } else if (!routeNum) {
-    _sendErrorJSON('Route number is invalid', res);
+    _sendErrorJSON('Route number is invalid', req, res);
   } else {
     Models.getPointsForRoute(db, stateId, type, routeNum, req.query.dir)
-      .then((result) => _sendOkJSON(result, res))
+      .then((result) => _sendOkJSON(result, req, res))
       .catch((err) => _catchError(err, res));
   }
 };
@@ -171,12 +195,12 @@ const concurrenciesPerRouteAPIRouter = (req, res) => {
   const routeNum = req.params.routeNum;
 
   if (!stateId) {
-    _sendErrorJSON('State ID must be provided', res);
+    _sendErrorJSON('State ID must be provided', req, res);
   } else if (!routeNum) {
-    _sendErrorJSON('Route number is invalid', res);
+    _sendErrorJSON('Route number is invalid', req, res);
   } else {
     Models.getPointsForConcurrencies(db, stateId, routeNum, req.query.dir)
-      .then((result) => _sendOkJSON(result, res))
+      .then((result) => _sendOkJSON(result, req, res))
       .catch((err) => _catchError(err, res));
   }
 };
@@ -195,7 +219,7 @@ const userSegmentsAPIRouter = (req, res) =>
       if (result) {
         Object.assign(retval, result);
       }
-      _sendOkJSON(retval, res);
+      _sendOkJSON(retval, req, res);
     }).catch((err) => _catchError(err, res));
 
 /**
@@ -209,7 +233,7 @@ const newUserAPIRouter = (req, res) => {
   const username = req.body.user;
   if (!username.match(/^[a-z0-9_-]{3,16}$/ig)) {
     const payload = {success: false, message: username + ' is not a valid username'};
-    _sendOkJSON(payload, res, 400); // need to send entire payload to response
+    _sendOkJSON(payload, req, res, 400); // need to send entire payload to response
     return;
   }
   Models.createUser(db, username)
@@ -222,7 +246,7 @@ const newUserAPIRouter = (req, res) => {
         message,
         userId: result.userId,
       };
-      _sendOkJSON(payload, res, 201);
+      _sendOkJSON(payload, req, res, 201);
     })
     .catch((err) => _catchError(err, res));
 };
@@ -243,31 +267,44 @@ const newUserSegmentAPIRouter = (req, res) =>
         success: true,
         message: `Successfully created ${result.affectedRows} user ${noun}!`,
       };
-      _sendOkJSON(payload, res, 201);
+      _sendOkJSON(payload, req, res, 201);
     }).catch((err) => _catchError(err, res));
 
-const _sendOkJSON = (obj, res, code = 200) =>
-  res.status(code).type('application/json').send(JSON.stringify(obj));
+const _sendOkJSON = (obj, req, res, code = 200) => {
+  const resJson = _cacheResponse(obj, req, res, code);
+  res.status(code).type('application/json').send(resJson);
+};
 
-const _sendErrorJSON = (message, res, code = 400) =>
-  res.status(code).type('application/json').send(JSON.stringify({ message }));
+const _sendErrorJSON = (message, req, res, code = 400) => {
+  const resJson = _cacheResponse({ message }, req, res, code);
+  res.status(code).type('application/json').send(resJson);
+};
+
+const _cacheResponse = (obj, req, res, code) => {
+  const keySuffix = req.originalUrl || req.url;
+  const resJson = JSON.stringify(obj);
+  redisClient.set('__express__' + keySuffix, resJson);
+  redisClient.set('__express_status__' + keySuffix, code);
+  return resJson;
+};
 
 const _catchError = (err, res) => {
   console.error(err);
-  _sendErrorJSON('Sorry, an error occurred!', res, 500);
+  let payload = JSON.stringify({ message: 'Sorry, an error occurred!' });
+  res.status(500).type('application/json').send(payload);
 };
 
 app.use(headerMiddleware);
 
 app.get('/users/:user', usersRouter);
 
-app.get('/api/states', statesAPIRouter);
+app.get('/api/states', redisMiddleware, statesAPIRouter);
 app.get('/api/users', usersAPIRouter);
-app.get('/api/segments/:stateId', segmentsPerStateAPIRouter);
-app.get('/api/points/:segmentId', pointsPerSegmentAPIRouter);
-app.get('/api/points/:type/:routeNum', pointsPerRouteAPIRouter);
-app.get('/api/concurrencies/:routeNum', concurrenciesPerRouteAPIRouter);
-app.get('/api/user_segments/:user', userSegmentsAPIRouter);
+app.get('/api/segments/:stateId', redisMiddleware, segmentsPerStateAPIRouter);
+app.get('/api/points/:segmentId', redisMiddleware, pointsPerSegmentAPIRouter);
+app.get('/api/points/:type/:routeNum', redisMiddleware, pointsPerRouteAPIRouter);
+app.get('/api/concurrencies/:routeNum', redisMiddleware, concurrenciesPerRouteAPIRouter);
+app.get('/api/user_segments/:user', redisMiddleware, userSegmentsAPIRouter);
 
 app.post('/api/newUser', newUserAPIRouter);
 app.post('/api/user_segments/new', newUserSegmentAPIRouter);
@@ -283,9 +320,25 @@ DB.getDB()
       };
       server = https.createServer(sslOptions, app);
     }
-    return server.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
+
+    const httpServer = server.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
+
+    redisClient = redis.createClient();
+    redisClient.on("error", (error) => {
+      if (error.code === 'ECONNREFUSED') {
+        console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
+        httpServer.close();
+        db.end();
+        process.exit(1);
+      } else {
+        console.error(error);
+      }
+    });
+
+    return httpServer;
   })
-  .then((server) => process.on('SIGINT', () => {
-    server.close();
+  .then((httpServer) => process.on('SIGINT', () => {
+    httpServer.close();
     db.end();
+    redisClient.quit();
   }));

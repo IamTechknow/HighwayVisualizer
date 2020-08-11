@@ -48,7 +48,7 @@ const getDB = () => mysql.createConnection({
   } else {
     console.error(err);
   }
-  process.exit(0);
+  process.exit(1);
 });
 
 /** @module DB */

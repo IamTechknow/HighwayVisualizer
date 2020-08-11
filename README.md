@@ -1,8 +1,8 @@
 # HighwayVisualizer
-HighwayVisualizer is a tool designed to render geodata of highway systems in the United States and to create and view segments of highways they have traveled on. The UI is powered by React and Leaflet, while the backend logic is based on Node.js and a SQL database.
+HighwayVisualizer is a tool designed to render geodata of highway systems in the United States and to create and view segments of highways they have traveled on. The UI is powered by React and Leaflet, while the backend logic is based on Node.js, Redis, and MySQL.
 
 ## Instructions
-Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window and run `npm run seed --seed && npm run build && npm run start`. Now you may go to localhost to access the site!
+Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Ensure the redis instance has started as well. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window and run `npm run seed --seed && npm run build && npm run debug`. Now you may go to localhost to access the site!
 
 ## Video
 A video of this project based on the commit tagged `mvp` may be found [here](https://youtu.be/i92g7lDWulA).
