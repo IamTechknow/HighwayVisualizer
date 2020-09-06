@@ -4,6 +4,9 @@ module.exports = {
     "node": true,
   },
   "extends": "airbnb",
+  "globals": {
+    "__API__": true,
+  },
   "parser": "babel-eslint",
   "rules": {
     "camelcase": ["error", { allow: ["len_m"] }],

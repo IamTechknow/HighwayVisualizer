@@ -42,17 +42,22 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 /**
- * Middleware function used by all endpoints which enables CORS and caching in prod environment.
+ * Middleware function used by all endpoints which enables CORS and STS and caching
+ * in prod environment.
+ *
  * @memberof module:highwayvisualizer
  * @param {express.Request} req
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
 const headerMiddleware = (req, res, next) => {
-  res.header("Access-Control-Allow-Origin", "*");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  if (process.env.NODE_ENV === 'production' && req.method === 'GET') {
-    res.header("Cache-Control", "public, max-age=86400");
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+  if (process.env.NODE_ENV === 'production') {
+    if (req.method === 'GET') {
+      res.header('Cache-Control', 'public, max-age=86400');
+    }
+    res.header('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
   }
   next();
 };

@@ -1,12 +1,12 @@
 // Promise based utility client to interact with API endpoints
 export default class APIClient {
   static getUsers() {
-    return fetch(__API__ + '/api/users')
+    return fetch(`${__API__}/api/users`)
       .then((res) => res.json());
   }
 
   static getStates() {
-    return fetch(__API__ + '/api/states')
+    return fetch(`${__API__}/api/states`)
       .then((res) => res.json());
   }
 
