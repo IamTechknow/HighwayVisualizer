@@ -34,20 +34,30 @@ module.exports = (env, argv) => ({
         test: /\.(js|jsx)?/,
         include: SRC_DIR,
         use: {
-          loader: 'babel-loader'
+          loader: 'babel-loader',
         },
       },
       {
         test: /\.css$/,
-        use: [ { loader: 'style-loader' }, { loader: 'css-loader' }, {
-          loader: 'postcss-loader',
-          options: {
-            plugins: getPlugins(argv)
+        use: [
+          {
+            loader: 'style-loader',
           },
-        }],
+          {
+            loader: 'css-loader',
+          },
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: getPlugins(argv),
+              },
+            },
+          }
+        ],
         include: [
           SRC_DIR,
-          path.resolve(__dirname, "node_modules/leaflet")
+          path.resolve(__dirname, "node_modules/leaflet"),
         ],
       },
       {
