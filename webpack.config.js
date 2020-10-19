@@ -3,24 +3,10 @@ const webpack = require('webpack');
 
 const SRC_DIR = path.join(__dirname, '/client');
 
-// Decide whether to use cssnano to minify CSS
-const getPlugins = (argv) => {
-  const plugins = [
-    require('autoprefixer')
-  ];
-  if (argv.mode === 'production') {
-    plugins.push(require('cssnano'));
-  }
-  return plugins;
-};
-
-// Allow absolute URL to be substituted through baseURI flag
-const getBaseURI = (argv) => JSON.stringify(argv.baseURI ?? 'http://localhost');
-
-module.exports = (env, argv) => ({
+module.exports = {
   entry: `${SRC_DIR}/index.jsx`,
-  devtool: argv.mode === 'development' ? 'source-map' : false,
-  cache: true,
+  mode: 'development',
+  devtool: 'source-map',
   output: {
     filename: 'bundle.js',
     path: path.join(__dirname, '/public/dist'),
@@ -50,7 +36,7 @@ module.exports = (env, argv) => ({
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
-                plugins: getPlugins(argv),
+                plugins: [require('autoprefixer')],
               },
             },
           }
@@ -71,7 +57,7 @@ module.exports = (env, argv) => ({
   },
   plugins: [
     new webpack.DefinePlugin({
-      __API__: getBaseURI(argv)
+      __API__: JSON.stringify('http://localhost'),
     })
   ],
-});
+};

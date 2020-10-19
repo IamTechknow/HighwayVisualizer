@@ -63,6 +63,7 @@ typings/
 package-lock.json
 public/dist/
 public/*.png
+webpack.config.production.js
 
 *.dbf
 *.shp
