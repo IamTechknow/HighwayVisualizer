@@ -166,6 +166,7 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
     await db.endTransaction();
     return;
   }
+  const skippedRoutes = [];
   for (let feature of filteredFeatures) {
     // HACK: Be wary if a multi line feature occurs. There is one in the DC shapefile even though it shouldn't be there. Sanitize it
     if (feature.geometry.type === 'MultiLineString') {
@@ -201,6 +202,13 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
     const facilityTypeKey = isShapefileData ? 'Facility_T' : 'facility_type';
 
     for (let route in segmentsByType) {
+      // HACK: Skip large number routes like Arizona state route 893984
+      if (route.length >= 4) {
+        skippedRoutes.push(route);
+        emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);
+        continue;
+      }
+
       segmentsByType[route] = segmentsByType[route].sort((left, right) => {
         return left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]);
       });
@@ -244,6 +252,7 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
   }
   emitter.emit(FEATURES_DONE_EVENT);
   await db.endTransaction();
+  console.log('Skipped routes with > 4 characters:', skippedRoutes.join());
 };
 
 /** @module fhwaFeatureParser */

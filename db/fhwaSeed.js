@@ -58,8 +58,12 @@ const getDataFromFeatureServer = async (db, stateIdentifier) => {
   console.log(`Getting 2018 feature data for ${stateIdentifier}...`);
   const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateIdentifier)[0];
   const layers = await ArcGISClient.queryLayers(serverURL);
-  if (layers.length < 1) {
-    console.err('No layers found in feature server, aborting');
+  if (!layers || layers.length < 1) {
+    return {
+      error: 'No layers found in feature server, aborting',
+      features: [],
+      type: 'FeatureCollection',
+    };
   }
 
   const whereClauses = [
