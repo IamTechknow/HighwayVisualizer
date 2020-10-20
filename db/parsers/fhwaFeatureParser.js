@@ -203,7 +203,7 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
 
     for (let route in segmentsByType) {
       // HACK: Skip large number routes like Arizona state route 893984
-      if (route.length >= 4) {
+      if (route.length > 4) {
         skippedRoutes.push(route);
         emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);
         continue;
@@ -252,7 +252,9 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
   }
   emitter.emit(FEATURES_DONE_EVENT);
   await db.endTransaction();
-  console.log('Skipped routes with > 4 characters:', skippedRoutes.join());
+  if (skippedRoutes.length > 0) {
+    console.log('Skipped routes with > 4 characters:', skippedRoutes.join());
+  }
 };
 
 /** @module fhwaFeatureParser */
