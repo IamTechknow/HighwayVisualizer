@@ -266,6 +266,25 @@ export default class Highways {
     return this.stateCache[stateId];
   }
 
+  getZoomLevel(routeStr, routeType, segmentData, segmentId) {
+    if (segmentData.length === 0) {
+      return 0;
+    }
+    // Check for data match, because segmentData and route vars may be out of sync.
+    const firstSegment = segmentData[0];
+    const segmentsOfRoute = this.getSegmentIds(routeType, routeStr);
+    if (!segmentsOfRoute.includes(firstSegment.id)) {
+      return 0; // TODO: parameter for previous zoom
+    }
+
+    const wholeRouteSelected = segmentData.length > 1
+      || this.getSegmentIds(routeType, routeStr).length === 1;
+    return this.getZoomForSegmentId(
+      wholeRouteSelected ? routeStr : segmentId,
+      wholeRouteSelected,
+    );
+  }
+
   setStates(stateArr) {
     this.stateCache = {};
     stateArr.forEach((stateObj) => {
