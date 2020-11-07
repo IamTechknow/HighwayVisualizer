@@ -107,50 +107,50 @@ const RouteDrawer = ({
         <div className="tabContent">
           <Collapsible title="States" open="true">
             <ul>
-              { states && states.map((obj) => (
+              { states ? states.map((state) => (
                 <li
-                  key={`state_${obj.id}`}
+                  key={`state_${state.id}`}
                   className="clickable"
-                  onClick={() => onStateClick(obj.id)}
+                  onClick={() => onStateClick(state.id)}
                   onKeyDown={(event) => {
                     if (event.keyCode === KEY_ENTER) {
-                      onStateClick(obj.id);
+                      onStateClick(state.id);
                     }
                   }}
                   role="presentation"
                 >
-                  {obj.title}
+                  {state.title}
                 </li>
-              ))}
+              )) : <h3>Loading...</h3>}
             </ul>
           </Collapsible>
 
           {/* List each route and all route segments */}
           <Collapsible title="Segments" open="true">
             <ul>
-              { segments && segments.map((obj) => (
+              { segments ? segments.map((segmentSet) => (
                 <li
-                  key={`${obj[0].routeNum}${obj[0].dir}_${obj[0].type}`}
+                  key={`${segmentSet[0].routeNum}${segmentSet[0].dir}_${segmentSet[0].type}`}
                   className="clickable"
-                  onClick={(event) => onRouteItemClick(event, obj[0])}
+                  onClick={(event) => onRouteItemClick(event, segmentSet[0])}
                   onKeyDown={(event) => {
                     if (event.keyCode === KEY_ENTER) {
-                      onRouteItemClick(event, obj[0]);
+                      onRouteItemClick(event, segmentSet[0]);
                     }
                   }}
                   role="presentation"
                 >
-                  {getRouteName(obj[0])}
-                  { obj.length > 1 && (
+                  {getRouteName(segmentSet[0])}
+                  { segmentSet.length > 1 && (
                     <ul>
-                      {obj.map((seg, i) => (
+                      {segmentSet.map((segment, i) => (
                         <li
-                          key={`segment-${seg.id}`}
+                          key={`segment-${segment.id}`}
                           className="clickable"
-                          onClick={(event) => onSegmentItemClick(event, seg.routeNum, seg.id)}
+                          onClick={(event) => onSegmentItemClick(event, segment)}
                           onKeyDown={(event) => {
                             if (event.keyCode === KEY_ENTER) {
-                              onSegmentItemClick(event, seg.routeNum, seg.id);
+                              onSegmentItemClick(event, segment);
                             }
                           }}
                           role="presentation"
@@ -161,7 +161,7 @@ const RouteDrawer = ({
                     </ul>
                   )}
                 </li>
-              ))}
+              )) : <h3>Loading...</h3>}
             </ul>
           </Collapsible>
         </div>
@@ -171,7 +171,7 @@ const RouteDrawer = ({
           getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
           segments={segments}
-          stateTitle={highwayData.getState(stateId).title}
+          stateTitle={stateId != null ? highwayData.getState(stateId).title : ''}
         />
       </SidebarTab>
       <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>
@@ -226,7 +226,7 @@ RouteDrawer.propTypes = {
       }),
     ),
   ).isRequired,
-  stateId: PropTypes.number.isRequired,
+  stateId: PropTypes.number,
   states: PropTypes.arrayOf(
     PropTypes.shape({
       id: PropTypes.number.isRequired,
@@ -254,6 +254,7 @@ RouteDrawer.propTypes = {
 };
 
 RouteDrawer.defaultProps = {
+  stateId: null,
   submitData: null,
 };
 

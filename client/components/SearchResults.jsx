@@ -9,6 +9,10 @@ const SearchResults = ({
   segments,
   stateTitle,
 }) => {
+  if (segments.length === 0 || stateTitle === '') {
+    return <h3>Loading...</h3>;
+  }
+
   const [searchResults, setSearchResults] = useState([]);
   const fullRoutes = useMemo(
     () => segments.flat().filter((routeObj) => routeObj.segNum === 0),

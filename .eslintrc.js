@@ -15,5 +15,6 @@ module.exports = {
     "one-var": "off",
     "one-var-declaration-per-line": "off",
     "react/forbid-foreign-prop-types": "off",
+    "react/no-array-index-key": "off",
   },
 };
