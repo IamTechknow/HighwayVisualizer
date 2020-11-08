@@ -106,21 +106,7 @@ export default class Highways {
     return { idx: closest, segmentId, ...points[closest] };
   }
 
-  constructor() {
-    // Flatened map from segment ID to segment data
-    this.segmentData = undefined;
-    // Map route number and direction to segment IDs for each route signage type
-    this.idCache = undefined;
-    // User segment data
-    this.userSegments = [];
-    // Map route number to segment length
-    this.routeLengthMap = undefined;
-    // Map state ID to object
-    this.stateCache = undefined;
-  }
-
-  getZoomForSegmentId(segmentId, isRouteNumber) {
-    const len = isRouteNumber ? this.routeLengthMap[segmentId] : this.segmentData[segmentId].len_m;
+  static getZoomForRouteLength(len) {
     if (len <= 1000) {
       return 14.5;
     }
@@ -149,6 +135,19 @@ export default class Highways {
       return 7.5;
     }
     return 6;
+  }
+
+  constructor() {
+    // Flatened map from segment ID to segment data
+    this.segmentData = undefined;
+    // Map route number and direction to segment IDs for each route signage type
+    this.idCache = undefined;
+    // User segment data
+    this.userSegments = [];
+    // Map route number to segment length
+    this.routeLengthMap = undefined;
+    // Map state ID to object
+    this.stateCache = undefined;
   }
 
   buildStateSegmentsData(raw) {
@@ -276,13 +275,12 @@ export default class Highways {
     if (!segmentsOfRoute.includes(firstSegment.id)) {
       return 0; // TODO: parameter for previous zoom
     }
-
     const wholeRouteSelected = segmentData.length > 1
       || this.getSegmentIds(routeType, routeStr).length === 1;
-    return this.getZoomForSegmentId(
-      wholeRouteSelected ? routeStr : segmentId,
-      wholeRouteSelected,
-    );
+    const routeLen = wholeRouteSelected
+      ? this.routeLengthMap[routeStr]
+      : this.segmentData[segmentId].len_m;
+    return Highways.getZoomForRouteLength(routeLen);
   }
 
   setStates(stateArr) {
