@@ -12,12 +12,12 @@ module.exports = {
     path: path.join(__dirname, '/public/dist'),
   },
   resolve: {
-    extensions: ['.js', '.jsx'],
+    extensions: ['.js', '.jsx', '.ts', '.tsx'],
   },
   module: {
     rules: [
       {
-        test: /\.(js|jsx)?/,
+        test: /\.(js|jsx|ts|tsx)?/,
         include: SRC_DIR,
         use: {
           loader: 'babel-loader',
@@ -39,18 +39,18 @@ module.exports = {
                 plugins: [require('autoprefixer')],
               },
             },
-          }
+          },
         ],
         include: [
           SRC_DIR,
-          path.resolve(__dirname, "node_modules/leaflet"),
+          path.resolve(__dirname, 'node_modules/leaflet'),
         ],
       },
       {
         test: /\.(png)$/,
         loader: 'file-loader',
         options: {
-          outputPath: '..' // Put output files next to index.html
+          outputPath: '..', // Put output files next to index.html
         },
       },
     ],
@@ -58,6 +58,6 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       __API__: JSON.stringify('http://localhost'),
-    })
+    }),
   ],
 };
