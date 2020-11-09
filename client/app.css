@@ -97,3 +97,7 @@ input[type='checkbox'].toggle {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
 }
+
+.leaflet-sidebar-close-offset {
+  padding-top: 5px;
+}

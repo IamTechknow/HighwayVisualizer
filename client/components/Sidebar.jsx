@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import { MapComponent } from 'react-leaflet';
 
-// Sidebar implementation for latest version of leaflet-sidebar
+// Sidebar implementation for latest version of leaflet-sidebar-v2
 export default class Sidebar extends MapComponent {
   onClose(e) {
     e.preventDefault();
@@ -16,27 +16,26 @@ export default class Sidebar extends MapComponent {
     this.props.onToggle(tabId);
   }
 
+  // Use tab props defined in route drawer to render the tab itself
   renderTab(tab) {
-    const {
-      disabled, icon, id, selected,
-    } = tab.props;
+    const { selected } = this.props;
+    const { icon, id } = tab.props;
     const activeText = id === selected ? ' active' : '';
-    const disabledText = disabled ? ' disabled' : '';
     return (
-      <li className={activeText + disabledText} key={id}>
-        <a href={`#${id}`} role="tab" onClick={(e) => disabled || this.onToggle(e, id)}>
+      <li className={activeText} key={id}>
+        <a href={`#${id}`} role="tab" onClick={(e) => this.onToggle(e, id)}>
           {icon}
         </a>
       </li>
     );
   }
 
-  renderPanes(children) {
-    const { closeIcon, selected, position } = this.props;
-    return React.Children.map(children, (p) => React.cloneElement(p, {
+  // Clone each tab to add more props, which will be used to render the tab content
+  renderTabContent(children) {
+    const { selected, position } = this.props;
+    return React.Children.map(children, (e) => React.cloneElement(e, {
       onClose: this.onClose.bind(this),
-      closeIcon,
-      active: p.props.id === selected,
+      active: e.props.id === selected,
       position: position || 'left',
     }));
   }
@@ -59,7 +58,7 @@ export default class Sidebar extends MapComponent {
           </ul>
         </div>
         <div className="leaflet-sidebar-content">
-          {this.renderPanes(tabs)}
+          {this.renderTabContent(tabs)}
         </div>
       </div>
     );
@@ -73,6 +72,7 @@ Sidebar.propTypes = {
   onClose: PropTypes.func.isRequired,
   onToggle: PropTypes.func.isRequired,
   position: PropTypes.string,
+  selected: PropTypes.string.isRequired,
 };
 
 Sidebar.defaultProps = {

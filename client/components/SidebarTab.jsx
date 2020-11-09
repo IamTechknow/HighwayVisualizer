@@ -1,7 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import { ArrowLeft } from 'react-feather';
 
-// Sidebar implementation for latest version of leaflet-sidebar
+// Tab content implementation for latest version of leaflet-sidebar-v2
 const SidebarTab = ({
   children, id, active = false, header, onClose,
 }) => {
@@ -11,13 +12,13 @@ const SidebarTab = ({
       <h1 className="leaflet-sidebar-header">
         {header}
         <div
-          className="leaflet-sidebar-close"
+          className="leaflet-sidebar-close leaflet-sidebar-close-offset"
           onClick={onClose}
           onKeyDown={onClose}
           role="button"
           tabIndex="-1"
         >
-          X
+          <ArrowLeft />
         </div>
       </h1>
       {children}
