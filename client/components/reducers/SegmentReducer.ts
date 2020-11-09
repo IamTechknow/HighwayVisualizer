@@ -1,10 +1,10 @@
-import {
-  UPDATE_CONCURRENCIES, UPDATE_POPUP, UPDATE_SEGMENT, UPDATE_SEGMENT_ID, UPDATE_STATE,
-} from '../actions/actionTypes';
+import type {SegmentReducerPayload, SegmentState} from './../../types/types';
 
-export default (segmentState, payload) => {
+import {ReducerActionType} from './../../types/enums';
+
+export default (segmentState: SegmentState, payload: SegmentReducerPayload): SegmentState => {
   switch (payload.type) {
-    case UPDATE_STATE:
+    case ReducerActionType.UPDATE_STATE:
       return {
         ...segmentState,
         concurrencies: [],
@@ -15,24 +15,24 @@ export default (segmentState, payload) => {
         segmentId: null,
         segments: payload.segments,
       };
-    case UPDATE_SEGMENT:
+    case ReducerActionType.UPDATE_SEGMENT:
       return {
         ...segmentState,
         lat: payload.lat,
         lon: payload.lon,
         segmentData: payload.segmentData,
       };
-    case UPDATE_SEGMENT_ID:
+    case ReducerActionType.UPDATE_SEGMENT_ID:
       return {
         ...segmentState,
         segmentId: payload.segmentId,
       };
-    case UPDATE_CONCURRENCIES:
+    case ReducerActionType.UPDATE_CONCURRENCIES:
       return {
         ...segmentState,
         concurrencies: payload.concurrencies,
       };
-    case UPDATE_POPUP:
+    case ReducerActionType.UPDATE_POPUP:
       return {
         ...segmentState,
         popupCoords: payload.popupCoords,

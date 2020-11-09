@@ -1,8 +1,10 @@
-import { UPDATE_ROUTE_INFO, UPDATE_ROUTE_SHOW } from '../actions/actionTypes';
+import type {RouteReducerPayload, RouteState} from './../../types/types';
 
-export default (routeState, payload) => {
+import {ReducerActionType} from './../../types/enums';
+
+export default (routeState: RouteState, payload: RouteReducerPayload): RouteState => {
   switch (payload.type) {
-    case UPDATE_ROUTE_INFO:
+    case ReducerActionType.UPDATE_ROUTE_INFO:
       return {
         ...routeState,
         firstSegmentId: null,
@@ -10,7 +12,7 @@ export default (routeState, payload) => {
         routeNum: payload.routeNum,
         routeType: payload.routeType,
       };
-    case UPDATE_ROUTE_SHOW:
+    case ReducerActionType.UPDATE_ROUTE_SHOW:
       return {
         ...routeState,
         firstSegmentId: payload.firstSegmentId,
