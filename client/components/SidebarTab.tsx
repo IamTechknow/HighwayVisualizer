@@ -1,11 +1,20 @@
-import PropTypes from 'prop-types';
 import React from 'react';
-import { ArrowLeft } from 'react-feather';
+import { Icon, ArrowLeft } from 'react-feather';
 
-// Tab content implementation for latest version of leaflet-sidebar-v2
+// Sidebar implementation for latest version of leaflet-sidebar-v2
+
+export interface Props {
+  active: boolean,
+  children: React.ReactElement,
+  header: string,
+  icon?: Icon,
+  id: string,
+  onClose: (e: React.SyntheticEvent) => void,
+}
+
 const SidebarTab = ({
   children, id, active = false, header, onClose,
-}) => {
+}: Props): React.ReactElement<Props> => {
   const activeClass = active ? 'active' : '';
   return (
     <div id={id} className={`leaflet-sidebar-pane ${activeClass}`}>
@@ -16,7 +25,7 @@ const SidebarTab = ({
           onClick={onClose}
           onKeyDown={onClose}
           role="button"
-          tabIndex="-1"
+          tabIndex={-1}
         >
           <ArrowLeft />
         </div>
@@ -24,19 +33,6 @@ const SidebarTab = ({
       {children}
     </div>
   );
-};
-
-SidebarTab.propTypes = {
-  active: PropTypes.bool,
-  children: PropTypes.node.isRequired,
-  header: PropTypes.string.isRequired,
-  id: PropTypes.string.isRequired,
-  onClose: PropTypes.func,
-};
-
-SidebarTab.defaultProps = {
-  active: false,
-  onClose: () => {},
 };
 
 export default SidebarTab;
