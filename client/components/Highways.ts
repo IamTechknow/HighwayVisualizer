@@ -1,5 +1,6 @@
 import { RouteSignType } from '../types/enums';
 import type { PopupCoord, State, Segment, SegmentPolyLine, UserSegment } from '../types/types';
+import type { IHighways } from '../types/interfaces';
 
 import * as Leaflet from 'leaflet';
 
@@ -13,17 +14,17 @@ const ROUTE_NAMES = Object.freeze({
 });
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
-export default class Highways {
+export default class Highways implements IHighways {
   // Flatened map from segment ID to segment data
-  private segmentData: { [segmentId: number]: Segment };
+  public segmentData: { [segmentId: number]: Segment };
   // Map route number and direction to segment IDs for each route signage type
-  private idCache: { [id: number]: { [routeStr: string]: Array<number> } };
+  public idCache: { [id: number]: { [routeStr: string]: Array<number> } };
   // User segment data
   public userSegments: Array<UserSegment>;
   // Map route number to segment length
-  private routeLengthMap: { [routeStr: string]: number };
+  public routeLengthMap: { [routeStr: string]: number };
   // Map state ID to object
-  private stateCache: { [stateId: number]: State };
+  public stateCache: { [stateId: number]: State };
 
   // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
   static calcHavensine(point: Leaflet.LatLng, radX2: number, radY2: number): number {
