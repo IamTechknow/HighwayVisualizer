@@ -4,12 +4,12 @@ import { Icon, ArrowLeft } from 'react-feather';
 // Sidebar implementation for latest version of leaflet-sidebar-v2
 
 export interface Props {
-  active: boolean,
+  active?: boolean,
   children: React.ReactElement,
   header: string,
-  icon?: Icon,
+  icon?: React.ReactElement<Icon>,
   id: string,
-  onClose: (e: React.SyntheticEvent) => void,
+  onClose?: (e: React.SyntheticEvent) => void,
 }
 
 const SidebarTab = ({
