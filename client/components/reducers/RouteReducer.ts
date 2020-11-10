@@ -1,6 +1,6 @@
-import type {RouteReducerPayload, RouteState} from './../../types/types';
+import type { RouteReducerPayload, RouteState } from './../../types/types';
 
-import {ReducerActionType} from './../../types/enums';
+import { ReducerActionType } from './../../types/enums';
 
 export default (routeState: RouteState, payload: RouteReducerPayload): RouteState => {
   switch (payload.type) {

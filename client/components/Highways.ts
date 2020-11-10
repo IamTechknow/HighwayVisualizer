@@ -1,5 +1,5 @@
 import { RouteSignType } from '../types/enums';
-import type {PopupCoord, State, Segment, SegmentPolyLine, UserSegment} from '../types/types';
+import type { PopupCoord, State, Segment, SegmentPolyLine, UserSegment } from '../types/types';
 
 import * as Leaflet from 'leaflet';
 
@@ -15,15 +15,15 @@ const ROUTE_NAMES = Object.freeze({
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways {
   // Flatened map from segment ID to segment data
-  private segmentData: {[segmentId: number]: Segment};
+  private segmentData: { [segmentId: number]: Segment };
   // Map route number and direction to segment IDs for each route signage type
-  private idCache: {[id: number]: {[routeStr: string]: Array<number>}};
+  private idCache: { [id: number]: { [routeStr: string]: Array<number> } };
   // User segment data
   public userSegments: Array<UserSegment>;
   // Map route number to segment length
-  private routeLengthMap: {[routeStr: string]: number};
+  private routeLengthMap: { [routeStr: string]: number };
   // Map state ID to object
-  private stateCache: {[stateId: number]: State};
+  private stateCache: { [stateId: number]: State };
 
   // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
   static calcHavensine(point: Leaflet.LatLng, radX2: number, radY2: number): number {
@@ -51,7 +51,7 @@ export default class Highways {
   }
 
   static getType(input: string): RouteSignType {
-    const classifications: {[key: string]: RouteSignType} = {
+    const classifications: { [key: string]: RouteSignType } = {
       I: RouteSignType.INTERSTATE,
       i: RouteSignType.INTERSTATE,
       US: RouteSignType.US_HIGHWAY,
@@ -70,7 +70,11 @@ export default class Highways {
       so points can be treated as a sorted array.
     - Less likely to work for routes that travel circular, may need to debug comparsions
   */
-  static findSegmentPoint(polyline: Leaflet.Polyline, clicked: Leaflet.LatLng, segmentId: number): PopupCoord {
+  static findSegmentPoint(
+    polyline: Leaflet.Polyline,
+    clicked: Leaflet.LatLng,
+    segmentId: number,
+  ): PopupCoord {
     const points = <Leaflet.LatLng[]>polyline.getLatLngs();
     let shortestDist = Number.MAX_VALUE;
     let closest;
@@ -157,17 +161,20 @@ export default class Highways {
     this.stateCache = {};
   }
 
-  buildStateSegmentsData(raw: Array<Segment>) {
+  buildStateSegmentsData(raw: Array<Segment>): void {
     const initialIdCache = {
       [RouteSignType.INTERSTATE]: {},
       [RouteSignType.US_HIGHWAY]: {},
       [RouteSignType.STATE]: {},
     };
-    const segmentReducer = (accum: {[segmentId: number]: Segment}, curr: Segment) => {
+    const segmentReducer = (accum: { [segmentId: number]: Segment }, curr: Segment) => {
       accum[curr.id] = curr;
       return accum;
     };
-    const idReducer = (accum: {[id: number]: {[routeStr: string]: Array<number>}}, currSegment: Segment) => {
+    const idReducer = (
+      accum: { [id: number]: { [routeStr: string]: Array<number> } },
+      currSegment: Segment,
+    ) => {
       const {
         dir, id, routeNum, type,
       } = currSegment;
@@ -179,7 +186,7 @@ export default class Highways {
       }
       return accum;
     };
-    const lenReducer = (accum: {[routeStr: string]: number}, currSegment: Segment) => {
+    const lenReducer = (accum: { [routeStr: string]: number }, currSegment: Segment) => {
       const { dir, len_m, routeNum } = currSegment;
       const key = routeNum + dir;
       accum[key] = accum[key] ? accum[key] + len_m : len_m;
@@ -194,7 +201,7 @@ export default class Highways {
     return this.segmentData[segmentId].segNum + 1;
   }
 
-  getSegmentIds(type: RouteSignType, routeNumAndDir: string) {
+  getSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number> {
     return this.idCache[type][routeNumAndDir];
   }
 
@@ -210,12 +217,18 @@ export default class Highways {
     this.userSegments.push(userSegment);
   }
 
-  addNewUserSegments(startMarker: PopupCoord, endMarker: PopupCoord, routeNum: string, segmentId: number, segmentData: Array<SegmentPolyLine>): void {
+  addNewUserSegments(
+    startMarker: PopupCoord,
+    endMarker: PopupCoord,
+    routeNum: string,
+    segmentId: number,
+    segmentData: Array<SegmentPolyLine>,
+  ): void {
     // Check whether both points have the same route ID
     if (startMarker.segmentId === segmentId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.addSegment({routeNum, segmentId, startId, endId, clinched: false});
+      this.addSegment({ routeNum, segmentId, startId, endId, clinched: false });
     } else {
       // Figure out higher and lower points
       const start = startMarker.segmentId > segmentId ? endMarker : startMarker;
@@ -224,23 +237,39 @@ export default class Highways {
 
       // Add first segment
       const endIdx = segmentData[<number>idMap.get(start.segmentId)].points.length;
-      this.addSegment({routeNum, segmentId: start.segmentId, startId: start.idx, endId: endIdx, clinched: false});
+      this.addSegment({
+        routeNum,
+        segmentId: start.segmentId,
+        startId: start.idx,
+        endId: endIdx,
+        clinched: false,
+      });
       // Add entire user segments if needed
       if (end.segmentId - start.segmentId > 1) {
         for (let i = start.segmentId + 1; i < end.segmentId; i += 1) {
-          this.addSegment(
-            {routeNum, segmentId: i, startId: 0, endId: segmentData[<number>idMap.get(i)].points.length, clinched: false},
-          );
+          this.addSegment({
+            routeNum,
+            segmentId: i,
+            startId: 0,
+            endId: segmentData[<number>idMap.get(i)].points.length,
+            clinched: false,
+          });
         }
       }
       // Add last segment
-      this.addSegment({routeNum, segmentId: end.segmentId, startId: 0, endId: end.idx, clinched: false});
+      this.addSegment({
+        routeNum,
+        segmentId: end.segmentId,
+        startId: 0,
+        endId: end.idx,
+        clinched: false,
+      });
     }
   }
 
   addFullSegment(routeNum: string, segmentId: number): void {
     this.addSegment(
-      {routeNum, segmentId, startId: 0, endId: this.segmentData[segmentId].len, clinched: false},
+      { routeNum, segmentId, startId: 0, endId: this.segmentData[segmentId].len, clinched: false },
     );
   }
 
@@ -272,7 +301,12 @@ export default class Highways {
     return this.stateCache[stateId];
   }
 
-  getZoomLevel(routeStr: string, routeType: RouteSignType, segmentData: Array<Segment>, segmentId: number): number {
+  getZoomLevel(
+    routeStr: string,
+    routeType: RouteSignType,
+    segmentData: Array<Segment>,
+    segmentId: number,
+  ): number {
     if (segmentData.length === 0) {
       return 0;
     }

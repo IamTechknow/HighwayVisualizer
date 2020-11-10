@@ -1,5 +1,5 @@
-import type {State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData} from '../types/types';
-import {RouteSignType} from '../types/enums';
+import type { State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData } from '../types/types';
+import { RouteSignType } from '../types/enums';
 
 // API host defined in webpack config
 declare const __API__: string;
@@ -26,13 +26,13 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
-  static getRoute(stateId: number, routeNum: string, type: RouteSignType, dir: String) {
+  static getRoute(stateId: number, routeNum: string, type: RouteSignType, dir: string): Promise<Array<SegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/points/${type}/${routeNum}/${query}`)
       .then((res) => res.json());
   }
 
-  static getConcurrenyPoints(stateId: number, routeNum: string, dir: string) {
+  static getConcurrenyPoints(stateId: number, routeNum: string, dir: string): Promise<Array<SegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/concurrencies/${routeNum}${query}`)
       .then((res) => res.json());

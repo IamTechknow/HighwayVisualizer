@@ -59,13 +59,13 @@ export interface SegmentReducerPayload {
 }
 
 export interface SegmentState {
-  concurrencies: Array<SegmentPolyLine>,
-  lat: number,
-  lon: number,
-  popupCoords: PopupCoord | null,
-  segmentData: Array<SegmentPolyLine>,
-  segmentId: number | null,
-  segments: Array<Segment>,
+  concurrencies?: Array<SegmentPolyLine>,
+  lat?: number,
+  lon?: number,
+  popupCoords?: PopupCoord | null,
+  segmentData?: Array<SegmentPolyLine>,
+  segmentId?: number | null,
+  segments?: Array<Segment>,
 }
 
 export interface State {

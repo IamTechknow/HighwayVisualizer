@@ -1,6 +1,6 @@
-import type {SegmentReducerPayload, SegmentState} from './../../types/types';
+import type { SegmentReducerPayload, SegmentState } from './../../types/types';
 
-import {ReducerActionType} from './../../types/enums';
+import { ReducerActionType } from './../../types/enums';
 
 export default (segmentState: SegmentState, payload: SegmentReducerPayload): SegmentState => {
   switch (payload.type) {
