@@ -80,12 +80,36 @@ export interface User {
   user: string,
 }
 
+export interface UserRouteProps {
+  user: string,
+}
+
 export interface UserSegment {
   routeNum: string,
   segmentId: number,
   startId: number,
   endId: number,
   clinched: boolean,
+}
+
+export interface UserStatSegment extends UserSegment {
+  points: Array<Leaflet.LatLngTuple>,
+}
+
+export interface UserStat {
+  readonly percentage: string,
+  readonly route: string,
+  readonly segment: number,
+  readonly state: string,
+  readonly total: number,
+  readonly traveled: number,
+}
+
+export interface UserStatsAPIPayload {
+  readonly loaded: boolean
+  readonly notFound: boolean
+  readonly stats: Array<UserStat>,
+  readonly userSegments: Array<UserStatSegment>
 }
 
 export interface SubmissionData {

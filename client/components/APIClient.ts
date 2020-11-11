@@ -38,6 +38,11 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
+  static getUserStats(userId: string): Promise<UserStatsAPIPayload> {
+    return fetch(`${__API__}/api/user_segments/${userId}`)
+      .then((res) => res.json());
+  }
+
   static postUser(user: FormDataEntryValue): Promise<UserSubmissionData> {
     return APIClient.postUserData<UserSubmissionData>('/api/newUser', JSON.stringify({ user }));
   }

@@ -1,7 +1,12 @@
-import PropTypes from 'prop-types';
 import React from 'react';
 
-const Collapsible = ({ children, title, open = '' }) => (
+interface Props {
+  children: React.ReactElement | React.ReactElement[],
+  title: string,
+  open?: boolean,
+}
+
+const Collapsible = ({ children, title, open = false }: Props): React.ReactElement<Props> => (
   <div className="wrap-collapsible">
     <input id={`collapsible-${title}`} className="toggle" type="checkbox" defaultChecked={open} />
     <label htmlFor={`collapsible-${title}`} className="lbl-toggle">{title}</label>
@@ -12,15 +17,5 @@ const Collapsible = ({ children, title, open = '' }) => (
     </div>
   </div>
 );
-
-Collapsible.propTypes = {
-  children: PropTypes.node.isRequired,
-  open: PropTypes.string,
-  title: PropTypes.string.isRequired,
-};
-
-Collapsible.defaultProps = {
-  open: '',
-};
 
 export default Collapsible;
