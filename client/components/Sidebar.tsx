@@ -3,7 +3,7 @@ import { DivOverlayTypes, MapComponent, MapComponentProps } from 'react-leaflet'
 import type { Props as SidebarTabProps } from './SidebarTab';
 
 interface Props extends MapComponentProps {
-  children: React.ReactElement<SidebarTabProps>[],
+  children: React.ReactElement<SidebarTabProps> | React.ReactElement<SidebarTabProps>[],
   collapsed: boolean,
   id: string,
   onClose: () => void,
@@ -46,7 +46,7 @@ export default class Sidebar extends MapComponent<Props, DivOverlayTypes> {
   }
 
   renderTabContent(
-    children: React.ReactElement<SidebarTabProps>[],
+    children: React.ReactElement<SidebarTabProps> | React.ReactElement<SidebarTabProps>[],
   ): React.ReactElement<SidebarTabProps>[] {
     const { selected } = this.props;
     return React.Children.map(children,
@@ -69,7 +69,7 @@ export default class Sidebar extends MapComponent<Props, DivOverlayTypes> {
       >
         <div className="leaflet-sidebar-tabs">
           <ul role="tablist">
-            {tabs.map(this.renderTab)}
+            {React.Children.map(tabs, this.renderTab.bind(this))}
           </ul>
         </div>
         <div className="leaflet-sidebar-content">

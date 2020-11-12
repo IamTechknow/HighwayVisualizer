@@ -1,4 +1,4 @@
-import type { State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData } from '../types/types';
+import type { State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData, UserStatsAPIPayload } from '../types/types';
 import { RouteSignType } from '../types/enums';
 
 // API host defined in webpack config
@@ -21,7 +21,7 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
-  static getSegment(segmentId: number): Promise<SegmentPolyLine> {
+  static getSegment(segmentId: number): Promise<Array<SegmentPolyLine>> {
     return fetch(`${__API__}/api/points/${segmentId}`)
       .then((res) => res.json());
   }

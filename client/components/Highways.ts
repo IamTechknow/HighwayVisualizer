@@ -305,7 +305,7 @@ export default class Highways implements IHighways {
   getZoomLevel(
     routeStr: string,
     routeType: RouteSignType,
-    segmentData: Array<Segment>,
+    segmentData: Array<SegmentPolyLine>,
     segmentId: number,
   ): number {
     if (segmentData.length === 0) {

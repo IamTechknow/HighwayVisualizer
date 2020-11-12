@@ -19,7 +19,7 @@ export interface IHighways {
   getSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number>,
   getSegmentNum(segmentId: number): number,
   getState(stateId: number): State,
-  getZoomLevel(routeStr: string, routeType: RouteSignType, segmentData: Array<Segment>, segmentId: number): number,
+  getZoomLevel(routeStr: string, routeType: RouteSignType, segmentData: Array<SegmentPolyLine>, segmentId: number): number,
   setStates(stateArr: Array<State>): void,
   shouldUseRouteDir(stateId: number): boolean,
   toggleUserSegment(idx: number): void,

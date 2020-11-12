@@ -44,7 +44,7 @@ export interface Segment {
 
 export interface SegmentPolyLine {
   readonly id: number,
-  readonly points: Array<Leaflet.LatLng>,
+  readonly points: Array<Leaflet.LatLngTuple>,
 }
 
 export interface SegmentReducerPayload {
@@ -55,7 +55,7 @@ export interface SegmentReducerPayload {
   popupCoords?: PopupCoord | null,
   segmentData?: Array<SegmentPolyLine>,
   segmentId?: number | null,
-  segments?: Array<Segment>,
+  segments?: Array<Array<Segment>>,
 }
 
 export interface SegmentState {
@@ -65,7 +65,7 @@ export interface SegmentState {
   popupCoords?: PopupCoord | null,
   segmentData?: Array<SegmentPolyLine>,
   segmentId?: number | null,
-  segments?: Array<Segment>,
+  segments?: Array<Array<Segment>>,
 }
 
 export interface State {

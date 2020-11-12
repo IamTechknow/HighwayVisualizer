@@ -1,5 +1,5 @@
 import type { IHighways } from '../types/interfaces';
-import type { State, Segment, User as UserType, UserSegment, UserSubmissionData } from '../types/types';
+import type { State, Segment, SubmissionData, User as UserType, UserSegment } from '../types/types';
 import { SegmentCreateMode } from '../types/enums';
 
 import React, { useState } from 'react';
@@ -21,7 +21,6 @@ interface Props {
   getRouteName: (segmentObj: Segment) => string,
   highwayData: IHighways,
   onClinchToggleFor: (i: number) => void,
-  onFormSubmit: (event: React.FormEvent) => void,
   onResetUserSegments: () => void,
   onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
   onSegmentItemClick: (event: React.SyntheticEvent, segment: Segment) => void,
@@ -29,10 +28,11 @@ interface Props {
   onSetMode: (mode: SegmentCreateMode) => void,
   onStateClick: (stateId: number) => void,
   onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
+  onUserSubmit: (newUser: string) => void,
   segments: Array<Array<Segment>>,
   stateId: number | null,
   states: Array<State>,
-  submitData: UserSubmissionData | null,
+  submitData: SubmissionData | null,
   userSegments: Array<UserSegment>,
   users: Array<UserType>,
 }
@@ -43,7 +43,6 @@ const RouteDrawer = ({
   getRouteName,
   highwayData,
   onClinchToggleFor,
-  onFormSubmit,
   onResetUserSegments,
   onRouteItemClick,
   onSegmentItemClick,
@@ -51,6 +50,7 @@ const RouteDrawer = ({
   onSetMode,
   onStateClick,
   onUserChange,
+  onUserSubmit,
   segments,
   stateId = null,
   states,
@@ -59,11 +59,21 @@ const RouteDrawer = ({
   users,
 }: Props): React.ReactElement<Props> => {
   const [isCollapsed, setCollapsed] = useState<boolean>(false);
+  const [currNameInput, setNameInput] = useState<string>("");
   const [selectedId, setSelectedId] = useState<string>('segments');
 
   const getIdForUserSegment = (userSeg: UserSegment): string => {
     const { endId, segmentId, startId } = userSeg;
     return `userSeg-${segmentId}-${startId}-${endId}`;
+  }
+
+  const onUserNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setNameInput(event.target.value);
+  }
+
+  const onFormSubmit = (event: React.FormEvent): void => {
+    event.preventDefault();
+    onUserSubmit(currNameInput);
   }
 
   return (
@@ -103,7 +113,14 @@ const RouteDrawer = ({
             <form onSubmit={onFormSubmit}>
               <label htmlFor="userName" className="nameFormElement">
                 Username
-                <input type="text" id="userName" name="userName" className="nameFormElement" />
+                <input
+                  className="nameFormElement"
+                  id="userName"
+                  onChange={onUserNameChange}
+                  name="userName"
+                  type="text"
+                  value={currNameInput}
+                />
               </label>
               <br />
               <button type="submit">Create User</button>
