@@ -1,27 +1,25 @@
-/* eslint-disable no-nested-ternary */
-import PropTypes from 'prop-types';
+import type { UserRouteProps, UserStatSegment, UserStatsAPIPayload } from '../types/types';
+
 import React, { useEffect, useState } from 'react';
 import { User } from 'react-feather';
 import { Map, TileLayer, Polyline } from 'react-leaflet';
 
+import { RouteComponentProps } from 'react-router';
+
+import APIClient from './APIClient';
+import { stringifyUserSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 
-const UserApp = ({ match }) => {
+const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactElement => {
   const [isCollapsed, setCollapsed] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-  const [notFound, setNotFound] = useState(false);
   const [scale, setScale] = useState(MILES);
   const [selectedId, setSelectedId] = useState('users');
-  const [stats, setStats] = useState([]);
-  const [userSegments, setUserSegments] = useState([]);
+  const [userStats, setUserStats] = useState<UserStatsAPIPayload | undefined>();
 
-  const getUserSegmentsFor = (userId) => fetch(`${__API__}/api/user_segments/${userId}`)
-    .then((res) => res.json());
-
-  const onSidebarToggle = (id) => {
+  const onSidebarToggle = (id: string): void => {
     if (selectedId === id) {
       setCollapsed(!isCollapsed);
     }
@@ -31,23 +29,21 @@ const UserApp = ({ match }) => {
     setSelectedId(id);
   };
 
-  useEffect(() => {
-    getUserSegmentsFor(match.params.user).then((result) => {
-      // Update boolean variables last because this is not simultaneous state update
-      setUserSegments(result.userSegments);
-      setStats(result.stats);
-      setNotFound(result.notFound);
-      setLoaded(result.loaded);
-    });
+  useEffect((): void => {
+    APIClient.getUserStats(match.params.user)
+      .then((result: UserStatsAPIPayload): void => {
+        setUserStats(result);
+      });
   }, []);
 
-  if (!loaded) {
+  if (userStats == null || !userStats.loaded) {
     return (
       <div>
         <h3>{`Getting ${match.params.user}'s segments...`}</h3>
       </div>
     );
   }
+  const { notFound, stats, userSegments } = userStats;
 
   if (notFound) {
     return (
@@ -68,10 +64,10 @@ const UserApp = ({ match }) => {
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
 
-        { userSegments && userSegments.map((userSeg) => (
+        {userSegments && userSegments.map((userSeg: UserStatSegment): React.ReactElement<Polyline> => (
           <Polyline
-            key={userSeg.toString()}
-            positions={userSeg.points}
+            key={stringifyUserSegment(userSeg)}
+            positions={userSeg.points ?? []}
             color={userSeg.clinched ? 'lime' : 'yellow'}
           />
         ))}
@@ -88,7 +84,7 @@ const UserApp = ({ match }) => {
             <h3>{`${match.params.user}'s traveling statistics`}</h3>
 
             <p>Unit conversion</p>
-            <select onChange={(event) => setScale(Number.parseFloat(event.target.value, 10))}>
+            <select onChange={(event) => setScale(Number.parseFloat(event.target.value))}>
               <option value={METERS}>Meters</option>
               <option value={KM}>Kilometers</option>
               <option value={MILES}>Miles</option>
@@ -128,14 +124,6 @@ const UserApp = ({ match }) => {
       </Sidebar>
     </div>
   );
-};
-
-UserApp.propTypes = {
-  match: PropTypes.shape({
-    params: PropTypes.shape({
-      user: PropTypes.string.isRequired,
-    }).isRequired,
-  }).isRequired,
 };
 
 export default UserApp;

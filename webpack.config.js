@@ -4,7 +4,7 @@ const webpack = require('webpack');
 const SRC_DIR = path.join(__dirname, '/client');
 
 module.exports = {
-  entry: `${SRC_DIR}/index.jsx`,
+  entry: `${SRC_DIR}/index.tsx`,
   mode: 'development',
   devtool: 'source-map',
   output: {

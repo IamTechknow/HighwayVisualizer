@@ -1,24 +1,46 @@
-import PropTypes from 'prop-types';
+import type { IHighways } from '../types/interfaces';
+import type { State, Segment, SubmissionData, User as UserType, UserSegment } from '../types/types';
+import { SegmentCreateMode } from '../types/enums';
+
 import React, { useState } from 'react';
 import {
   Info, Map, Search, User,
 } from 'react-feather';
 
-import Highways from './Highways';
+import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
 import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
-const MANUAL = 0, CLINCH = 1, KEY_ENTER = 13, ICON_SIZE = 16;
+const KEY_ENTER = 13, ICON_SIZE = 16;
+
+interface Props {
+  currMode: number,
+  currUserId: number,
+  highwayData: IHighways,
+  onClinchToggleFor: (i: number) => void,
+  onResetUserSegments: () => void,
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
+  onSegmentItemClick: (event: React.SyntheticEvent, segment: Segment) => void,
+  onSendUserSegments: () => void,
+  onSetMode: (mode: SegmentCreateMode) => void,
+  onStateClick: (stateId: number) => void,
+  onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
+  onUserSubmit: (newUser: string) => void,
+  segments: Array<Array<Segment>>,
+  stateId: number | null,
+  states: Array<State>,
+  submitData: SubmissionData | null,
+  userSegments: Array<UserSegment>,
+  users: Array<UserType>,
+}
 
 const RouteDrawer = ({
   currMode,
   currUserId,
-  getRouteName,
   highwayData,
   onClinchToggleFor,
-  onFormSubmit,
   onResetUserSegments,
   onRouteItemClick,
   onSegmentItemClick,
@@ -26,22 +48,38 @@ const RouteDrawer = ({
   onSetMode,
   onStateClick,
   onUserChange,
+  onUserSubmit,
   segments,
-  stateId,
+  stateId = null,
   states,
-  submitData,
+  submitData = null,
   userSegments,
   users,
-}) => {
-  const [isCollapsed, setCollapsed] = useState(false);
-  const [selectedId, setSelectedId] = useState('segments');
+}: Props): React.ReactElement<Props> => {
+  const [isCollapsed, setCollapsed] = useState<boolean>(false);
+  const [currNameInput, setNameInput] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string>('segments');
+
+  const getIdForUserSegment = (userSeg: UserSegment): string => {
+    const { endId, segmentId, startId } = userSeg;
+    return `userSeg-${segmentId}-${startId}-${endId}`;
+  }
+
+  const onUserNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setNameInput(event.target.value);
+  }
+
+  const onFormSubmit = (event: React.FormEvent): void => {
+    event.preventDefault();
+    onUserSubmit(currNameInput);
+  }
 
   return (
     <Sidebar
       id="sidebar"
       collapsed={isCollapsed}
       selected={selectedId}
-      onClose={() => setCollapsed(true)}
+      onClose={(): void => setCollapsed(true)}
       onToggle={(id) => {
         if (selectedId === id) {
           setCollapsed(!isCollapsed);
@@ -54,30 +92,37 @@ const RouteDrawer = ({
     >
       <SidebarTab id="users" header="User Settings" icon={<User size={ICON_SIZE} />}>
         <div className="tabContent">
-          { submitData && <h3>{submitData.message}</h3> }
+          {submitData && <h3>{submitData.message}</h3>}
           <h3>
-            { currMode === CLINCH ? 'Clinch Mode' : 'Create Mode' }
+            {currMode === SegmentCreateMode.CLINCH ? 'Clinch Mode' : 'Create Mode'}
             <span className="segRow">
-              <button type="button" onClick={() => onSetMode(MANUAL)}>Manual</button>
-              <button type="button" onClick={() => onSetMode(CLINCH)}>Clinch</button>
+              <button type="button" onClick={() => onSetMode(SegmentCreateMode.MANUAL)}>Manual</button>
+              <button type="button" onClick={() => onSetMode(SegmentCreateMode.CLINCH)}>Clinch</button>
             </span>
           </h3>
 
-          <Collapsible title="Users" open="true">
+          <Collapsible title="Users" open={true}>
             <select value={currUserId} onChange={onUserChange} className="nameFormElement">
               <option key={-1} value={-1}>Select or create User</option>
-              { users
+              {users
                 && users.map((user) => <option key={user.id} value={user.id}>{user.user}</option>)}
             </select>
 
             <form onSubmit={onFormSubmit}>
               <label htmlFor="userName" className="nameFormElement">
                 Username
-                <input type="text" id="userName" name="userName" className="nameFormElement" />
+                <input
+                  className="nameFormElement"
+                  id="userName"
+                  onChange={onUserNameChange}
+                  name="userName"
+                  type="text"
+                  value={currNameInput}
+                />
               </label>
               <br />
               <button type="submit">Create User</button>
-              { currUserId >= 0
+              {currUserId >= 0
                 && <a href={`/users/${users[currUserId - 1].user}`}>View Stats</a>}
             </form>
           </Collapsible>
@@ -86,33 +131,37 @@ const RouteDrawer = ({
             <ul>
               {
                 userSegments
-                && userSegments.map((userSeg, i) => (
-                  <div key={userSeg.toString()} className="userSegRow">
+                && userSegments.map((userSeg: UserSegment, i: number): React.ReactNode => (
+                  <div key={getIdForUserSegment(userSeg)} className="userSegRow">
                     <li>
-                      {`${Highways.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
-                      <input type="checkbox" onClick={() => { onClinchToggleFor(i); }} />
+                      {`${HighwayUtils.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
+                      <input type="checkbox" onClick={(): void => { onClinchToggleFor(i); }} />
                     </li>
                   </div>
                 ))
               }
             </ul>
 
-            { currUserId >= 0 && userSegments
-              && <button type="button" onClick={onSendUserSegments}>Submit User Segments</button>}
+            <button
+              disabled={currUserId < 0 && userSegments.length === 0}
+              onClick={onSendUserSegments}
+              type="button">
+              Submit User Segments
+            </button>
             <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>
           </Collapsible>
         </div>
       </SidebarTab>
       <SidebarTab id="segments" header="Segments" icon={<Map size={ICON_SIZE} />}>
         <div className="tabContent">
-          <Collapsible title="States" open="true">
+          <Collapsible title="States" open={true}>
             <ul>
-              { states ? states.map((state) => (
+              {states ? states.map((state: State): React.ReactNode => (
                 <li
                   key={`state_${state.id}`}
                   className="clickable"
-                  onClick={() => onStateClick(state.id)}
-                  onKeyDown={(event) => {
+                  onClick={(): void => onStateClick(state.id)}
+                  onKeyDown={(event: React.KeyboardEvent): void => {
                     if (event.keyCode === KEY_ENTER) {
                       onStateClick(state.id);
                     }
@@ -126,29 +175,29 @@ const RouteDrawer = ({
           </Collapsible>
 
           {/* List each route and all route segments */}
-          <Collapsible title="Segments" open="true">
+          <Collapsible title="Segments" open={true}>
             <ul>
-              { segments ? segments.map((segmentSet) => (
+              {stateId != null && segments ? segments.map((segmentSet: Array<Segment>): React.ReactNode => (
                 <li
                   key={`${segmentSet[0].routeNum}${segmentSet[0].dir}_${segmentSet[0].type}`}
                   className="clickable"
-                  onClick={(event) => onRouteItemClick(event, segmentSet[0])}
-                  onKeyDown={(event) => {
+                  onClick={(event: React.MouseEvent): void => onRouteItemClick(event, segmentSet[0])}
+                  onKeyDown={(event: React.KeyboardEvent): void => {
                     if (event.keyCode === KEY_ENTER) {
                       onRouteItemClick(event, segmentSet[0]);
                     }
                   }}
                   role="presentation"
                 >
-                  {getRouteName(segmentSet[0])}
+                  {HighwayUtils.getRouteName(segmentSet[0], highwayData.getState(stateId).identifier)}
                   { segmentSet.length > 1 && (
                     <ul>
-                      {segmentSet.map((segment, i) => (
+                      {segmentSet.map((segment: Segment, i: number): React.ReactNode => (
                         <li
                           key={`segment-${segment.id}`}
                           className="clickable"
-                          onClick={(event) => onSegmentItemClick(event, segment)}
-                          onKeyDown={(event) => {
+                          onClick={(event: React.MouseEvent): void => onSegmentItemClick(event, segment)}
+                          onKeyDown={(event: React.KeyboardEvent): void => {
                             if (event.keyCode === KEY_ENTER) {
                               onSegmentItemClick(event, segment);
                             }
@@ -168,10 +217,9 @@ const RouteDrawer = ({
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<Search size={ICON_SIZE} />}>
         <SearchResults
-          getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
           segments={segments}
-          stateTitle={stateId != null ? highwayData.getState(stateId).title : ''}
+          state={stateId != null ? highwayData.getState(stateId) : null}
         />
       </SidebarTab>
       <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>
@@ -200,62 +248,6 @@ const RouteDrawer = ({
       </SidebarTab>
     </Sidebar>
   );
-};
-
-RouteDrawer.propTypes = {
-  currMode: PropTypes.number.isRequired,
-  currUserId: PropTypes.number.isRequired,
-  getRouteName: PropTypes.func.isRequired,
-  highwayData: PropTypes.instanceOf(Highways).isRequired,
-  onClinchToggleFor: PropTypes.func.isRequired,
-  onFormSubmit: PropTypes.func.isRequired,
-  onResetUserSegments: PropTypes.func.isRequired,
-  onRouteItemClick: PropTypes.func.isRequired,
-  onSegmentItemClick: PropTypes.func.isRequired,
-  onSendUserSegments: PropTypes.func.isRequired,
-  onSetMode: PropTypes.func.isRequired,
-  onStateClick: PropTypes.func.isRequired,
-  onUserChange: PropTypes.func.isRequired,
-  segments: PropTypes.arrayOf(
-    PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        dir: PropTypes.string,
-        routeNum: PropTypes.string.isRequired,
-        type: PropTypes.number.isRequired,
-      }),
-    ),
-  ).isRequired,
-  stateId: PropTypes.number,
-  states: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      identifier: PropTypes.string.isRequired,
-      initials: PropTypes.string.isRequired,
-      title: PropTypes.string.isRequired,
-    }),
-  ).isRequired,
-  submitData: PropTypes.shape({
-    message: PropTypes.string,
-    success: PropTypes.bool,
-  }),
-  userSegments: PropTypes.arrayOf(
-    PropTypes.shape({
-      routeNum: PropTypes.string.isRequired,
-      segmentId: PropTypes.number.isRequired,
-    }),
-  ).isRequired,
-  users: PropTypes.arrayOf(
-    PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      user: PropTypes.string.isRequired,
-    }),
-  ).isRequired,
-};
-
-RouteDrawer.defaultProps = {
-  stateId: null,
-  submitData: null,
 };
 
 export default RouteDrawer;

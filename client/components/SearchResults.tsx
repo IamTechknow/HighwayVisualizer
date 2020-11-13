@@ -1,25 +1,31 @@
-import PropTypes from 'prop-types';
+import type { Segment, State } from '../types/types';
+
 import React, { useMemo, useState } from 'react';
 
-import Highways from './Highways';
+import * as HighwayUtils from '../utils/HighwayUtils';
+
+interface Props {
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
+  segments: Array<Array<Segment>>,
+  state: State | null,
+}
 
 const SearchResults = ({
-  getRouteName,
   onRouteItemClick,
   segments,
-  stateTitle,
-}) => {
-  if (segments.length === 0 || stateTitle === '') {
+  state,
+}: Props): React.ReactElement<Props> => {
+  if (segments.length === 0 || state == null) {
     return <h3>Loading...</h3>;
   }
 
-  const [searchResults, setSearchResults] = useState([]);
-  const fullRoutes = useMemo(
-    () => segments.flat().filter((routeObj) => routeObj.segNum === 0),
+  const [searchResults, setSearchResults] = useState<Segment[]>([]);
+  const fullRoutes = useMemo<Segment[]>(
+    (): Segment[] => segments.flat().filter((routeObj: Segment): boolean => routeObj.segNum === 0),
     [segments],
   );
 
-  const onSearchSegments = (event) => {
+  const onSearchSegments = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const query = event.target.value;
     if (!query) {
       setSearchResults([]);
@@ -30,10 +36,14 @@ const SearchResults = ({
     const routeNum = queries.length > 0 ? queries[queries.length - 1] : null;
     let filteredSegments = fullRoutes;
     if (queries.length > 1) {
-      const highwayType = Highways.getType(queries[0]);
-      filteredSegments = fullRoutes.filter((routeObj) => routeObj.type === highwayType);
+      const highwayType = HighwayUtils.getType(queries[0]);
+      filteredSegments = fullRoutes.filter(
+        (routeObj: Segment): boolean => routeObj.type === highwayType,
+      );
     }
-    const results = filteredSegments.filter((routeObj) => routeObj.routeNum.indexOf(routeNum) >= 0);
+    const results = filteredSegments.filter(
+      (routeObj: Segment): boolean => routeNum != null && routeObj.routeNum.indexOf(routeNum) >= 0,
+    );
     setSearchResults(results.slice(0, 30));
   };
 
@@ -41,9 +51,9 @@ const SearchResults = ({
     <div className="tabContent">
       <input
         type="text"
-        size="50"
+        size={50}
         className="nameFormElement"
-        placeholder={`Search ${stateTitle} segments by type and/or number...`}
+        placeholder={`Search ${state.title} segments by type and/or number...`}
         onChange={onSearchSegments}
       />
       {
@@ -65,19 +75,19 @@ const SearchResults = ({
           : (
             <ul>
               {
-                searchResults.map((firstSeg) => (
+                searchResults.map((firstSeg: Segment): React.ReactNode => (
                   <li
                     key={firstSeg.id}
                     className="clickable"
-                    onClick={(event) => onRouteItemClick(event, firstSeg)}
-                    onKeyDown={(event) => {
+                    onClick={(event: React.MouseEvent): void => onRouteItemClick(event, firstSeg)}
+                    onKeyDown={(event: React.KeyboardEvent): void => {
                       if (event.keyCode === 13) {
                         onRouteItemClick(event, firstSeg);
                       }
                     }}
                     role="presentation"
                   >
-                    {getRouteName(firstSeg)}
+                    {HighwayUtils.getRouteName(firstSeg, state.identifier)}
                   </li>
                 ))
               }
@@ -86,22 +96,6 @@ const SearchResults = ({
       }
     </div>
   );
-};
-
-SearchResults.propTypes = {
-  getRouteName: PropTypes.func.isRequired,
-  onRouteItemClick: PropTypes.func.isRequired,
-  segments: PropTypes.arrayOf(
-    PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.number,
-        dir: PropTypes.string,
-        routeNum: PropTypes.string.isRequired,
-        type: PropTypes.number.isRequired,
-      }),
-    ),
-  ).isRequired,
-  stateTitle: PropTypes.string.isRequired,
 };
 
 export default SearchResults;

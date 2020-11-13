@@ -1,13 +1,6 @@
 {
   plugins: [
-    [
-      "import",
-      {
-        libraryName: "react-feather",
-        libraryDirectory: "dist/icons",
-      },
-      '@babel/proposal-class-properties',
-    ]
+    '@babel/proposal-class-properties'
   ],
   presets: [
     [
@@ -17,7 +10,7 @@
       '@babel/preset-react'
     ],
     [
-      '@babel/typescript'
+      '@babel/preset-typescript'
     ]
   ]
 }
