@@ -21,6 +21,5 @@ export interface IHighways {
   getState(stateId: number): State,
   getZoomLevel(routeStr: string, routeType: RouteSignType, segmentData: Array<SegmentPolyLine>, segmentId: number): number,
   setStates(stateArr: Array<State>): void,
-  shouldUseRouteDir(stateId: number): boolean,
   toggleUserSegment(idx: number): void,
 }

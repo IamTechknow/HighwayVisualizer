@@ -6,7 +6,7 @@ import { getMapForLiveIds, getZoomForRouteLength } from '../utils/HighwayUtils';
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways implements IHighways {
-  // Flatened map from segment ID to segment data
+  // Flattened map from segment ID to segment data
   public segmentData: { [segmentId: number]: Segment };
   // Map route number and direction to segment IDs for each route signage type
   public idCache: { [id: number]: { [routeStr: string]: Array<number> } };
@@ -193,16 +193,5 @@ export default class Highways implements IHighways {
     stateArr.forEach((stateObj: State): void => {
       this.stateCache[stateObj.id] = stateObj;
     });
-  }
-
-  shouldUseRouteDir(stateId: number): boolean {
-    switch (this.stateCache[stateId].identifier) {
-      case 'California':
-      case 'District':
-      case 'Maryland':
-        return true;
-      default:
-        return false;
-    }
   }
 }

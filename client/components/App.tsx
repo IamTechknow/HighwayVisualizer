@@ -167,7 +167,11 @@ const CreateApp = (): React.ReactElement => {
   };
 
   // Process array of route segments. There will always be at least one
-  const setNewSegment = (newSegmentData: Array<SegmentPolyLine>, routeStr: string, currType: RouteSignType): void => {
+  const setNewSegment = (
+    newSegmentData: Array<SegmentPolyLine>,
+    routeStr: string,
+    currType: RouteSignType,
+  ): void => {
     const firstSegment = newSegmentData[0];
     const [midSegmentId, midPointIdx] = newSegmentData.length > 1
       ? highwayData.getCenterOfRoute(routeStr, currType)
