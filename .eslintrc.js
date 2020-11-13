@@ -19,7 +19,6 @@ module.exports = {
     'no-param-reassign': ['error', { ignorePropertyModificationsFor: ['accum'] }],
     'one-var': 'off',
     'one-var-declaration-per-line': 'off',
-    'react/forbid-foreign-prop-types': 'off',
     'react/no-array-index-key': 'off',
     'no-use-before-define': 'off',
     '@typescript-eslint/no-use-before-define': ['error'],

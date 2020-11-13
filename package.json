@@ -9,7 +9,7 @@
     "build": "webpack --config webpack.config.production.js",
     "reset": "redis-cli flushall && node db/seed.js",
     "seed": "redis-cli flushall && node db/seed.js --seed",
-    "lint": "eslint client/components client/components/reducers client/types",
+    "lint": "eslint client/components client/components/reducers client/types"
   },
   "repository": {
     "type": "git",
@@ -24,7 +24,6 @@
     "leaflet-sidebar-v2": "^3.2.3",
     "mysql2": "^2.2.5",
     "node-fetch": "^2.6.1",
-    "prop-types": "^15.7.2",
     "react": "^16.14.0",
     "react-dom": "^16.14.0",
     "react-feather": "^2.0.8",
