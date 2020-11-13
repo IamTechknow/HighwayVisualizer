@@ -10,6 +10,7 @@ import {
 
 import APIClient from './APIClient';
 import Highways from './Highways';
+import * as HighwayUtils from '../utils/HighwayUtils';
 import RouteDrawer from './RouteDrawer';
 import rootReducer from './reducers/rootReducer';
 
@@ -125,11 +126,15 @@ const CreateApp = (): React.ReactElement => {
     }
   };
 
-  const onSegmentClick = (i: number, clickedSegmentId: number, event: Leaflet.LeafletMouseEvent): void => {
+  const onSegmentClick = (
+    i: number,
+    clickedSegmentId: number,
+    event: Leaflet.LeafletMouseEvent
+  ): void => {
     if (segmentData == null || routeNum == null) {
       return;
     }
-    const segLatLng = Highways.findSegmentPoint(event.target, event.latlng, clickedSegmentId);
+    const segLatLng = HighwayUtils.findSegmentPoint(event.target, event.latlng, clickedSegmentId);
     if (!popupCoords) {
       dispatch({
         segmentPayload: {
@@ -159,21 +164,6 @@ const CreateApp = (): React.ReactElement => {
   const onUserChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     const newUserId = Number.parseInt(event.target.value, 10);
     setUserId(newUserId);
-  };
-
-  const getRouteName = (segmentObj: Segment): string => {
-    if (stateId == null) {
-      return '';
-    }
-    const stateIdentifier = highwayData.getState(stateId).identifier;
-
-    // One exception for D.C. Route 295
-    const routeName = stateIdentifier === 'District' && segmentObj.type === RouteSignType.STATE
-      ? `D.C. Route ${segmentObj.routeNum}`
-      : `${Highways.getRoutePrefix(segmentObj.type)} ${segmentObj.routeNum}`;
-    return highwayData.shouldUseRouteDir(stateId)
-      ? `${routeName} ${segmentObj.dir}`
-      : routeName;
   };
 
   // Process array of route segments. There will always be at least one
@@ -320,7 +310,7 @@ const CreateApp = (): React.ReactElement => {
     ? highwayData.segmentData[popupCoords.segmentId]
     : null;
   const liveSegs = segmentData != null
-    ? Highways.getMapForLiveIds(segmentData)
+    ? HighwayUtils.getMapForLiveIds(segmentData)
     : null;
 
   return (
@@ -350,7 +340,7 @@ const CreateApp = (): React.ReactElement => {
           (userSeg: UserSegment): React.ReactNode => liveSegs && liveSegs.has(userSeg.segmentId)
             && (
               <Polyline
-                key={userSeg.toString()}
+                key={HighwayUtils.stringifyUserSegment(userSeg)}
                 positions={
                   segmentData[liveSegs.get(userSeg.segmentId) ?? 0].points.slice(
                     userSeg.startId,
@@ -361,10 +351,17 @@ const CreateApp = (): React.ReactElement => {
               />
             ),
         )}
-        {popupCoords && popupSeg
+        {popupCoords && popupSeg && stateId != null
           && (
             <Popup position={popupCoords}>
-              <span id="startPopup">{getRouteName(highwayData.segmentData[segmentId])}</span>
+              <span id="startPopup">
+                {
+                  HighwayUtils.getRouteName(
+                    highwayData.segmentData[segmentId],
+                    highwayData.getState(stateId).identifier,
+                  )
+                }
+              </span>
               {' '}
               <br />
               <strong>{`Segment ${popupSeg.segNum}, Point ${popupCoords.idx + 1} of ${popupSeg.len}`}</strong>
@@ -382,7 +379,6 @@ const CreateApp = (): React.ReactElement => {
       <RouteDrawer
         currMode={currMode}
         currUserId={currUserId}
-        getRouteName={getRouteName}
         highwayData={highwayData}
         onClinchToggleFor={onClinchToggleFor}
         onResetUserSegments={onResetUserSegments}

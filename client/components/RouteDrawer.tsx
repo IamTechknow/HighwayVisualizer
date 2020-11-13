@@ -7,7 +7,7 @@ import {
   Info, Map, Search, User,
 } from 'react-feather';
 
-import Highways from './Highways';
+import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
 import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
@@ -18,7 +18,6 @@ const KEY_ENTER = 13, ICON_SIZE = 16;
 interface Props {
   currMode: number,
   currUserId: number,
-  getRouteName: (segmentObj: Segment) => string,
   highwayData: IHighways,
   onClinchToggleFor: (i: number) => void,
   onResetUserSegments: () => void,
@@ -40,7 +39,6 @@ interface Props {
 const RouteDrawer = ({
   currMode,
   currUserId,
-  getRouteName,
   highwayData,
   onClinchToggleFor,
   onResetUserSegments,
@@ -136,7 +134,7 @@ const RouteDrawer = ({
                 && userSegments.map((userSeg: UserSegment, i: number): React.ReactNode => (
                   <div key={getIdForUserSegment(userSeg)} className="userSegRow">
                     <li>
-                      {`${Highways.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
+                      {`${HighwayUtils.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
                       <input type="checkbox" onClick={(): void => { onClinchToggleFor(i); }} />
                     </li>
                   </div>
@@ -179,7 +177,7 @@ const RouteDrawer = ({
           {/* List each route and all route segments */}
           <Collapsible title="Segments" open={true}>
             <ul>
-              {segments ? segments.map((segmentSet: Array<Segment>): React.ReactNode => (
+              {stateId != null && segments ? segments.map((segmentSet: Array<Segment>): React.ReactNode => (
                 <li
                   key={`${segmentSet[0].routeNum}${segmentSet[0].dir}_${segmentSet[0].type}`}
                   className="clickable"
@@ -191,7 +189,7 @@ const RouteDrawer = ({
                   }}
                   role="presentation"
                 >
-                  {getRouteName(segmentSet[0])}
+                  {HighwayUtils.getRouteName(segmentSet[0], highwayData.getState(stateId).identifier)}
                   { segmentSet.length > 1 && (
                     <ul>
                       {segmentSet.map((segment: Segment, i: number): React.ReactNode => (
@@ -219,10 +217,9 @@ const RouteDrawer = ({
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<Search size={ICON_SIZE} />}>
         <SearchResults
-          getRouteName={getRouteName}
           onRouteItemClick={onRouteItemClick}
           segments={segments}
-          stateTitle={stateId != null ? highwayData.getState(stateId).title : ''}
+          state={stateId != null ? highwayData.getState(stateId) : null}
         />
       </SidebarTab>
       <SidebarTab id="about" header="About HighwayVisualizer" icon={<Info size={ICON_SIZE} />}>

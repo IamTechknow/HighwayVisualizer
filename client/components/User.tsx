@@ -7,6 +7,7 @@ import { Map, TileLayer, Polyline } from 'react-leaflet';
 import { RouteComponentProps } from 'react-router';
 
 import APIClient from './APIClient';
+import { stringifyUserSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
@@ -17,11 +18,6 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
   const [scale, setScale] = useState(MILES);
   const [selectedId, setSelectedId] = useState('users');
   const [userStats, setUserStats] = useState<UserStatsAPIPayload | undefined>();
-
-  const stringifyUserSegment = (userSegment: UserStatSegment) => {
-    const { endId, segmentId, startId } = userSegment;
-    return `userSeg-${segmentId}-${startId}-${endId}`;
-  };
 
   const onSidebarToggle = (id: string): void => {
     if (selectedId === id) {

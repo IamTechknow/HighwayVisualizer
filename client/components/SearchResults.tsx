@@ -1,23 +1,21 @@
-import type { Segment } from '../types/types';
+import type { Segment, State } from '../types/types';
 
 import React, { useMemo, useState } from 'react';
 
-import Highways from './Highways';
+import * as HighwayUtils from '../utils/HighwayUtils';
 
 interface Props {
-  getRouteName: (seg: Segment) => string,
   onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
   segments: Array<Array<Segment>>,
-  stateTitle: string,
+  state: State | null,
 }
 
 const SearchResults = ({
-  getRouteName,
   onRouteItemClick,
   segments,
-  stateTitle,
+  state,
 }: Props): React.ReactElement<Props> => {
-  if (segments.length === 0 || stateTitle === '') {
+  if (segments.length === 0 || state == null) {
     return <h3>Loading...</h3>;
   }
 
@@ -38,7 +36,7 @@ const SearchResults = ({
     const routeNum = queries.length > 0 ? queries[queries.length - 1] : null;
     let filteredSegments = fullRoutes;
     if (queries.length > 1) {
-      const highwayType = Highways.getType(queries[0]);
+      const highwayType = HighwayUtils.getType(queries[0]);
       filteredSegments = fullRoutes.filter(
         (routeObj: Segment): boolean => routeObj.type === highwayType,
       );
@@ -55,7 +53,7 @@ const SearchResults = ({
         type="text"
         size={50}
         className="nameFormElement"
-        placeholder={`Search ${stateTitle} segments by type and/or number...`}
+        placeholder={`Search ${state.title} segments by type and/or number...`}
         onChange={onSearchSegments}
       />
       {
@@ -89,7 +87,7 @@ const SearchResults = ({
                     }}
                     role="presentation"
                   >
-                    {getRouteName(firstSeg)}
+                    {HighwayUtils.getRouteName(firstSeg, state.identifier)}
                   </li>
                 ))
               }

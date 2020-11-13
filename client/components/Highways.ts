@@ -2,16 +2,7 @@ import { RouteSignType } from '../types/enums';
 import type { PopupCoord, State, Segment, SegmentPolyLine, UserSegment } from '../types/types';
 import type { IHighways } from '../types/interfaces';
 
-import * as Leaflet from 'leaflet';
-
-const R = 6371e3; // Mean radius of Earth in meters
-const FACTOR = Math.PI / 180;
-const POINTS_BINSEARCH_ITERATIONS = 2;
-const ROUTE_NAMES = Object.freeze({
-  [RouteSignType.INTERSTATE]: 'Interstate',
-  [RouteSignType.US_HIGHWAY]: 'US Highway',
-  [RouteSignType.STATE]: 'State Route',
-});
+import { getMapForLiveIds, getZoomForRouteLength } from '../utils/HighwayUtils';
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways implements IHighways {
@@ -25,134 +16,6 @@ export default class Highways implements IHighways {
   public routeLengthMap: { [routeStr: string]: number };
   // Map state ID to object
   public stateCache: { [stateId: number]: State };
-
-  // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
-  static calcHavensine(point: Leaflet.LatLng, radX2: number, radY2: number): number {
-    const { lat, lng } = point;
-
-    const radX1 = Highways.toRadians(lat);
-    const deltaLat = radX2 - radX1;
-    const deltaLng = radY2 - Highways.toRadians(lng);
-    const sinOfDeltaLat = Math.sin(deltaLat / 2);
-    const sinOfDeltaLng = Math.sin(deltaLng / 2);
-
-    const a = sinOfDeltaLat * sinOfDeltaLat
-      + Math.cos(radX1) * Math.cos(radX2)
-      * sinOfDeltaLng * sinOfDeltaLng;
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  static getMapForLiveIds(segments: Array<SegmentPolyLine>): Map<number, number> {
-    return new Map(segments.map((seg, i) => [seg.id, i]));
-  }
-
-  static getRoutePrefix(typeEnum: RouteSignType): string {
-    return ROUTE_NAMES[typeEnum];
-  }
-
-  static getType(input: string): RouteSignType {
-    const classifications: { [key: string]: RouteSignType } = {
-      I: RouteSignType.INTERSTATE,
-      i: RouteSignType.INTERSTATE,
-      US: RouteSignType.US_HIGHWAY,
-      us: RouteSignType.US_HIGHWAY,
-    };
-    return classifications[input] ? classifications[input] : RouteSignType.STATE;
-  }
-
-  static toRadians(angle: number): number {
-    return angle * FACTOR;
-  }
-
-  /*
-    Assumptions made for binary search:
-    - The route is generally travelling in a certain direction
-      so points can be treated as a sorted array.
-    - Less likely to work for routes that travel circular, may need to debug comparsions
-  */
-  static findSegmentPoint(
-    polyline: Leaflet.Polyline,
-    clicked: Leaflet.LatLng,
-    segmentId: number,
-  ): PopupCoord {
-    const points = <Leaflet.LatLng[]>polyline.getLatLngs();
-    let shortestDist = Number.MAX_VALUE;
-    let closest;
-    const clickedLat = clicked.lat, clickedLng = clicked.lng;
-    const radX2 = Highways.toRadians(clickedLat), radY2 = Highways.toRadians(clickedLng);
-
-    // Binary search for desired range by comparing distances
-    // Not exhaustive to ensure point is found
-    let lo = 0, hi = points.length - 1;
-    for (let i = 0; i < POINTS_BINSEARCH_ITERATIONS; i += 1) {
-      const mid = Math.trunc((hi + lo) / 2);
-      const latMid = points[mid].lat, lngMid = points[mid].lng;
-      const radXMid = Highways.toRadians(latMid), radYMid = Highways.toRadians(lngMid);
-      const startDist = Highways.calcHavensine(points[lo], radX2, radY2);
-      const midDist = Highways.calcHavensine(points[mid], radX2, radY2);
-      const endDist = Highways.calcHavensine(points[hi], radX2, radY2);
-      const startToMidDist = Highways.calcHavensine(points[lo], radXMid, radYMid);
-      const midToEndDist = Highways.calcHavensine(points[hi], radXMid, radYMid);
-      if (startDist <= midDist && startDist <= endDist) {
-        hi = mid;
-      } else if (
-        midDist <= startDist && midDist <= endDist && endDist >= midToEndDist
-      ) {
-        hi = mid;
-      } else if (
-        midDist <= startDist && midDist <= endDist && startDist >= startToMidDist
-      ) {
-        lo = mid;
-      } else {
-        lo = mid;
-      }
-    }
-
-    for (let i = lo; i <= hi; i += 1) {
-      const d = Highways.calcHavensine(points[i], radX2, radY2);
-      if (d < shortestDist) {
-        shortestDist = d;
-        closest = i;
-      }
-    }
-    if (closest == null) {
-      throw new Error('Assertion failed: No point index found during binary search!');
-    }
-
-    return { idx: closest, segmentId, ...points[closest] };
-  }
-
-  static getZoomForRouteLength(len: number): number {
-    if (len <= 1000) {
-      return 14.5;
-    }
-    if (len <= 3000) {
-      return 13.5;
-    }
-    if (len <= 5000) {
-      return 12.5;
-    }
-    if (len <= 10000) {
-      return 11.5;
-    }
-    if (len <= 30000) {
-      return 11;
-    }
-    if (len <= 50000) {
-      return 10.5;
-    }
-    if (len <= 100000) {
-      return 9.5;
-    }
-    if (len <= 300000) {
-      return 8.5;
-    }
-    if (len <= 500000) {
-      return 7.5;
-    }
-    return 6;
-  }
 
   constructor() {
     this.segmentData = {};
@@ -234,7 +97,7 @@ export default class Highways implements IHighways {
       // Figure out higher and lower points
       const start = startMarker.segmentId > segmentId ? endMarker : startMarker;
       const end = startMarker.segmentId < segmentId ? endMarker : startMarker;
-      const idMap = Highways.getMapForLiveIds(segmentData);
+      const idMap = getMapForLiveIds(segmentData);
 
       // Add first segment
       const endIdx = segmentData[<number>idMap.get(start.segmentId)].points.length;
@@ -322,7 +185,7 @@ export default class Highways implements IHighways {
     const routeLen = wholeRouteSelected
       ? this.routeLengthMap[routeStr]
       : this.segmentData[segmentId].len_m;
-    return Highways.getZoomForRouteLength(routeLen);
+    return getZoomForRouteLength(routeLen);
   }
 
   setStates(stateArr: Array<State>): void {
