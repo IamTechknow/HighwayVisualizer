@@ -56,6 +56,7 @@ export interface SegmentReducerPayload {
   segmentData?: Array<SegmentPolyLine>,
   segmentId?: number | null,
   segments?: Array<Array<Segment>>,
+  zoom?: number,
 }
 
 export interface SegmentState {
@@ -66,6 +67,7 @@ export interface SegmentState {
   segmentData?: Array<SegmentPolyLine>,
   segmentId?: number | null,
   segments?: Array<Array<Segment>>,
+  zoom?: number,
 }
 
 export interface State {

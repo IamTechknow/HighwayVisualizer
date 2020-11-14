@@ -171,15 +171,6 @@ export default class Highways implements IHighways {
     segmentData: Array<SegmentPolyLine>,
     segmentId: number,
   ): number {
-    if (segmentData.length === 0) {
-      return 0;
-    }
-    // Check for data match, because segmentData and route vars may be out of sync.
-    const firstSegment = segmentData[0];
-    const segmentsOfRoute = this.getSegmentIds(routeType, routeStr);
-    if (!segmentsOfRoute.includes(firstSegment.id)) {
-      return 0; // TODO: parameter for previous zoom
-    }
     const wholeRouteSelected = segmentData.length > 1
       || this.getSegmentIds(routeType, routeStr).length === 1;
     const routeLen = wholeRouteSelected

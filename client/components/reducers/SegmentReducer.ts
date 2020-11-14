@@ -8,8 +8,6 @@ export default (segmentState: SegmentState, payload: SegmentReducerPayload): Seg
       return {
         ...segmentState,
         concurrencies: [],
-        lat: 0,
-        lon: 0,
         popupCoords: null,
         segmentData: [],
         segmentId: null,
@@ -18,9 +16,11 @@ export default (segmentState: SegmentState, payload: SegmentReducerPayload): Seg
     case ReducerActionType.UPDATE_SEGMENT:
       return {
         ...segmentState,
+        concurrencies: [],
         lat: payload.lat,
         lon: payload.lon,
         segmentData: payload.segmentData,
+        zoom: payload.zoom,
       };
     case ReducerActionType.UPDATE_SEGMENT_ID:
       return {

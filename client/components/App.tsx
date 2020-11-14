@@ -27,6 +27,7 @@ const initialRootState: RootState = {
     segmentData: [],
     segmentId: null,
     segments: [],
+    zoom: 7,
   },
 };
 
@@ -43,7 +44,7 @@ const CreateApp = (): React.ReactElement => {
   const [rootState, dispatch] = useReducer(rootReducer, initialRootState);
   const { routeState, segmentState } = rootState;
   const {
-    concurrencies, lat, lon, popupCoords, segmentData, segmentId, segments,
+    concurrencies, lat, lon, popupCoords, segmentData, segmentId, segments, zoom,
   } = segmentState;
   const { routeNum, routeType, dir } = routeState;
 
@@ -177,12 +178,14 @@ const CreateApp = (): React.ReactElement => {
       ? highwayData.getCenterOfRoute(routeStr, currType)
       : [0, Math.floor(firstSegment.points.length / 2)];
     const [centerLat, centerLon] = newSegmentData[midSegmentId].points[midPointIdx];
+    const newZoom = highwayData.getZoomLevel(routeStr, currType, newSegmentData, firstSegment.id);
     dispatch({
       segmentPayload: {
         type: ReducerActionType.UPDATE_SEGMENT,
         lat: centerLat,
         lon: centerLon,
         segmentData: newSegmentData,
+        zoom: newZoom,
       },
     });
   };
@@ -309,7 +312,6 @@ const CreateApp = (): React.ReactElement => {
     );
   }
 
-  const zoom = highwayData.getZoomLevel(routeNum + dir, routeType, segmentData, segmentId);
   const popupSeg = popupCoords != null
     ? highwayData.segmentData[popupCoords.segmentId]
     : null;
