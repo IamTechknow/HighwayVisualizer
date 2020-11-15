@@ -33,6 +33,7 @@ const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
  */
 const app = express();
 let db;
+let httpServer;
 let redisClient;
 
 app.use(compression({threshold: 8192}));
@@ -301,6 +302,40 @@ const _catchError = (err, res) => {
   res.status(500).type('application/json').send(payload);
 };
 
+const _setupRedisAndGetServer = () => {
+  let server = app;
+  if (process.env.NODE_ENV === 'production') {
+    const sslOptions = {
+      cert: fs.readFileSync(process.env.CERT_PATH),
+      key: fs.readFileSync(process.env.KEY_PATH),
+    };
+    server = https.createServer(sslOptions, app);
+  }
+
+  const _httpServer = server.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
+
+  redisClient = redis.createClient();
+  redisClient.on("error", (error) => {
+    if (error.code === 'ECONNREFUSED') {
+      console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
+      _shutdownServer();
+      process.exit(1);
+    } else {
+      console.error(error);
+    }
+  });
+
+  return _httpServer;
+};
+
+const _shutdownServer = () => {
+  if (db != null) {
+    db.end();
+  }
+  httpServer.close();
+  redisClient.quit();
+};
+
 app.use(headerMiddleware);
 
 app.get('/users/:user', usersRouter);
@@ -319,33 +354,12 @@ app.post('/api/user_segments/new', newUserSegmentAPIRouter);
 DB.getDB()
   .then((client) => {
     db = client;
-    let server = app;
-    if (process.env.NODE_ENV === 'production') {
-      const sslOptions = {
-        cert: fs.readFileSync(process.env.CERT_PATH),
-        key: fs.readFileSync(process.env.KEY_PATH),
-      };
-      server = https.createServer(sslOptions, app);
-    }
-
-    const httpServer = server.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
-
-    redisClient = redis.createClient();
-    redisClient.on("error", (error) => {
-      if (error.code === 'ECONNREFUSED') {
-        console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
-        httpServer.close();
-        db.end();
-        process.exit(1);
-      } else {
-        console.error(error);
-      }
-    });
-
-    return httpServer;
+    httpServer = _setupRedisAndGetServer();
+    process.on('SIGINT', _shutdownServer);
   })
-  .then((httpServer) => process.on('SIGINT', () => {
-    httpServer.close();
-    db.end();
-    redisClient.quit();
-  }));
+  .catch((err) => {
+    DB.logMySQLError(err);
+    console.warn('Server will now try to run with Redis only');
+    httpServer = _setupRedisAndGetServer();
+    process.on('SIGINT', _shutdownServer);
+  });

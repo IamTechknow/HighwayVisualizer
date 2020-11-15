@@ -12,12 +12,30 @@ const DATABASE = 'highways';
 const AUTHENTICATION_FIX = 'https://stackoverflow.com/questions/50093144/mysql-8-0-client-does-not-support-authentication-protocol-requested-by-server';
 
 /**
- * Connects to the highways MySQL database.
+ * Logs the received MySQL driver error object.
  *
- * Enables the multiple statements flag which is used to gather queried route segments
- * into a single result array. If the connection fails for common reasons, console logs
- * will print helpful messages. When the database connection is no longer to be used, the end
- * method needs to be called to terminate the connection and the program.
+ * For a few codes, a helpful message will be printed, otherwise the entire object is logged.
+ * This may be exported to the server logic to better handle the error.
+ */
+const logMySQLError = (err) => {
+  if (err.code === 'ER_BAD_DB_ERROR') {
+    console.error('highways DB not found. Did you run "npm run reset/seed" yet?');
+  } else if (err.code === 'ER_NOT_SUPPORTED_AUTH_MODE') {
+    console.error(`NodeJS driver does not support v8.0 authentication (yet). Go to ${AUTHENTICATION_FIX} to work around`);
+  } else if (err.code === 'ECONNREFUSED') {
+    console.error('Failed to connect. Has "mysqld --console" been run yet?');
+  } else {
+    console.error(err);
+  }
+};
+
+/**
+ * Connects to the highways MySQL database and prepares the database client.
+ *
+ * When the database connection is no longer to be used, the end method needs to be called
+ * to terminate the connection and the program. If an error occurs that causes this promise
+ * to be rejected, it's up to the client code to handle it. The logMySQLError function
+ * may be used to log the error.
  *
  * @return {Promise} Returns a Promise that resolves with a MySQL Connection object. It is
  *         connected to the highways database and contains helper methods to start and stop
@@ -38,18 +56,7 @@ const getDB = () => mysql.createConnection({
   // Handle first time run
   return db.query(`CREATE DATABASE IF NOT EXISTS ${DATABASE}; use ${DATABASE};`)
     .then(() => db);
-}).catch((err) => {
-  if (err.code === 'ER_BAD_DB_ERROR') {
-    console.error('highways DB not found. Did you run "npm run reset/seed" yet?');
-  } else if (err.code === 'ER_NOT_SUPPORTED_AUTH_MODE') {
-    console.error(`NodeJS driver does not support v8.0 authentication (yet). Go to ${AUTHENTICATION_FIX} to work around`);
-  } else if (err.code === 'ECONNREFUSED') {
-    console.error('Failed to connect. Has "mysqld --console" been run yet?');
-  } else {
-    console.error(err);
-  }
-  process.exit(1);
 });
 
 /** @module DB */
-module.exports = {getDB};
+module.exports = { getDB, logMySQLError };
