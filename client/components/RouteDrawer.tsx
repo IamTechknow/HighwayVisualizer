@@ -59,6 +59,7 @@ const RouteDrawer = ({
   const [isCollapsed, setCollapsed] = useState<boolean>(false);
   const [currNameInput, setNameInput] = useState<string>("");
   const [selectedId, setSelectedId] = useState<string>('segments');
+  const [currSegments, setSegments] = useState<Array<Segment>>(segments[0] ?? []);
 
   const getIdForUserSegment = (userSeg: UserSegment): string => {
     const { endId, segmentId, startId } = userSeg;
@@ -72,6 +73,17 @@ const RouteDrawer = ({
   const onFormSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     onUserSubmit(currNameInput);
+  }
+
+  const _onRouteItemClick = (event: React.SyntheticEvent, clickedSegments: Array<Segment>): void => {
+    setSegments(clickedSegments);
+    onRouteItemClick(event, clickedSegments[0]);
+  }
+
+  const _getRouteName = (firstSegment: Segment, stateId: number | null): string => {
+    return stateId != null
+      ? HighwayUtils.getRouteName(firstSegment, highwayData.getState(stateId).identifier)
+      : '';
   }
 
   return (
@@ -101,7 +113,7 @@ const RouteDrawer = ({
             </span>
           </h3>
 
-          <Collapsible title="Users" open={true}>
+          <Collapsible title="Users" open>
             <select value={currUserId} onChange={onUserChange} className="nameFormElement">
               <option key={-1} value={-1}>Select or create User</option>
               {users
@@ -154,7 +166,7 @@ const RouteDrawer = ({
       </SidebarTab>
       <SidebarTab id="segments" header="Segments" icon={<Map size={ICON_SIZE} />}>
         <div className="tabContent">
-          <Collapsible title="States" open={true}>
+          <Collapsible title="States" open>
             <ul>
               {states ? states.map((state: State): React.ReactNode => (
                 <li
@@ -174,43 +186,45 @@ const RouteDrawer = ({
             </ul>
           </Collapsible>
 
-          {/* List each route and all route segments */}
-          <Collapsible title="Segments" open={true}>
+          <Collapsible title="Routes" open>
             <ul>
               {stateId != null && segments ? segments.map((segmentSet: Array<Segment>): React.ReactNode => (
                 <li
                   key={`${segmentSet[0].routeNum}${segmentSet[0].dir}_${segmentSet[0].type}`}
                   className="clickable"
-                  onClick={(event: React.MouseEvent): void => onRouteItemClick(event, segmentSet[0])}
+                  onClick={(event: React.MouseEvent): void => _onRouteItemClick(event, segmentSet)}
                   onKeyDown={(event: React.KeyboardEvent): void => {
                     if (event.key === KEY_ENTER) {
-                      onRouteItemClick(event, segmentSet[0]);
+                      _onRouteItemClick(event, segmentSet);
                     }
                   }}
                   role="presentation"
                 >
-                  {HighwayUtils.getRouteName(segmentSet[0], highwayData.getState(stateId).identifier)}
-                  { segmentSet.length > 1 && (
-                    <ul>
-                      {segmentSet.map((segment: Segment, i: number): React.ReactNode => (
-                        <li
-                          key={`segment-${segment.id}`}
-                          className="clickable"
-                          onClick={(event: React.MouseEvent): void => onSegmentItemClick(event, segment)}
-                          onKeyDown={(event: React.KeyboardEvent): void => {
-                            if (event.key === KEY_ENTER) {
-                              onSegmentItemClick(event, segment);
-                            }
-                          }}
-                          role="presentation"
-                        >
-                          {`Segment ${i + 1}`}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  {_getRouteName(segmentSet[0], stateId)}
                 </li>
               )) : <h3>Loading...</h3>}
+            </ul>
+          </Collapsible>
+
+          <Collapsible title={`${_getRouteName(currSegments[0], stateId)} Segments`} open>
+            <ul>
+              {
+                currSegments.map((segment: Segment, i: number): React.ReactNode => (
+                  <li
+                    key={`segment-${segment.id}`}
+                    className="clickable"
+                    onClick={(event: React.MouseEvent): void => onSegmentItemClick(event, segment)}
+                    onKeyDown={(event: React.KeyboardEvent): void => {
+                      if (event.key === KEY_ENTER) {
+                        onSegmentItemClick(event, segment);
+                      }
+                    }}
+                    role="presentation"
+                  >
+                    {`Segment ${i + 1}`}
+                  </li>
+                ))
+              }
             </ul>
           </Collapsible>
         </div>
