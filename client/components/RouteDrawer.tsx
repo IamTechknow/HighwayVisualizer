@@ -13,7 +13,7 @@ import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
-const KEY_ENTER = 13, ICON_SIZE = 16;
+const KEY_ENTER = 'Enter', ICON_SIZE = 16;
 
 interface Props {
   currMode: number,
@@ -162,7 +162,7 @@ const RouteDrawer = ({
                   className="clickable"
                   onClick={(): void => onStateClick(state.id)}
                   onKeyDown={(event: React.KeyboardEvent): void => {
-                    if (event.keyCode === KEY_ENTER) {
+                    if (event.key === KEY_ENTER) {
                       onStateClick(state.id);
                     }
                   }}
@@ -183,7 +183,7 @@ const RouteDrawer = ({
                   className="clickable"
                   onClick={(event: React.MouseEvent): void => onRouteItemClick(event, segmentSet[0])}
                   onKeyDown={(event: React.KeyboardEvent): void => {
-                    if (event.keyCode === KEY_ENTER) {
+                    if (event.key === KEY_ENTER) {
                       onRouteItemClick(event, segmentSet[0]);
                     }
                   }}
@@ -198,7 +198,7 @@ const RouteDrawer = ({
                           className="clickable"
                           onClick={(event: React.MouseEvent): void => onSegmentItemClick(event, segment)}
                           onKeyDown={(event: React.KeyboardEvent): void => {
-                            if (event.keyCode === KEY_ENTER) {
+                            if (event.key === KEY_ENTER) {
                               onSegmentItemClick(event, segment);
                             }
                           }}
