@@ -101,3 +101,9 @@ input[type='checkbox'].toggle {
 .leaflet-sidebar-close-offset {
   padding-top: 5px;
 }
+
+.routeRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 8px 8px 8px;
+}

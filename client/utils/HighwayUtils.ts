@@ -65,8 +65,12 @@ const shouldUseRouteDir = (stateIdentifier: string): boolean => {
 export const getRouteName = (
   segment: Segment,
   stateIdentifier: string,
+  useRouteTitle = true,
 ): string => {
   const { dir, routeNum, type } = segment;
+  if (!useRouteTitle) {
+    return `${routeNum}` + (shouldUseRouteDir(stateIdentifier) ? `${dir}` : '');
+  }
   // One exception for D.C. Route 295
   const routeName = stateIdentifier === 'District' && type === RouteSignType.STATE
     ? `D.C. Route ${routeNum}`

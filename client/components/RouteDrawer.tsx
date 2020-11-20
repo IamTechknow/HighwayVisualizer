@@ -13,7 +13,7 @@ import SearchResults from './SearchResults';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
-const KEY_ENTER = 'Enter', ICON_SIZE = 16;
+const KEY_ENTER = 'Enter', ICON_SIZE = 16, ROUTES_PER_ROW = 8;
 
 interface Props {
   currMode: number,
@@ -80,10 +80,23 @@ const RouteDrawer = ({
     onRouteItemClick(event, clickedSegments[0]);
   }
 
-  const _getRouteName = (firstSegment: Segment, stateId: number | null): string => {
+  const _getRouteName = (
+    firstSegment: Segment,
+    stateId: number | null,
+    useRouteTitle = true,
+  ): string => {
     return stateId != null
-      ? HighwayUtils.getRouteName(firstSegment, highwayData.getState(stateId).identifier)
+      ? HighwayUtils.getRouteName(
+        firstSegment,
+        highwayData.getState(stateId).identifier,
+        useRouteTitle,
+      )
       : '';
+  }
+
+  const routeMatrix: Segment[][][] = [];
+  for (let i = 0; i < segments.length; i += ROUTES_PER_ROW) {
+    routeMatrix.push(segments.slice(i, i + ROUTES_PER_ROW));
   }
 
   return (
@@ -187,23 +200,26 @@ const RouteDrawer = ({
           </Collapsible>
 
           <Collapsible title="Routes" open>
-            <ul>
-              {stateId != null && segments ? segments.map((segmentSet: Array<Segment>): React.ReactNode => (
-                <li
-                  key={`${segmentSet[0].routeNum}${segmentSet[0].dir}_${segmentSet[0].type}`}
-                  className="clickable"
-                  onClick={(event: React.MouseEvent): void => _onRouteItemClick(event, segmentSet)}
-                  onKeyDown={(event: React.KeyboardEvent): void => {
-                    if (event.key === KEY_ENTER) {
-                      _onRouteItemClick(event, segmentSet);
-                    }
-                  }}
-                  role="presentation"
-                >
-                  {_getRouteName(segmentSet[0], stateId)}
-                </li>
+            <div>
+              {stateId != null ? routeMatrix.map((segmentSubArray: Segment[][], i: number): React.ReactNode => (
+                <span key={`segmentSet-${i}`} className="routeRow">
+                  {
+                    segmentSubArray.map((segmentSet: Segment[]): React.ReactNode => {
+                      const segment = segmentSet[0];
+                      const { dir, routeNum, type } = segment;
+                      return (
+                        <div
+                          key={`${routeNum}${dir}_${type}`}
+                          className="clickable"
+                          onClick={(event: React.MouseEvent): void => _onRouteItemClick(event, segmentSet)}>
+                          {_getRouteName(segment, stateId, false)}
+                        </div>
+                      );
+                    })
+                  }
+                </span>
               )) : <h3>Loading...</h3>}
-            </ul>
+            </div>
           </Collapsible>
 
           <Collapsible title={`${_getRouteName(currSegments[0], stateId)} Segments`} open>
