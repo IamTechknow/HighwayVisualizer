@@ -4,6 +4,8 @@ import React, { useMemo, useState } from 'react';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 
+const KEY_ENTER = 'Enter', MAX_RESULTS = 30, SEARCH_QUERY_SIZE = 60;
+
 interface Props {
   onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
   segments: Array<Array<Segment>>,
@@ -44,14 +46,14 @@ const SearchResults = ({
     const results = filteredSegments.filter(
       (routeObj: Segment): boolean => routeNum != null && routeObj.routeNum.indexOf(routeNum) >= 0,
     );
-    setSearchResults(results.slice(0, 30));
+    setSearchResults(results.slice(0, MAX_RESULTS));
   };
 
   return (
     <div className="tabContent">
       <input
         type="text"
-        size={50}
+        size={SEARCH_QUERY_SIZE}
         className="nameFormElement"
         placeholder={`Search ${state.title} segments by type and/or number...`}
         onChange={onSearchSegments}
@@ -81,7 +83,7 @@ const SearchResults = ({
                     className="clickable"
                     onClick={(event: React.MouseEvent): void => onRouteItemClick(event, firstSeg)}
                     onKeyDown={(event: React.KeyboardEvent): void => {
-                      if (event.keyCode === 13) {
+                      if (event.key === KEY_ENTER) {
                         onRouteItemClick(event, firstSeg);
                       }
                     }}

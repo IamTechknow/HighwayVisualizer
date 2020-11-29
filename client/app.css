@@ -25,6 +25,11 @@ body {
 
 .clickable {
   color: #3388ff;
+  cursor: pointer;
+}
+
+.clickable:hover {
+  text-decoration: underline;
 }
 
 .mapStyle{
