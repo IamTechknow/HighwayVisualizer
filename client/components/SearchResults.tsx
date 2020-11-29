@@ -4,7 +4,7 @@ import React, { useMemo, useState } from 'react';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 
-const KEY_ENTER = 'Enter', MAX_RESULTS = 30, SEARCH_QUERY_SIZE = 60;
+const KEY_ENTER = 'Enter', MAX_RESULTS = 30;
 
 interface Props {
   onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
@@ -27,7 +27,7 @@ const SearchResults = ({
     [segments],
   );
 
-  const onSearchSegments = (event: React.ChangeEvent<HTMLInputElement>): void => {
+  const onSearchRoutes = (event: React.ChangeEvent<HTMLInputElement>): void => {
     const query = event.target.value;
     if (!query) {
       setSearchResults([]);
@@ -52,11 +52,11 @@ const SearchResults = ({
   return (
     <div className="tabContent">
       <input
-        type="text"
-        size={SEARCH_QUERY_SIZE}
+        id="routeSearch"
         className="nameFormElement"
-        placeholder={`Search ${state.title} segments by type and/or number...`}
-        onChange={onSearchSegments}
+        onChange={onSearchRoutes}
+        placeholder={`Search ${state.title} routes by type and/or number...`}
+        type="search"
       />
       {
         !searchResults.length
