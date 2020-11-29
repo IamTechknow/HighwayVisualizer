@@ -36,7 +36,7 @@ let db;
 let httpServer;
 let redisClient;
 
-app.use(compression({threshold: 8192}));
+app.use(compression({ threshold: 8192 }));
 app.use(express.static(path.resolve(__dirname, '../public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -240,7 +240,7 @@ const userSegmentsAPIRouter = (req, res) =>
 const newUserAPIRouter = (req, res) => {
   const username = req.body.user;
   if (!username.match(/^[a-z0-9_-]{3,16}$/ig)) {
-    const payload = {success: false, message: username + ' is not a valid username'};
+    const payload = { success: false, message: username + ' is not a valid username' };
     _sendOkJSON(payload, req, res, 400); // need to send entire payload to response
     return;
   }
@@ -267,8 +267,13 @@ const newUserAPIRouter = (req, res) => {
  * @param {string} req.body.userSegments - The user segment data to insert.
  * @param {express.Response} res
  */
-const newUserSegmentAPIRouter = (req, res) =>
-  Models.createUserSegment(db, req.body.userId, req.body.userSegments)
+const newUserSegmentAPIRouter = (req, res) => {
+  const userId = req.body.userId;
+  if (userId <= 0) {
+    _sendErrorJSON('No user was provided, please ensure a user was selected.', req, res);
+    return;
+  }
+  Models.createUserSegment(db, userId, req.body.userSegments)
     .then((result) => {
       const noun = result.affectedRows > 1 ? 'segments' : 'segment';
       const payload = {
@@ -277,6 +282,7 @@ const newUserSegmentAPIRouter = (req, res) =>
       };
       _sendOkJSON(payload, req, res, 201);
     }).catch((err) => _catchError(err, res));
+};
 
 const _sendOkJSON = (obj, req, res, code = 200) => {
   const resJson = _cacheResponse(obj, req, res, code);
@@ -346,7 +352,7 @@ app.get('/api/segments/:stateId', redisMiddleware, segmentsPerStateAPIRouter);
 app.get('/api/points/:segmentId', redisMiddleware, pointsPerSegmentAPIRouter);
 app.get('/api/points/:type/:routeNum', redisMiddleware, pointsPerRouteAPIRouter);
 app.get('/api/concurrencies/:routeNum', redisMiddleware, concurrenciesPerRouteAPIRouter);
-app.get('/api/user_segments/:user', redisMiddleware, userSegmentsAPIRouter);
+app.get('/api/user_segments/:user', userSegmentsAPIRouter);
 
 app.post('/api/newUser', newUserAPIRouter);
 app.post('/api/user_segments/new', newUserSegmentAPIRouter);

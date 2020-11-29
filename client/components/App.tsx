@@ -74,7 +74,9 @@ const CreateApp = (): React.ReactElement => {
       .then((res) => {
         highwayData.clearUserSegments();
         setSubmitData(res);
-        setUserSegments([]);
+        if (res.success) {
+          setUserSegments([]);
+        }
       });
   };
 

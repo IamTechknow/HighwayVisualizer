@@ -168,7 +168,7 @@ const RouteDrawer = ({
             </ul>
 
             <button
-              disabled={currUserId < 0 && userSegments.length === 0}
+              disabled={currUserId < 0 || userSegments.length === 0}
               onClick={onSendUserSegments}
               type="button">
               Submit User Segments
