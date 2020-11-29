@@ -113,6 +113,11 @@ input[type='checkbox'].toggle {
   padding: 8px 8px 8px 8px;
 }
 
+.routeTable {
+  max-height: 400px;
+  overflow: auto;
+}
+
 #routeSearch {
   width: 28em;
 }

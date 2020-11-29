@@ -200,7 +200,7 @@ const RouteDrawer = ({
           </Collapsible>
 
           <Collapsible title="Routes" open>
-            <div>
+            <div className="routeTable">
               {stateId != null ? routeMatrix.map((segmentSubArray: Segment[][], i: number): React.ReactNode => (
                 <span key={`segmentSet-${i}`} className="routeRow">
                   {
