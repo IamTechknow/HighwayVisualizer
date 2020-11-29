@@ -2,7 +2,7 @@ import type { UserRouteProps, UserStatSegment, UserStatsAPIPayload } from '../ty
 
 import React, { useEffect, useState } from 'react';
 import { User } from 'react-feather';
-import { Map, TileLayer, Polyline } from 'react-leaflet';
+import { MapContainer, TileLayer, Polyline, PolylineProps } from 'react-leaflet';
 
 import { RouteComponentProps } from 'react-router';
 
@@ -58,20 +58,20 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
 
   return (
     <div>
-      <Map className="mapStyle" center={userSegments[0].points[0]} zoom={7} zoomControl={false}>
+      <MapContainer className="mapStyle" center={userSegments[0].points[0]} zoom={7} zoomControl={false}>
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
 
-        {userSegments && userSegments.map((userSeg: UserStatSegment): React.ReactElement<Polyline> => (
+        {userSegments && userSegments.map((userSeg: UserStatSegment): React.ReactElement<PolylineProps> => (
           <Polyline
             key={stringifyUserSegment(userSeg)}
             positions={userSeg.points ?? []}
             color={userSeg.clinched ? 'lime' : 'yellow'}
           />
         ))}
-      </Map>
+      </MapContainer>
       <Sidebar
         id="sidebar"
         collapsed={isCollapsed}

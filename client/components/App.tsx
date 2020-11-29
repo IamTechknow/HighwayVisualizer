@@ -5,12 +5,13 @@ import { ReducerActionType, RouteSignType, SegmentCreateMode } from '../types/en
 import * as Leaflet from 'leaflet';
 import React, { useEffect, useReducer, useState } from 'react';
 import {
-  Map, TileLayer, Polyline, Popup,
+  MapContainer, TileLayer, Polyline, PolylineProps, Popup,
 } from 'react-leaflet';
 
 import APIClient from './APIClient';
 import Highways from './Highways';
 import * as HighwayUtils from '../utils/HighwayUtils';
+import MapUpdater from './MapUpdater';
 import RouteDrawer from './RouteDrawer';
 import rootReducer from './reducers/rootReducer';
 
@@ -285,6 +286,14 @@ const CreateApp = (): React.ReactElement => {
       });
   }, [segmentId]);
 
+  // Polyline implements EventedProps for a prop of event listeners
+  const createPolyLineEventMap = (
+    i: number,
+    segmentId: number
+  ): Leaflet.LeafletEventHandlerFnMap => ({
+    click: (event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, segmentId, event),
+  });
+
   if (initFailed) {
     return (
       <div>
@@ -306,6 +315,7 @@ const CreateApp = (): React.ReactElement => {
     || routeType == null
     || lat == null
     || lon == null
+    || zoom == null
   ) {
     return (
       <div>
@@ -323,24 +333,23 @@ const CreateApp = (): React.ReactElement => {
 
   return (
     <div>
-      <Map
+      <MapContainer
         className="mapStyle"
-        center={[lat, lon]}
-        zoom={zoom}
         zoomControl={false}
       >
+        <MapUpdater center={[lat, lon]} zoom={zoom} />
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
-        {segmentData && segmentData.map((seg, i: number): React.ReactElement<Polyline> => (
+        {segmentData && segmentData.map((seg, i: number): React.ReactElement<PolylineProps> => (
           <Polyline
             key={`seg-${seg.id}`}
-            onClick={(event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, seg.id, event)}
+            eventHandlers={createPolyLineEventMap(i, seg.id)}
             positions={seg.points}
           />
         ))}
-        {concurrencies && concurrencies.map((seg, i: number): React.ReactElement<Polyline> => (
+        {concurrencies && concurrencies.map((seg, i: number): React.ReactElement<PolylineProps> => (
           <Polyline key={`concurrency-${seg.id}-${i}`} positions={seg.points} />
         ))}
         {/* Show unsubmitted user segments if selected route and segment is the same */}
@@ -383,7 +392,7 @@ const CreateApp = (): React.ReactElement => {
               <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>
             </Popup>
           )}
-      </Map>
+      </MapContainer>
       <RouteDrawer
         currMode={currMode}
         currUserId={currUserId}
