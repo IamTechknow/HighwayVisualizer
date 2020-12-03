@@ -94,9 +94,29 @@ const RouteDrawer = ({
       : '';
   }
 
+  const getNumFromRoute = (routeNum: string): number => {
+    let i = 0;
+    while (i < routeNum.length && !isNaN(Number(routeNum[i]))) {
+      i++;
+    }
+    return Number(routeNum.substring(0, i));
+  };
+
+  // Give enough space for routes based on # of digits
   const routeMatrix: Segment[][][] = [];
-  for (let i = 0; i < segments.length; i += ROUTES_PER_ROW) {
-    routeMatrix.push(segments.slice(i, i + ROUTES_PER_ROW));
+  let i = 0;
+  while (i < segments.length) {
+    let routesPerRow = ROUTES_PER_ROW;
+    const currIdx = Math.min(segments.length - 1, i + routesPerRow - 1);
+    const lastRouteInRow = segments[currIdx][0];
+    const lastRouteNum = getNumFromRoute(lastRouteInRow.routeNum);
+    if (lastRouteNum >= 100) {
+      routesPerRow = ROUTES_PER_ROW - 1;
+    } else if (lastRouteNum >= 1000) {
+      routesPerRow = ROUTES_PER_ROW - 2;
+    }
+    routeMatrix.push(segments.slice(i, i + routesPerRow));
+    i += routesPerRow;
   }
 
   return (

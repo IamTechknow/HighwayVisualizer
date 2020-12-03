@@ -107,6 +107,10 @@ input[type='checkbox'].toggle {
   padding-top: 5px;
 }
 
+.leaflet-sidebar-pane.active{
+  padding: 10px 10px;
+}
+
 .routeRow {
   display: flex;
   justify-content: space-between;

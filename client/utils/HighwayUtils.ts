@@ -6,11 +6,17 @@ import * as Leaflet from 'leaflet';
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
 const POINTS_BINSEARCH_ITERATIONS = 2;
-const ROUTE_NAMES = Object.freeze({
+const ROUTE_NAMES = {
   [RouteSignType.INTERSTATE]: 'Interstate',
   [RouteSignType.US_HIGHWAY]: 'US Highway',
   [RouteSignType.STATE]: 'State Route',
-});
+};
+
+const ROUTE_ABBREVIATIONS = {
+  [RouteSignType.INTERSTATE]: 'I-',
+  [RouteSignType.US_HIGHWAY]: 'US ',
+  [RouteSignType.STATE]: '',
+};
 
 export const toRadians = (angle: number): number => {
   return angle * FACTOR;
@@ -69,7 +75,10 @@ export const getRouteName = (
 ): string => {
   const { dir, routeNum, type } = segment;
   if (!useRouteTitle) {
-    return `${routeNum}` + (shouldUseRouteDir(stateIdentifier) ? `${dir}` : '');
+    const abbreviation = stateIdentifier === 'District' && type === RouteSignType.STATE
+      ? 'DC '
+      : ROUTE_ABBREVIATIONS[type];
+    return `${abbreviation}${routeNum}` + (shouldUseRouteDir(stateIdentifier) ? `${dir}` : '');
   }
   // One exception for D.C. Route 295
   const routeName = stateIdentifier === 'District' && type === RouteSignType.STATE
