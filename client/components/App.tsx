@@ -36,7 +36,7 @@ const CreateApp = (): React.ReactElement => {
   const [currMode, setCurrMode] = useState<SegmentCreateMode>(SegmentCreateMode.MANUAL);
   const [currUserId, setUserId] = useState<number>(-1);
   const [initFailed, setInitFailed] = useState<boolean>(false);
-  const [stateId, setStateId] = useState<number | null>(null);
+  const [stateId, setStateId] = useState<number>(-1);
   const [states, setStates] = useState<State[]>([]);
   const [submitData, setSubmitData] = useState<SubmissionData | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -403,7 +403,7 @@ const CreateApp = (): React.ReactElement => {
         onSegmentItemClick={onSegmentItemClick}
         onSendUserSegments={onSendUserSegments}
         onSetMode={setCurrMode}
-        onStateClick={setStateId}
+        onUpdateState={setStateId}
         onUserChange={onUserChange}
         onUserSubmit={onUserSubmit}
         segments={segments}

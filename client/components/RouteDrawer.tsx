@@ -25,11 +25,11 @@ interface Props {
   onSegmentItemClick: (event: React.SyntheticEvent, segment: Segment) => void,
   onSendUserSegments: () => void,
   onSetMode: (mode: SegmentCreateMode) => void,
-  onStateClick: (stateId: number) => void,
+  onUpdateState: (stateId: number) => void,
   onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
   onUserSubmit: (newUser: string) => void,
   segments: Array<Array<Segment>>,
-  stateId: number | null,
+  stateId: number,
   states: Array<State>,
   submitData: SubmissionData | null,
   userSegments: Array<UserSegment>,
@@ -46,11 +46,11 @@ const RouteDrawer = ({
   onSegmentItemClick,
   onSendUserSegments,
   onSetMode,
-  onStateClick,
+  onUpdateState,
   onUserChange,
   onUserSubmit,
   segments,
-  stateId = null,
+  stateId,
   states,
   submitData = null,
   userSegments,
@@ -78,6 +78,10 @@ const RouteDrawer = ({
   const _onRouteItemClick = (event: React.SyntheticEvent, clickedSegments: Array<Segment>): void => {
     setSegments(clickedSegments);
     onRouteItemClick(event, clickedSegments[0]);
+  }
+
+  const _onStateSelect = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+    onUpdateState(Number(event.target.value));
   }
 
   const _getRouteName = (
@@ -200,23 +204,12 @@ const RouteDrawer = ({
       <SidebarTab id="segments" header="Segments" icon={<Map size={ICON_SIZE} />}>
         <div className="tabContent">
           <Collapsible title="States" open>
-            <ul>
-              {states ? states.map((state: State): React.ReactNode => (
-                <li
-                  key={`state_${state.id}`}
-                  className="clickable"
-                  onClick={(): void => onStateClick(state.id)}
-                  onKeyDown={(event: React.KeyboardEvent): void => {
-                    if (event.key === KEY_ENTER) {
-                      onStateClick(state.id);
-                    }
-                  }}
-                  role="presentation"
-                >
-                  {state.title}
-                </li>
-              )) : <h3>Loading...</h3>}
-            </ul>
+            <select value={stateId} onChange={_onStateSelect} className="nameFormElement">
+              {stateId === -1 && <option value={-1}>Loading...</option>}
+              {states.map(
+                (state: State) => <option key={state.id} value={state.id}>{state.title}</option>
+              )}
+            </select>
           </Collapsible>
 
           <Collapsible title="Routes" open>
