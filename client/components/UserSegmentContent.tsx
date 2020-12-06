@@ -85,7 +85,11 @@ const UserSegmentContent = ({
           <br />
           <button type="submit">Create User</button>
           {currUserId >= 0 &&
-            <a href={`/users/${users[currUserId - 1].user}`}>View Stats</a>
+            <a
+              href={`/users/${users[currUserId - 1].user}`}
+              rel="noopener noreferrer">
+              View Stats
+            </a>
           }
         </form>
       </Collapsible>
