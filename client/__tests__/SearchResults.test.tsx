@@ -7,18 +7,12 @@ import SearchResults from '../components/SearchResults';
 import * as TestUtils from './utils/TestUtils';
 
 const routeClickMap: { [routeStr: string]: number } = {};
-const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: Segment): void => {
+const state = TestUtils.getTestStateData()[0];
+const segmentData = TestUtils.getTestSegmentDataByStateID(state.id);
+
+const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: Segment): void => {
   const currVal = routeClickMap[segmentOfRoute.routeNum];
   routeClickMap[segmentOfRoute.routeNum] = currVal != null ? currVal + 1 : 1;
-};
-
-const segmentData = TestUtils.getTestSegmentData();
-
-const state = {
-  "id": 1,
-  "title": "California",
-  "identifier": "California",
-  "initials": "CA",
 };
 
 const mockSearchResults = () => mount(
@@ -34,8 +28,7 @@ const updateSearchBar = (searchBar: ReactWrapper, input: string) => {
     target: {
       'value': input,
     }
-  });
-  searchBar.update();
+  }).update();
 }
 
 describe('SearchResults component test suite', () => {

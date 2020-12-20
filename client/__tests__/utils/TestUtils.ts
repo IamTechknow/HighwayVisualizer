@@ -1,11 +1,15 @@
-import type { Segment } from '../../types/types';
+import type { Segment, State } from '../../types/types';
 
-export const getTestSegmentData = (): Array<Array<Segment>> => [
+const getTestSegmentDataForCA = (): Array<Array<Segment>> => [
   [
     { "id": 326, "routeNum": "1", "type": 4, "segNum": 0, "dir": "S", "len": 31, "len_m": 1528.939697265625 },
+    { "id": 327, "routeNum": "1", "type": 4, "segNum": 1, "dir": "S", "len": 210, "len_m": 15217.7734375 },
+    { "id": 328, "routeNum": "1", "type": 4, "segNum": 2, "dir": "S", "len": 687, "len_m": 79710.3359375 },
   ],
   [
     { "id": 339, "routeNum": "1", "type": 4, "segNum": 0, "dir": "N", "len": 35, "len_m": 1517.7744140625 },
+    { "id": 340, "routeNum": "1", "type": 4, "segNum": 1, "dir": "N", "len": 212, "len_m": 15213.5673828125 },
+    { "id": 341, "routeNum": "1", "type": 4, "segNum": 2, "dir": "N", "len": 710, "len_m": 79773.6640625 },
   ],
   [
     { "id": 528, "routeNum": "2", "type": 4, "segNum": 0, "dir": "W", "len": 10, "len_m": 2210.22314453125 },
@@ -37,4 +41,61 @@ export const getTestSegmentData = (): Array<Array<Segment>> => [
   [
     { "id": 723, "routeNum": "6", "type": 3, "segNum": 0, "dir": "N", "len": 385, "len_m": 65122.80859375 }
   ],
+];
+
+const getTestSegmentDataForDC = (): Array<Array<Segment>> => [
+  [
+    { "id": 874, "routeNum": "1", "type": 3, "segNum": 0, "dir": "E", "len": 128, "len_m": 1325.2808837890625 }
+  ],
+  [
+    { "id": 880, "routeNum": "29", "type": 3, "segNum": 0, "dir": "N", "len": 104, "len_m": 1317.3594970703125 }
+  ],
+  [
+    { "id": 888, "routeNum": "50", "type": 3, "segNum": 0, "dir": "N", "len": 177, "len_m": 2010.5015869140625 }
+  ],
+  [
+    { "id": 863, "routeNum": "66", "type": 2, "segNum": 0, "dir": "E", "len": 308, "len_m": 2251.263916015625 }
+  ],
+  [
+    { "id": 865, "routeNum": "95", "type": 2, "segNum": 0, "dir": "N", "len": 5, "len_m": 200.95787048339844 }
+  ],
+  [
+    { "id": 866, "routeNum": "295", "type": 2, "segNum": 0, "dir": "N", "len": 986, "len_m": 8143.580078125 }
+  ],
+  [
+    { "id": 892, "routeNum": "295", "type": 4, "segNum": 0, "dir": "S", "len": 307, "len_m": 2976.601806640625 }
+  ],
+  [
+    { "id": 868, "routeNum": "395", "type": 2, "segNum": 0, "dir": "N", "len": 525, "len_m": 5594.1953125 }
+  ],
+  [
+    { "id": 872, "routeNum": "695", "type": 2, "segNum": 0, "dir": "N", "len": 429, "len_m": 3513.908935546875 }
+  ],
+];
+
+export const getTestSegmentDataByStateID = (stateID: number): Array<Array<Segment>> => {
+  switch (stateID) {
+    case 2:
+      return getTestSegmentDataForDC();
+    default:
+      return getTestSegmentDataForCA();
+  }
+}
+
+export const getTestRawSegmentDataByStateID = (stateID: number): Array<Segment> =>
+  getTestSegmentDataByStateID(stateID).flat();
+
+export const getTestStateData = (): Array<State> => [
+  {
+    "id": 1,
+    "title": "California",
+    "identifier": "California",
+    "initials": "CA",
+  },
+  {
+    "id": 2,
+    "title": "Washington DC",
+    "identifier": "District",
+    "initials": "DC"
+  },
 ];
