@@ -5,7 +5,7 @@
   "scripts": {
     "start": "NODE_ENV=production node server",
     "debug": "node --inspect server",
-    "react": "webpack --config webpack.config.js --output-pathinfo --watch",
+    "react": "webpack --config webpack.config.js --watch",
     "build": "webpack --config webpack.config.production.js",
     "reset": "redis-cli flushall && node db/seed.js",
     "seed": "redis-cli flushall && node db/seed.js --seed",
