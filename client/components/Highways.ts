@@ -1,5 +1,7 @@
 import { RouteSignType } from '../types/enums';
-import type { PopupCoord, State, Segment, SegmentPolyLine, UserSegment } from '../types/types';
+import type {
+  PopupCoord, State, Segment, SegmentPolyLine, UserSegment,
+} from '../types/types';
 import type { IHighways } from '../types/interfaces';
 
 import { getMapForLiveIds, getZoomForRouteLength } from '../utils/HighwayUtils';
@@ -8,12 +10,16 @@ import { getMapForLiveIds, getZoomForRouteLength } from '../utils/HighwayUtils';
 export default class Highways implements IHighways {
   // Flattened map from segment ID to segment data
   public segmentData: { [segmentId: number]: Segment };
+
   // Map route number and direction to segment IDs for each route signage type
   public idCache: { [id: number]: { [routeStr: string]: Array<number> } };
+
   // User segment data
   public userSegments: Array<UserSegment>;
+
   // Map route number to segment length
   public routeLengthMap: { [routeStr: string]: number };
+
   // Map state ID to object
   public stateCache: { [stateId: number]: State };
 
@@ -51,6 +57,7 @@ export default class Highways implements IHighways {
       return accum;
     };
     const lenReducer = (accum: { [routeStr: string]: number }, currSegment: Segment) => {
+      // eslint-disable-next-line @typescript-eslint/naming-convention
       const { dir, len_m, routeNum } = currSegment;
       const key = routeNum + dir;
       accum[key] = accum[key] ? accum[key] + len_m : len_m;
@@ -92,7 +99,9 @@ export default class Highways implements IHighways {
     if (startMarker.segmentId === segmentId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.addSegment({ routeNum, segmentId, startId, endId, clinched: false });
+      this.addSegment({
+        routeNum, segmentId, startId, endId, clinched: false,
+      });
     } else {
       // Figure out higher and lower points
       const start = startMarker.segmentId > segmentId ? endMarker : startMarker;
@@ -133,7 +142,9 @@ export default class Highways implements IHighways {
 
   addFullSegment(routeNum: string, segmentId: number): void {
     this.addSegment(
-      { routeNum, segmentId, startId: 0, endId: this.segmentData[segmentId].len, clinched: false },
+      {
+        routeNum, segmentId, startId: 0, endId: this.segmentData[segmentId].len, clinched: false,
+      },
     );
   }
 
@@ -171,8 +182,8 @@ export default class Highways implements IHighways {
     segmentData: Array<SegmentPolyLine>,
     segmentId: number,
   ): number {
-    const wholeRouteSelected = segmentData.length > 1
-      || this.getSegmentIds(routeType, routeStr).length === 1;
+    const wholeRouteSelected = segmentData.length > 1 ||
+      this.getSegmentIds(routeType, routeStr).length === 1;
     const routeLen = wholeRouteSelected
       ? this.routeLengthMap[routeStr]
       : this.segmentData[segmentId].len_m;

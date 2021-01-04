@@ -1,8 +1,7 @@
+import React from 'react';
+import { mount } from 'enzyme';
 import type { IHighways } from '../types/interfaces';
 import type { Segment } from '../types/types';
-
-import React from "react";
-import { mount } from 'enzyme';
 
 import APIClient from '../components/APIClient';
 import Highways from '../components/Highways';
@@ -43,7 +42,7 @@ const mockSegmentContent = (initialStateId: number) => {
       segments={segmentDataByRoute}
       stateId={initialStateId}
       states={stateData}
-    />
+    />,
   );
 };
 
@@ -59,18 +58,18 @@ describe('SegmentContent component test suite', () => {
   it('should render all available routes for the selected state', () => {
     const segmentDataByRoute = TestUtils.getTestSegmentDataByStateID(stateData[0].id);
     const comp = mockSegmentContent(stateData[0].id);
-    const routeTable = comp.find(".routeTable");
-    const routeRows = routeTable.first().find(".routeRow");
+    const routeTable = comp.find('.routeTable');
+    const routeRows = routeTable.first().find('.routeRow');
     expect(routeRows.length).toBeGreaterThan(1);
-    const clickables = routeTable.first().find(".clickable");
+    const clickables = routeTable.first().find('.clickable');
     const expectedRoutes = segmentDataByRoute.length;
     expect(clickables.length).toBe(expectedRoutes);
   });
 
   it('should render all available segments for the selected route', () => {
     const comp = mockSegmentContent(stateData[0].id);
-    const segmentList = comp.find("ul");
-    const clickables = segmentList.first().find(".clickable");
+    const segmentList = comp.find('ul');
+    const clickables = segmentList.first().find('.clickable');
     const expectedSegments = TestUtils.getTestSegmentDataByStateID(stateData[0].id)[0].length;
     expect(clickables.length).toBe(expectedSegments);
   });
@@ -94,8 +93,8 @@ describe('SegmentContent component test suite', () => {
 
     const updatedSelect = comp.find('select');
     expect(updatedSelect.props().value).toBe(finalStateID);
-    const routeTable = comp.find(".routeTable");
-    const clickables = routeTable.first().find(".clickable");
+    const routeTable = comp.find('.routeTable');
+    const clickables = routeTable.first().find('.clickable');
     const expectedDCRoutes = finalSegments.length;
     expect(clickables.length).toBe(expectedDCRoutes);
   });

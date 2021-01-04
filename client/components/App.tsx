@@ -1,12 +1,13 @@
-import type { IHighways } from '../types/interfaces';
-import type { RootState, State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData } from '../types/types';
-import { ReducerActionType, RouteSignType, SegmentCreateMode } from '../types/enums';
-
 import * as Leaflet from 'leaflet';
 import React, { useEffect, useReducer, useState } from 'react';
 import {
   MapContainer, TileLayer, Polyline, PolylineProps, Popup,
 } from 'react-leaflet';
+import type { IHighways } from '../types/interfaces';
+import type {
+  RootState, State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData,
+} from '../types/types';
+import { ReducerActionType, RouteSignType, SegmentCreateMode } from '../types/enums';
 
 import APIClient from './APIClient';
 import Highways from './Highways';
@@ -133,7 +134,7 @@ const CreateApp = (): React.ReactElement => {
   const onSegmentClick = (
     i: number,
     clickedSegmentId: number,
-    event: Leaflet.LeafletMouseEvent
+    event: Leaflet.LeafletMouseEvent,
   ): void => {
     if (segmentData == null || routeNum == null) {
       return;
@@ -250,11 +251,11 @@ const CreateApp = (): React.ReactElement => {
   // Respond to changes to route. Render the whole route if firstSegmentId is nonnull
   useEffect((): void => {
     if (
-      routeNum == null
-      || routeType == null
-      || dir == null
-      || routeState.firstSegmentId == null
-      || stateId == null) {
+      routeNum == null ||
+      routeType == null ||
+      dir == null ||
+      routeState.firstSegmentId == null ||
+      stateId == null) {
       return;
     }
 
@@ -289,9 +290,9 @@ const CreateApp = (): React.ReactElement => {
   // Polyline implements EventedProps for a prop of event listeners
   const createPolyLineEventMap = (
     i: number,
-    segmentId: number
+    polylineSegmentId: number,
   ): Leaflet.LeafletEventHandlerFnMap => ({
-    click: (event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, segmentId, event),
+    click: (event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, polylineSegmentId, event),
   });
 
   if (initFailed) {
@@ -307,15 +308,15 @@ const CreateApp = (): React.ReactElement => {
 
   // TODO: Remove and put loading messages
   if (
-    segments == null
-    || segmentData == null
-    || segmentId == null
-    || routeNum == null
-    || dir == null
-    || routeType == null
-    || lat == null
-    || lon == null
-    || zoom == null
+    segments == null ||
+    segmentData == null ||
+    segmentId == null ||
+    routeNum == null ||
+    dir == null ||
+    routeType == null ||
+    lat == null ||
+    lon == null ||
+    zoom == null
   ) {
     return (
       <div>
@@ -354,8 +355,8 @@ const CreateApp = (): React.ReactElement => {
         ))}
         {/* Show unsubmitted user segments if selected route and segment is the same */}
         {userSegments && userSegments.map(
-          (userSeg: UserSegment): React.ReactNode => liveSegs && liveSegs.has(userSeg.segmentId)
-            && (
+          (userSeg: UserSegment): React.ReactNode => liveSegs && liveSegs.has(userSeg.segmentId) &&
+            (
               <Polyline
                 key={HighwayUtils.stringifyUserSegment(userSeg)}
                 positions={
@@ -368,8 +369,8 @@ const CreateApp = (): React.ReactElement => {
               />
             ),
         )}
-        {popupCoords && popupSeg && stateId != null
-          && (
+        {popupCoords && popupSeg && stateId != null &&
+          (
             <Popup position={popupCoords}>
               <span id="startPopup">
                 {
@@ -386,7 +387,7 @@ const CreateApp = (): React.ReactElement => {
               <br />
               <span>
                 (Clicking on the segment again will create a user segment for travel stats)
-            </span>
+              </span>
               {' '}
               <br />
               <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>

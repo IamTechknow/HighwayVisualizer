@@ -1,6 +1,5 @@
-import type { Segment, State } from '../types/types';
-
 import React, { useMemo, useState } from 'react';
+import type { Segment, State } from '../types/types';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 

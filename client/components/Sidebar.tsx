@@ -20,7 +20,7 @@ const Sidebar = ({
   onClose,
   onToggle,
   position = 'left',
-  selected
+  selected,
 }: Props): React.ReactElement<Props> => {
   const _onClose = (e: React.SyntheticEvent): void => {
     e.preventDefault();
@@ -36,11 +36,11 @@ const Sidebar = ({
 
   // Use tab props defined in route drawer to render the tab itself
   const renderTab = (tab: React.ReactElement<SidebarTabProps>): React.ReactNode => {
-    const { icon, id } = tab.props;
-    const activeText = id === selected ? ' active' : '';
+    const { icon, id: tabId } = tab.props;
+    const activeText = tabId === selected ? ' active' : '';
     return (
-      <li className={activeText} key={id}>
-        <a href={`#${id}`} role="tab" onClick={(e: React.MouseEvent): void => _onToggle(e, id)}>
+      <li className={activeText} key={tabId}>
+        <a href={`#${tabId}`} role="tab" onClick={(e: React.MouseEvent): void => _onToggle(e, tabId)}>
           {icon}
         </a>
       </li>
@@ -49,13 +49,11 @@ const Sidebar = ({
 
   const renderTabContent = (
     children: React.ReactElement<SidebarTabProps> | React.ReactElement<SidebarTabProps>[],
-  ): React.ReactElement<SidebarTabProps>[] => {
-    return React.Children.map(children,
-      (e: React.ReactElement<SidebarTabProps>) => React.cloneElement(e, {
-        onClose: _onClose,
-        active: e.props.id === selected,
-      }));
-  };
+  ): React.ReactElement<SidebarTabProps>[] => React.Children.map(children,
+    (e: React.ReactElement<SidebarTabProps>) => React.cloneElement(e, {
+      onClose: _onClose,
+      active: e.props.id === selected,
+    }));
 
   const positionClass = `leaflet-sidebar-${position}`;
   const collapsedClass = collapsed ? 'collapsed' : '';

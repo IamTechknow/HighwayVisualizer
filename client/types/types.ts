@@ -1,6 +1,5 @@
-import { ReducerActionType, RouteSignType } from './enums';
-
 import * as Leaflet from 'leaflet';
+import { ReducerActionType, RouteSignType } from './enums';
 
 export interface PopupCoord extends Leaflet.LatLngLiteral {
   readonly idx: number,

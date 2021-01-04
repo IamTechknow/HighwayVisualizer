@@ -1,7 +1,8 @@
-import { RouteSignType } from '../types/enums';
-import type { PopupCoord, Segment, SegmentPolyLine, UserSegment } from '../types/types';
-
 import * as Leaflet from 'leaflet';
+import { RouteSignType } from '../types/enums';
+import type {
+  PopupCoord, Segment, SegmentPolyLine, UserSegment,
+} from '../types/types';
 
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
@@ -18,9 +19,7 @@ const ROUTE_ABBREVIATIONS = {
   [RouteSignType.STATE]: '',
 };
 
-export const toRadians = (angle: number): number => {
-  return angle * FACTOR;
-};
+export const toRadians = (angle: number): number => angle * FACTOR;
 
 // Apply haversine formula to calculate the 'great-circle' distance between two coordinates
 export const calcHavensine = (point: Leaflet.LatLng, radX2: number, radY2: number): number => {
@@ -32,20 +31,18 @@ export const calcHavensine = (point: Leaflet.LatLng, radX2: number, radY2: numbe
   const sinOfDeltaLat = Math.sin(deltaLat / 2);
   const sinOfDeltaLng = Math.sin(deltaLng / 2);
 
-  const a = sinOfDeltaLat * sinOfDeltaLat
-    + Math.cos(radX1) * Math.cos(radX2)
-    * sinOfDeltaLng * sinOfDeltaLng;
+  const a = sinOfDeltaLat * sinOfDeltaLat +
+    Math.cos(radX1) * Math.cos(radX2) *
+    sinOfDeltaLng * sinOfDeltaLng;
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
-}
-
-export const getMapForLiveIds = (segments: Array<SegmentPolyLine>): Map<number, number> => {
-  return new Map(segments.map((seg, i) => [seg.id, i]));
-}
-
-export const getRoutePrefix = (typeEnum: RouteSignType): string => {
-  return ROUTE_NAMES[typeEnum];
 };
+
+export const getMapForLiveIds = (
+  segments: Array<SegmentPolyLine>,
+): Map<number, number> => new Map(segments.map((seg, i) => [seg.id, i]));
+
+export const getRoutePrefix = (typeEnum: RouteSignType): string => ROUTE_NAMES[typeEnum];
 
 export const getType = (input: string): RouteSignType => {
   const classifications: { [key: string]: RouteSignType } = {
@@ -78,7 +75,7 @@ export const getRouteName = (
     const abbreviation = stateIdentifier === 'District' && type === RouteSignType.STATE
       ? 'DC '
       : ROUTE_ABBREVIATIONS[type];
-    return `${abbreviation}${routeNum}` + (shouldUseRouteDir(stateIdentifier) ? `${dir}` : '');
+    return `${abbreviation}${routeNum}${shouldUseRouteDir(stateIdentifier) ? `${dir}` : ''}`;
   }
   // One exception for D.C. Route 295
   const routeName = stateIdentifier === 'District' && type === RouteSignType.STATE

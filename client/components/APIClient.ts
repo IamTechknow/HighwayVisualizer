@@ -1,7 +1,17 @@
-import type { State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData, UserStatsAPIPayload } from '../types/types';
+import type {
+  State,
+  Segment,
+  SegmentPolyLine,
+  SubmissionData,
+  User,
+  UserSegment,
+  UserSubmissionData,
+  UserStatsAPIPayload,
+} from '../types/types';
 import { RouteSignType } from '../types/enums';
 
 // API host defined in webpack config
+// eslint-disable-next-line @typescript-eslint/naming-convention
 declare const __API__: string;
 
 // Promise based utility client to interact with API endpoints
@@ -26,13 +36,22 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
-  static getRoute(stateId: number, routeNum: string, type: RouteSignType, dir: string): Promise<Array<SegmentPolyLine>> {
+  static getRoute(
+    stateId: number,
+    routeNum: string,
+    type: RouteSignType,
+    dir: string,
+  ): Promise<Array<SegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/points/${type}/${routeNum}/${query}`)
       .then((res) => res.json());
   }
 
-  static getConcurrenyPoints(stateId: number, routeNum: string, dir: string): Promise<Array<SegmentPolyLine>> {
+  static getConcurrenyPoints(
+    stateId: number,
+    routeNum: string,
+    dir: string,
+  ): Promise<Array<SegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/concurrencies/${routeNum}${query}`)
       .then((res) => res.json());
@@ -47,8 +66,14 @@ export default class APIClient {
     return APIClient.postUserData<UserSubmissionData>('/api/newUser', JSON.stringify({ user }));
   }
 
-  static postUserSegments(userId: number, userSegments: Array<UserSegment>): Promise<SubmissionData> {
-    return APIClient.postUserData<SubmissionData>('/api/user_segments/new', JSON.stringify({ userId, userSegments }));
+  static postUserSegments(
+    userId: number,
+    userSegments: Array<UserSegment>,
+  ): Promise<SubmissionData> {
+    return APIClient.postUserData<SubmissionData>(
+      '/api/user_segments/new',
+      JSON.stringify({ userId, userSegments }),
+    );
   }
 
   static postUserData<T>(endpoint: string, data: string): Promise<T> {

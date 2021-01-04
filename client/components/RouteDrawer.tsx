@@ -1,11 +1,12 @@
-import type { IHighways } from '../types/interfaces';
-import type { State, Segment, SubmissionData, User as UserType, UserSegment } from '../types/types';
-import { SegmentCreateMode } from '../types/enums';
-
 import React, { useState } from 'react';
 import {
   Info, Map, Search, User,
 } from 'react-feather';
+import type { IHighways } from '../types/interfaces';
+import type {
+  State, Segment, SubmissionData, User as UserType, UserSegment,
+} from '../types/types';
+import { SegmentCreateMode } from '../types/enums';
 
 import AboutContent from './AboutContent';
 import SearchResults from './SearchResults';

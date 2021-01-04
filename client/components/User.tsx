@@ -1,10 +1,11 @@
-import type { UserRouteProps, UserStatSegment, UserStatsAPIPayload } from '../types/types';
-
 import React, { useEffect, useState } from 'react';
 import { User } from 'react-feather';
-import { MapContainer, TileLayer, Polyline, PolylineProps } from 'react-leaflet';
+import {
+  MapContainer, TileLayer, Polyline, PolylineProps,
+} from 'react-leaflet';
 
 import { RouteComponentProps } from 'react-router';
+import type { UserRouteProps, UserStatSegment, UserStatsAPIPayload } from '../types/types';
 
 import APIClient from './APIClient';
 import { stringifyUserSegment } from '../utils/HighwayUtils';
@@ -27,6 +28,13 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
       setCollapsed(false);
     }
     setSelectedId(id);
+  };
+
+  const getUnit = (scaleNum: number): string => {
+    if (scaleNum === METERS) {
+      return 'meters';
+    }
+    return scaleNum === KM ? 'km' : 'mi';
   };
 
   useEffect((): void => {
@@ -64,13 +72,15 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
 
-        {userSegments && userSegments.map((userSeg: UserStatSegment): React.ReactElement<PolylineProps> => (
-          <Polyline
-            key={stringifyUserSegment(userSeg)}
-            positions={userSeg.points ?? []}
-            color={userSeg.clinched ? 'lime' : 'yellow'}
-          />
-        ))}
+        {userSegments && userSegments.map(
+          (userSeg: UserStatSegment): React.ReactElement<PolylineProps> => (
+            <Polyline
+              key={stringifyUserSegment(userSeg)}
+              positions={userSeg.points ?? []}
+              color={userSeg.clinched ? 'lime' : 'yellow'}
+            />
+          ),
+        )}
       </MapContainer>
       <Sidebar
         id="sidebar"
@@ -96,8 +106,8 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
                   <th>State</th>
                   <th>Route</th>
                   <th>Segment</th>
-                  <th>{`Traveled (${scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi'})`}</th>
-                  <th>{`Total (${scale === METERS ? 'meters' : scale === KM ? 'km' : 'mi'})`}</th>
+                  <th>{`Traveled (${getUnit(scale)})`}</th>
+                  <th>{`Total (${getUnit(scale)})`}</th>
                   <th>Percentage</th>
                 </tr>
               </thead>

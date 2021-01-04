@@ -1,8 +1,7 @@
+import React, { useState } from 'react';
 import type { IHighways } from '../types/interfaces';
 import type { SubmissionData, User as UserType, UserSegment } from '../types/types';
 import { SegmentCreateMode } from '../types/enums';
-
-import React, { useState } from 'react';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
@@ -36,21 +35,21 @@ const UserSegmentContent = ({
   userSegments,
   users,
 }: Props): React.ReactElement<Props> => {
-  const [currNameInput, setNameInput] = useState<string>("");
+  const [currNameInput, setNameInput] = useState<string>('');
 
   const getIdForUserSegment = (userSeg: UserSegment): string => {
     const { endId, segmentId, startId } = userSeg;
     return `userSeg-${segmentId}-${startId}-${endId}`;
-  }
+  };
 
   const onUserNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
     setNameInput(event.target.value);
-  }
+  };
 
   const onFormSubmit = (event: React.FormEvent): void => {
     event.preventDefault();
     onUserSubmit(currNameInput);
-  }
+  };
 
   return (
     <div className="tabContent">
@@ -66,8 +65,8 @@ const UserSegmentContent = ({
       <Collapsible title="Users" open>
         <select value={currUserId} onChange={onUserChange} className="nameFormElement">
           <option key={-1} value={-1}>Select or create User</option>
-          {users
-            && users.map((user) => <option key={user.id} value={user.id}>{user.user}</option>)}
+          {users &&
+            users.map((user) => <option key={user.id} value={user.id}>{user.user}</option>)}
         </select>
 
         <form onSubmit={onFormSubmit}>
@@ -85,20 +84,22 @@ const UserSegmentContent = ({
           <br />
           <button type="submit">Create User</button>
           {currUserId >= 0 &&
+            (
             <a
               href={`/users/${users[currUserId - 1].user}`}
-              rel="noopener noreferrer">
+              rel="noopener noreferrer"
+            >
               View Stats
             </a>
-          }
+            )}
         </form>
       </Collapsible>
 
       <Collapsible title="User Segments">
         <ul>
           {
-            userSegments
-            && userSegments.map((userSeg: UserSegment, i: number): React.ReactNode => (
+            userSegments &&
+            userSegments.map((userSeg: UserSegment, i: number): React.ReactNode => (
               <div key={getIdForUserSegment(userSeg)} className="userSegRow">
                 <li>
                   {`${HighwayUtils.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
@@ -112,7 +113,8 @@ const UserSegmentContent = ({
         <button
           disabled={currUserId < 0 || userSegments.length === 0}
           onClick={onSendUserSegments}
-          type="button">
+          type="button"
+        >
           Submit User Segments
         </button>
         <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>

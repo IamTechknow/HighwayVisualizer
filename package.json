@@ -9,7 +9,7 @@
     "build": "webpack --config webpack.config.production.js",
     "reset": "redis-cli flushall && node db/seed.js",
     "seed": "redis-cli flushall && node db/seed.js --seed",
-    "lint": "eslint client/components client/components/reducers client/types client/__tests__",
+    "lint": "eslint client/components client/components/reducers client/types client/utils client/__tests__",
     "test": "jest"
   },
   "repository": {

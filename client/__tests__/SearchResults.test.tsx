@@ -1,7 +1,6 @@
-import type { Segment } from '../types/types';
-
-import React from "react";
+import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
+import type { Segment } from '../types/types';
 
 import SearchResults from '../components/SearchResults';
 import * as TestUtils from './utils/TestUtils';
@@ -20,22 +19,22 @@ const mockSearchResults = () => mount(
     onRouteItemClick={onRouteItemClick}
     segments={segmentData}
     state={state}
-  />
+  />,
 );
 
 const updateSearchBar = (searchBar: ReactWrapper, input: string) => {
   searchBar.simulate('change', {
     target: {
-      'value': input,
-    }
+      value: input,
+    },
   }).update();
-}
+};
 
 describe('SearchResults component test suite', () => {
   it('should show search hints when search bar is empty or gets cleared', () => {
     const comp = mockSearchResults();
-    const searchBar = comp.find("#routeSearch");
-    const bulletPoints = comp.find("li");
+    const searchBar = comp.find('#routeSearch');
+    const bulletPoints = comp.find('li');
     expect(searchBar.props().value).toBeFalsy();
     expect(bulletPoints.length).toBe(2);
     updateSearchBar(searchBar, '');
@@ -45,24 +44,24 @@ describe('SearchResults component test suite', () => {
 
   it('should show search hints when search yields no results', () => {
     const comp = mockSearchResults();
-    const searchBar = comp.find("#routeSearch");
+    const searchBar = comp.find('#routeSearch');
     updateSearchBar(searchBar, 'I');
     const searchHintHeader = comp.find('h3');
-    const bulletPoints = comp.find("li");
+    const bulletPoints = comp.find('li');
     expect(searchHintHeader.length).toBe(1);
     expect(bulletPoints.length).toBe(2);
   });
 
   it('should show search results for a valid entry', () => {
     const comp = mockSearchResults();
-    const searchBar = comp.find("#routeSearch");
+    const searchBar = comp.find('#routeSearch');
     updateSearchBar(searchBar, 'I-5');
     const searchHintHeader = comp.find('h3');
-    const bulletPoints = comp.find("li");
+    const bulletPoints = comp.find('li');
     expect(searchHintHeader.length).toBe(0);
     const expectedBulletPoints = segmentData
       .flat()
-      .filter(segment => segment.routeNum === '5')
+      .filter((segment) => segment.routeNum === '5')
       .length;
     expect(bulletPoints.length).toBe(expectedBulletPoints);
   });
@@ -70,15 +69,15 @@ describe('SearchResults component test suite', () => {
   it('should allow selected routes to be clicked', () => {
     const routeNum = '5'; // I-5
     const comp = mockSearchResults();
-    const searchBar = comp.find("#routeSearch");
+    const searchBar = comp.find('#routeSearch');
     updateSearchBar(searchBar, routeNum);
-    const bulletPoints = comp.find("li");
+    const bulletPoints = comp.find('li');
     bulletPoints.forEach((routeBullet): void => {
       routeBullet.simulate('click');
     });
     const bulletPointsWithRoute5 = segmentData
       .flat()
-      .filter(segment => segment.routeNum === routeNum)
+      .filter((segment) => segment.routeNum === routeNum)
       .length;
     expect(routeClickMap[routeNum]).toBe(bulletPointsWithRoute5);
   });
