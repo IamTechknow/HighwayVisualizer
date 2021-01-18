@@ -214,7 +214,7 @@ const CreateApp = (): React.ReactElement => {
 
   // Respond to changes to state ID. Rebuild highway data for the state and change the route
   useEffect((): void => {
-    if (stateId == null) {
+    if (stateId == null || stateId === -1) {
       return;
     }
 
