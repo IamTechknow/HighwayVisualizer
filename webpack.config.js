@@ -7,9 +7,14 @@ module.exports = {
   entry: `${SRC_DIR}/index.tsx`,
   mode: 'development',
   devtool: 'source-map',
+  target: ['web', 'es2017'],
   output: {
     filename: 'bundle.js',
+    module: true,
     path: path.join(__dirname, '/public/dist'),
+  },
+  experiments: {
+    outputModule: true,
   },
   resolve: {
     extensions: ['.js', '.jsx', '.ts', '.tsx'],
