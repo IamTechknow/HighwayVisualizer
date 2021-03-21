@@ -43,8 +43,8 @@ const logMySQLError = (err) => {
  */
 const getDB = () => mysql.createConnection({
   host: 'localhost',
-  user: 'root',
-  password: '',
+  user: process.env.DB_USERNAME,
+  password: process.env.DB_PASSWORD,
   multipleStatements: true
 }).then((db) => {
   if (process.env.NODE_ENV === 'development') {
