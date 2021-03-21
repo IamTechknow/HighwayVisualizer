@@ -5,7 +5,15 @@ import {
 } from 'react-leaflet';
 import type { IHighways } from '../types/interfaces';
 import type {
-  RootState, State, Segment, SegmentPolyLine, SubmissionData, User, UserSegment, UserSubmissionData,
+  PopupCoord,
+  RootState,
+  State,
+  Segment,
+  SegmentPolyLine,
+  SubmissionData,
+  User,
+  UserSegment,
+  UserSubmissionData,
 } from '../types/types';
 import { ReducerActionType, RouteSignType, SegmentCreateMode } from '../types/enums';
 
@@ -107,7 +115,6 @@ const CreateApp = (): React.ReactElement => {
     }
   };
 
-  // Prevent events occurring twice
   const onSegmentItemClick = (event: React.SyntheticEvent, segment: Segment): void => {
     const {
       id, routeNum: newRouteNum, type: newRouteType, dir: newDir,
@@ -295,6 +302,31 @@ const CreateApp = (): React.ReactElement => {
     click: (event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, polylineSegmentId, event),
   });
 
+  const createPopup = (
+    routeName: string,
+    popupSeg: Segment,
+    coord: PopupCoord,
+  ): React.ReactElement<Leaflet.Popup> => (
+    <Popup position={coord}>
+      <span id="startPopup">
+        {
+          routeName
+        }
+      </span>
+      {' '}
+      <br />
+      <strong>{`Segment ${popupSeg.segNum}, Point ${coord.idx + 1} of ${popupSeg.len}`}</strong>
+      {' '}
+      <br />
+      <span>
+        (Clicking on the segment again will create a user segment for travel stats)
+      </span>
+      {' '}
+      <br />
+      <a href={`https://www.google.com/maps/?ll=${coord.lat},${coord.lng}`}>GMaps Link</a>
+    </Popup>
+  );
+
   if (initFailed) {
     return (
       <div>
@@ -369,30 +401,16 @@ const CreateApp = (): React.ReactElement => {
               />
             ),
         )}
-        {popupCoords && popupSeg && stateId != null &&
-          (
-            <Popup position={popupCoords}>
-              <span id="startPopup">
-                {
-                  HighwayUtils.getRouteName(
-                    highwayData.segmentData[segmentId],
-                    highwayData.getState(stateId).identifier,
-                  )
-                }
-              </span>
-              {' '}
-              <br />
-              <strong>{`Segment ${popupSeg.segNum}, Point ${popupCoords.idx + 1} of ${popupSeg.len}`}</strong>
-              {' '}
-              <br />
-              <span>
-                (Clicking on the segment again will create a user segment for travel stats)
-              </span>
-              {' '}
-              <br />
-              <a href={`https://www.google.com/maps/?ll=${popupCoords.lat},${popupCoords.lng}`}>GMaps Link</a>
-            </Popup>
-          )}
+        {popupCoords && popupSeg && stateId != null && (
+          createPopup(
+            HighwayUtils.getRouteName(
+              popupSeg,
+              highwayData.getState(stateId).identifier,
+            ),
+            popupSeg,
+            popupCoords,
+          )
+        )}
       </MapContainer>
       <RouteDrawer
         currMode={currMode}
