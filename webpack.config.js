@@ -9,6 +9,7 @@ module.exports = {
   devtool: 'source-map',
   devServer: {
     contentBase: ['./public'],
+    historyApiFallback: true,
     hot: true,
     open: true,
   },
