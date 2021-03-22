@@ -51,6 +51,16 @@ const UserSegmentContent = ({
     onUserSubmit(currNameInput);
   };
 
+  const getUserSegmentTitle = (userSeg: UserSegment) => {
+    const { segmentId, routeNum } = userSeg;
+    const prefix = HighwayUtils.getRoutePrefix(highwayData.segmentData[segmentId].type);
+    return `${prefix} ${routeNum} Segment ${highwayData.getSegmentNum(segmentId)}`;
+  };
+
+  const userSegmentsInState = userSegments.filter(
+    (userSeg: UserSegment) => userSeg.segmentId in highwayData.segmentData,
+  );
+
   return (
     <div className="tabContent">
       {submitData && <h3>{submitData.message}</h3>}
@@ -85,30 +95,43 @@ const UserSegmentContent = ({
           <button type="submit">Create User</button>
           {currUserId >= 0 &&
             (
-            <a
-              href={`/users/${users[currUserId - 1].user}`}
-              rel="noopener noreferrer"
-            >
-              View Stats
-            </a>
+              <a
+                href={`/users/${users[currUserId - 1].user}`}
+                rel="noopener noreferrer"
+              >
+                View Stats
+              </a>
             )}
         </form>
       </Collapsible>
 
-      <Collapsible title="User Segments">
-        <ul>
-          {
-            userSegments &&
-            userSegments.map((userSeg: UserSegment, i: number): React.ReactNode => (
-              <div key={getIdForUserSegment(userSeg)} className="userSegRow">
-                <li>
-                  {`${HighwayUtils.getRoutePrefix(highwayData.segmentData[userSeg.segmentId].type)} ${userSeg.routeNum} Segment ${highwayData.getSegmentNum(userSeg.segmentId)}`}
-                  <input type="checkbox" onClick={(): void => { onClinchToggleFor(i); }} />
-                </li>
-              </div>
-            ))
-          }
-        </ul>
+      <Collapsible title="User Segments" open>
+        {
+          userSegmentsInState.length > 0
+            ? (
+              <ul>
+                {
+                  userSegmentsInState.map((userSeg: UserSegment, i: number): React.ReactNode => {
+                    const userSegKey = getIdForUserSegment(userSeg);
+                    return (
+                      <div key={userSegKey} className="userSegRow">
+                        <li>
+                          <label className="clickable" htmlFor={userSegKey}>
+                            {getUserSegmentTitle(userSeg)}
+                          </label>
+                          <input
+                            id={userSegKey}
+                            type="checkbox"
+                            onClick={(): void => { onClinchToggleFor(i); }}
+                          />
+                        </li>
+                      </div>
+                    );
+                  })
+                }
+              </ul>
+            ) : <h3>No unsubmitted user segments in current state</h3>
+        }
 
         <button
           disabled={currUserId < 0 || userSegments.length === 0}

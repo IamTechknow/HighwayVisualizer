@@ -60,7 +60,7 @@ const CreateApp = (): React.ReactElement => {
 
   const onClinchToggleFor = (i: number): void => {
     highwayData.toggleUserSegment(i);
-    setUserSegments(highwayData.userSegments);
+    setUserSegments(highwayData.userSegments.slice());
   };
 
   const onUserSubmit = (user: string): void => {

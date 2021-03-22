@@ -171,6 +171,8 @@ export const getZoomForRouteLength = (len: number): number => {
 };
 
 export const stringifyUserSegment = (userSegment: UserSegment): string => {
-  const { endId, segmentId, startId } = userSegment;
-  return `userSeg-${segmentId}-${startId}-${endId}`;
+  const {
+    clinched, endId, segmentId, startId,
+  } = userSegment;
+  return `userSeg-${segmentId}-${startId}-${endId}-${clinched}`;
 };
