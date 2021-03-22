@@ -7,11 +7,16 @@ module.exports = {
   entry: `${SRC_DIR}/index.tsx`,
   mode: 'development',
   devtool: 'source-map',
-  target: ['web', 'es2017'],
+  devServer: {
+    contentBase: ['./public'],
+    hot: true,
+    open: true,
+  },
   output: {
     filename: 'bundle.js',
     module: true,
     path: path.join(__dirname, '/public/dist'),
+    publicPath: '/dist/',
   },
   experiments: {
     outputModule: true,
