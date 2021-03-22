@@ -56,7 +56,7 @@ class Models {
    */
   static getPointsForSegment(db, segmentId) {
     const query = 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + segmentId;
-    return Models.processPointQueries(db, [query, ''], [{id: segmentId}]);
+    return Models.processPointQueries(db, [query, ''], [{ id: segmentId }]);
   }
 
   /**
@@ -81,7 +81,7 @@ class Models {
     const keys = await db.query(keyQuery, args).then((result) => result[0]);
 
     const segments = keys.map(key => {
-      return dir !== undefined ? {id: key.id} : {dir: key.dir, id: key.id};
+      return dir !== undefined ? { id: key.id } : { dir: key.dir, id: key.id };
     });
     const combinedQuery = keys.map(key => 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + key.id);
     return Models.processPointQueries(db, [...combinedQuery, ''], segments);
@@ -118,7 +118,7 @@ class Models {
     rte2_segments.forEach((seg) => {
       segmentBaseMap[seg.id] = seg.base;
     });
-    const segments = concurrencies.map((con) => {return {id: con.rte2_seg};});
+    const segments = concurrencies.map((con) => { return { id: con.rte2_seg }; });
     const combinedQuery = concurrencies.map((con) =>
       `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points
        WHERE segment_key = ${con.rte2_seg} AND id >= ${segmentBaseMap[con.rte2_seg] + con.start_pt}
@@ -148,12 +148,24 @@ class Models {
   static getUserSegmentsBy(db, username) {
     return db.execute('SELECT * FROM users WHERE user = ?;', [username])
       .then((result) => {
-        if (result[0].length) {
-          return db.execute('SELECT * FROM user_segments WHERE user_id = ?;', [result[0][0].id])
-            .then((userSegResult) => userSegResult[0].length ? Models.getPointsByUser(db, userSegResult[0]) : false)
-        } else {
-          return false;
+        if (result[0].length < 0) {
+          return [];
         }
+        return db.execute('SELECT segment_id as segmentId, clinched, start_id as startId, end_id as endId FROM user_segments WHERE user_id = ?;', [result[0][0].id])
+          .then(
+            (userSegResult) => {
+              const [userSegmentData] = userSegResult;
+              if (userSegmentData.length < 0) {
+                return [];
+              }
+              return Models.getPointsByUser(db, userSegmentData.map(userSeg => {
+                return {
+                  ...userSeg,
+                  clinched: userSeg.clinched === 1,
+                };
+              }));
+            }
+          );
       })
       .catch((err) => { console.error(err); });
   }
@@ -191,11 +203,11 @@ class Models {
    */
   static async createUserSegment(db, userId, userSegments) {
     const userSegArgs = userSegments.map(seg => [userId, seg.segmentId, seg.clinched ? 1 : 0, seg.startId, seg.endId]);
-    const userSegmentMap = userSegments.reduce((accum, seg) => { return {...accum, [seg.segmentId]: seg}; }, {});
+    const userSegmentMap = userSegments.reduce((accum, seg) => { return { ...accum, [seg.segmentId]: seg }; }, {});
     const segmentDataMap = await db.query('SELECT * FROM segments WHERE id IN (?);', [Object.keys(userSegmentMap)])
       .then(result => result[0])
       .then(data =>
-        data.reduce((accum, curr) => { return {...accum, [curr.id]: curr}; }, {})
+        data.reduce((accum, curr) => { return { ...accum, [curr.id]: curr }; }, {})
       );
     const concurrencyData = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?);', [Object.keys(userSegmentMap)])
       .then(result => result[0]);
@@ -260,14 +272,16 @@ class Models {
 
     for (let obj of userSegs) {
       // Get the base point ID for the segment, then calculate the start and end IDs
-      const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [obj.segment_id]).then((result) => result[0][0].base);
-      const start_id = base + obj.start_id, end_id = base + obj.end_id;
-      const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + obj.segment_id;
-      queries.push(queryBase + ` AND id >= ${start_id} AND id <= ${end_id}`);
+      const { endId, segmentId, startId } = obj;
+      const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [segmentId]).then((result) => result[0][0].base);
+      const pointStartID = base + startId;
+      const pointEndID = base + endId;
+      const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + segmentId;
+      queries.push(queryBase + ` AND id >= ${pointStartID} AND id <= ${pointEndID}`);
     }
     const userSegments = await Models.processPointQueries(db, [...queries, ''], userSegs);
     const stats = await Models.calcStats(db, userSegments);
-    return {stats, userSegments};
+    return { stats, userSegments };
   }
 
   /**
@@ -282,9 +296,9 @@ class Models {
   static async calcStats(db, userSegments) {
     let stats = [];
 
-    for (let seg of userSegments) {
-      let metersTraveled = Utils.calcSegmentDistance(seg.points);
-      let segment = await db.execute('SELECT * FROM segments WHERE id = ?', [seg.segment_id]).then((result) => result[0][0]);
+    for (let userSeg of userSegments) {
+      let metersTraveled = Utils.calcSegmentDistance(userSeg.points);
+      let segment = await db.execute('SELECT * FROM segments WHERE id = ?', [userSeg.segmentId]).then((result) => result[0][0]);
       let total = segment.len_m;
 
       let state;
