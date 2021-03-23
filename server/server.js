@@ -4,8 +4,13 @@
  * @module highwayvisualizer
  * @requires NPM:compression
  * @requires NPM:express
+ * @requires fs
+ * @requires https
  * @requires NPM:morgan
  * @requires path
+ * 
+ * @requires /server/middleware.js:highwayvisualizer/middleware
+ * @requires /server/routes.js:highwayvisualizer/routes
  */
 
 const compression = require('compression');
@@ -32,7 +37,7 @@ const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
  * @return {Server} The application server
  */
 const createServer = (db, redisClient) => {
-  const app = express();
+  let app = express();
   app.use(compression({ threshold: 8192 }));
   app.use(express.static(path.resolve(__dirname, '../public')));
   app.use(express.json());

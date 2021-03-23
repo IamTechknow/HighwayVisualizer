@@ -3,11 +3,14 @@
  *               and then creates and hosts the server.
  *
  * @requires NPM:redis
+ * @requires NPM:yargs
  * @requires /db/index.js
  * @requires /server/server.js
  */
 
 const redis = require('redis');
+const yargs = require('yargs/yargs');
+
 const DB = require('../db');
 const { createServer } = require('./server');
 
@@ -34,18 +37,31 @@ const _getShutdownHandler = (db, httpServer, redisClient) => {
   };
 };
 
-const runServer = async () => {
+const runServer = async (redisOnly) => {
+  if (redisOnly) {
+    console.info('Running server in read-only mode');
+  }
+  let db = null;
   try {
-    const db = await DB.getDB();
     const redisClient = _getRedisClient();
+    if (!redisOnly) {
+      db = await DB.getDB();
+    }
     const server = createServer(db, redisClient);
     process.on('SIGINT', _getShutdownHandler(db, server, redisClient));
   } catch (err) {
     DB.logMySQLError(err);
-    console.warn('Server will now try to run with Redis only');
-    const server = createServer(null, redisClient);
-    process.on('SIGINT', _getShutdownHandler(null, server, redisClient));
+    console.warn(
+      'Server could not communicate with DB, use --redis-only switch to run server in read-only mode'
+    );
   }
 };
 
-runServer();
+const args = yargs(process.argv.slice(2))
+  .options('redisOnly', {
+    default: false,
+    describe: 'Allow server to run in read-only mode',
+    type: 'boolean',
+  })
+  .parse();
+runServer(args.redisOnly);
