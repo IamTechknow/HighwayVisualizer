@@ -315,7 +315,7 @@ const CreateApp = (): React.ReactElement => {
       </span>
       {' '}
       <br />
-      <strong>{`Segment ${popupSeg.segNum}, Point ${coord.idx + 1} of ${popupSeg.len}`}</strong>
+      <strong>{`Segment ${popupSeg.segNum + 1}, Point ${coord.idx + 1} of ${popupSeg.len}`}</strong>
       {' '}
       <br />
       <span>

@@ -19,6 +19,7 @@ export default (segmentState: SegmentState, payload: SegmentReducerPayload): Seg
         concurrencies: [],
         lat: payload.lat,
         lon: payload.lon,
+        popupCoords: null,
         segmentData: payload.segmentData,
         zoom: payload.zoom,
       };
