@@ -1,6 +1,6 @@
-import type { Segment, State } from '../../types/types';
+import type { RouteSegment, State } from '../../types/types';
 
-const getTestSegmentDataForCA = (): Array<Array<Segment>> => [
+const getTestRouteSegmentDataForCA = (): Array<Array<RouteSegment>> => [
   [
     {
       id: 326, routeNum: '1', type: 4, segNum: 0, dir: 'S', len: 31, len_m: 1528.939697265625,
@@ -75,7 +75,7 @@ const getTestSegmentDataForCA = (): Array<Array<Segment>> => [
   ],
 ];
 
-const getTestSegmentDataForDC = (): Array<Array<Segment>> => [
+const getTestRouteSegmentDataForDC = (): Array<Array<RouteSegment>> => [
   [
     {
       id: 874, routeNum: '1', type: 3, segNum: 0, dir: 'E', len: 128, len_m: 1325.2808837890625,
@@ -123,18 +123,20 @@ const getTestSegmentDataForDC = (): Array<Array<Segment>> => [
   ],
 ];
 
-export const getTestSegmentDataByStateID = (stateID: number): Array<Array<Segment>> => {
+export const getTestRouteSegmentDataByStateID = (
+  stateID: number,
+): Array<Array<RouteSegment>> => {
   switch (stateID) {
     case 2:
-      return getTestSegmentDataForDC();
+      return getTestRouteSegmentDataForDC();
     default:
-      return getTestSegmentDataForCA();
+      return getTestRouteSegmentDataForCA();
   }
 };
 
-export const getTestRawSegmentDataByStateID = (
+export const getTestRawRouteSegmentDataByStateID = (
   stateID: number,
-): Array<Segment> => getTestSegmentDataByStateID(stateID).flat();
+): Array<RouteSegment> => getTestRouteSegmentDataByStateID(stateID).flat();
 
 export const getTestStateData = (): Array<State> => [
   {

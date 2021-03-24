@@ -1,6 +1,6 @@
 # HighwayVisualizer
 
-[HighwayVisualizer](https://iamtechknow.dev) is a tool designed to render geodata of highway systems in the United States and to create and view segments of highways they have traveled on.
+[HighwayVisualizer](https://iamtechknow.dev) is a tool designed to render geodata of highway systems in the United States and to allow users to create their own travel segments.
 
 ## Instructions
 
@@ -15,19 +15,19 @@ A video of this project based on the commit tagged `mvp` may be found [here](htt
 User Stories:
 
 * [X] As a user, I can view highway routes of a state on a map
-* [X] As a user, I can view segments of a highway route, both individually and the route as a whole
-* [X] As a user, I can create a user to add custom segments of a route
-* [X] As a user, I can click on two ends of a segment to define a custom user segment
+* [X] As a user, I can view route segments of a highway route, both individually and the route as a whole
+* [X] As a user, I can create a user to add travel segments of a route
+* [X] As a user, I can click on two points of a route segment to define a travel segment
   * [X] As a user, I can click once on a route segment to an info popup
-  * [X] As a user, I can click on two route segments and create user segments for the two route segments and all in between
-  * [X] As a user, I can use the clinch mode to automatically create a user segment by clicking on a route or segment
+  * [X] As a user, I can click on two route segments and create travel segments for the two route segments and all in between
+  * [X] As a user, I can use the clinch mode to automatically create a travel segment by clicking on a route or segment
 * [X] As a user, I can search for quick access to routes
-* [X] As a user, I can view segments of routes defined by other users
+* [X] As a user, I can view travel segments defined by other users
 * [X] As a user, I can see stats on the highways I have travelled on
 * [ ] As a user, I can log in as myself to be able to submit data
 * [ ] As a user, I can toggle some features on or off
 * [X] As a developer, I can seed highway data for any state from the FHWA [website](https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles.cfm)
-* [X] As a developer, there is adequate test coverage in the frontend
+* [ ] As a developer, there is adequate test coverage in the frontend
 
 ## Tech Stack and Libraries used
 

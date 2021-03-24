@@ -7,7 +7,7 @@ export default (routeState: RouteState, payload: RouteReducerPayload): RouteStat
     case ReducerActionType.UPDATE_ROUTE_INFO:
       return {
         ...routeState,
-        firstSegmentId: null,
+        firstRouteSegmentId: null,
         dir: payload.dir,
         routeNum: payload.routeNum,
         routeType: payload.routeType,
@@ -15,7 +15,7 @@ export default (routeState: RouteState, payload: RouteReducerPayload): RouteStat
     case ReducerActionType.UPDATE_ROUTE_SHOW:
       return {
         ...routeState,
-        firstSegmentId: payload.firstSegmentId,
+        firstRouteSegmentId: payload.firstRouteSegmentId,
         dir: payload.dir,
         routeNum: payload.routeNum,
         routeType: payload.routeType,

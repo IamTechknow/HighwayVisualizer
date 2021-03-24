@@ -1,53 +1,56 @@
 import { RouteSignType } from '../types/enums';
 import type {
-  PopupCoord, State, Segment, SegmentPolyLine, UserSegment,
+  PopupCoord, State, RouteSegment, RouteSegmentPolyLine, TravelSegment,
 } from '../types/types';
 import type { IHighways } from '../types/interfaces';
 
-import { getMapForLiveIds, getZoomForRouteLength } from '../utils/HighwayUtils';
+import { getMapForLiveSegmentIds, getZoomForRouteLength } from '../utils/HighwayUtils';
 
 // Manages highway information on the client side, including route IDs, numbers, and points size.
 export default class Highways implements IHighways {
-  // Flattened map from segment ID to segment data
-  public segmentData: { [segmentId: number]: Segment };
+  // Flattened map from route segment ID to route segment data
+  public routeSegmentData: { [routeSegmentId: number]: RouteSegment };
 
-  // Map route number and direction to segment IDs for each route signage type
+  // Map route number and direction to route segment IDs for each route signage type
   public idCache: { [id: number]: { [routeStr: string]: Array<number> } };
 
-  // User segment data
-  public userSegments: Array<UserSegment>;
+  // Travel segment data
+  public travelSegments: Array<TravelSegment>;
 
-  // Map route number to segment length
+  // Map route number to route segment length
   public routeLengthMap: { [routeStr: string]: number };
 
   // Map state ID to object
   public stateCache: { [stateId: number]: State };
 
   constructor() {
-    this.segmentData = {};
+    this.routeSegmentData = {};
     this.idCache = {};
-    this.userSegments = [];
+    this.travelSegments = [];
     this.routeLengthMap = {};
     this.stateCache = {};
   }
 
-  buildStateSegmentsData(raw: Array<Segment>): void {
+  buildStateSegmentsData(raw: Array<RouteSegment>): void {
     const initialIdCache = {
       [RouteSignType.INTERSTATE]: {},
       [RouteSignType.US_HIGHWAY]: {},
       [RouteSignType.STATE]: {},
     };
-    const segmentReducer = (accum: { [segmentId: number]: Segment }, curr: Segment) => {
+    const routeSegmentReducer = (
+      accum: { [routeSegmentId: number]: RouteSegment },
+      curr: RouteSegment,
+    ) => {
       accum[curr.id] = curr;
       return accum;
     };
     const idReducer = (
       accum: { [id: number]: { [routeStr: string]: Array<number> } },
-      currSegment: Segment,
+      currRouteSegment: RouteSegment,
     ) => {
       const {
         dir, id, routeNum, type,
-      } = currSegment;
+      } = currRouteSegment;
       const key = routeNum + dir;
       if (accum[type][key]) {
         accum[type][key].push(id);
@@ -56,83 +59,83 @@ export default class Highways implements IHighways {
       }
       return accum;
     };
-    const lenReducer = (accum: { [routeStr: string]: number }, currSegment: Segment) => {
+    const lenReducer = (accum: { [routeStr: string]: number }, currRouteSegment: RouteSegment) => {
       // eslint-disable-next-line @typescript-eslint/naming-convention
-      const { dir, len_m, routeNum } = currSegment;
+      const { dir, len_m, routeNum } = currRouteSegment;
       const key = routeNum + dir;
       accum[key] = accum[key] ? accum[key] + len_m : len_m;
       return accum;
     };
-    this.segmentData = raw.reduce(segmentReducer, {});
+    this.routeSegmentData = raw.reduce(routeSegmentReducer, {});
     this.idCache = raw.reduce(idReducer, initialIdCache);
     this.routeLengthMap = raw.reduce(lenReducer, {});
   }
 
-  getSegmentNum(segmentId: number): number {
-    return this.segmentData[segmentId].segNum + 1;
+  getRouteSegmentNum(routeSegmentId: number): number {
+    return this.routeSegmentData[routeSegmentId].segNum + 1;
   }
 
-  getSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number> {
+  getRouteSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number> {
     return this.idCache[type][routeNumAndDir];
   }
 
-  clearUserSegments(): void {
-    this.userSegments = [];
+  clearTravelSegments(): void {
+    this.travelSegments = [];
   }
 
-  toggleUserSegment(idx: number): void {
-    this.userSegments[idx].clinched = !this.userSegments[idx].clinched;
+  toggleTravelSegment(idx: number): void {
+    this.travelSegments[idx].clinched = !this.travelSegments[idx].clinched;
   }
 
-  addSegment(userSegment: UserSegment): void {
-    this.userSegments.push(userSegment);
+  addTravelSegment(travelSegment: TravelSegment): void {
+    this.travelSegments.push(travelSegment);
   }
 
-  addNewUserSegments(
+  addNewTravelSegments(
     startMarker: PopupCoord,
     endMarker: PopupCoord,
     routeNum: string,
-    segmentId: number,
-    segmentData: Array<SegmentPolyLine>,
+    routeSegmentId: number,
+    routeSegmentData: Array<RouteSegmentPolyLine>,
   ): void {
     // Check whether both points have the same route ID
-    if (startMarker.segmentId === segmentId) {
+    if (startMarker.routeSegmentId === routeSegmentId) {
       const startId = Math.min(startMarker.idx, endMarker.idx),
         endId = Math.max(startMarker.idx, endMarker.idx);
-      this.addSegment({
-        routeNum, segmentId, startId, endId, clinched: false,
+      this.addTravelSegment({
+        routeNum, routeSegmentId, startId, endId, clinched: false,
       });
     } else {
       // Figure out higher and lower points
-      const start = startMarker.segmentId > segmentId ? endMarker : startMarker;
-      const end = startMarker.segmentId < segmentId ? endMarker : startMarker;
-      const idMap = getMapForLiveIds(segmentData);
+      const start = startMarker.routeSegmentId > routeSegmentId ? endMarker : startMarker;
+      const end = startMarker.routeSegmentId < routeSegmentId ? endMarker : startMarker;
+      const idMap = getMapForLiveSegmentIds(routeSegmentData);
 
       // Add first segment
-      const endIdx = segmentData[<number>idMap.get(start.segmentId)].points.length;
-      this.addSegment({
+      const endIdx = routeSegmentData[<number>idMap.get(start.routeSegmentId)].points.length;
+      this.addTravelSegment({
         routeNum,
-        segmentId: start.segmentId,
+        routeSegmentId: start.routeSegmentId,
         startId: start.idx,
         endId: endIdx,
         clinched: false,
       });
       // Add entire user segments if needed
-      if (end.segmentId - start.segmentId > 1) {
-        for (let i = start.segmentId + 1; i < end.segmentId; i += 1) {
-          this.addSegment({
+      if (end.routeSegmentId - start.routeSegmentId > 1) {
+        for (let i = start.routeSegmentId + 1; i < end.routeSegmentId; i += 1) {
+          this.addTravelSegment({
             routeNum,
-            segmentId: i,
+            routeSegmentId: i,
             startId: 0,
-            endId: segmentData[<number>idMap.get(i)].points.length,
+            endId: routeSegmentData[<number>idMap.get(i)].points.length,
             clinched: false,
           });
         }
       }
       // Add last segment
-      this.addSegment({
+      this.addTravelSegment({
         routeNum,
-        segmentId: end.segmentId,
+        routeSegmentId: end.routeSegmentId,
         startId: 0,
         endId: end.idx,
         clinched: false,
@@ -140,33 +143,38 @@ export default class Highways implements IHighways {
     }
   }
 
-  addFullSegment(routeNum: string, segmentId: number): void {
-    this.addSegment(
+  addFullRouteSegment(routeNum: string, routeSegmentId: number): void {
+    this.addTravelSegment(
       {
-        routeNum, segmentId, startId: 0, endId: this.segmentData[segmentId].len, clinched: false,
+        routeNum,
+        routeSegmentId,
+        startId: 0,
+        endId: this.routeSegmentData[routeSegmentId].len,
+        clinched: false,
       },
     );
   }
 
-  addAllSegments(routeNum: string, type: RouteSignType, dir: string): void {
-    this.getSegmentIds(type, routeNum + dir).forEach((segmentId: number): void => {
-      this.addFullSegment(routeNum, segmentId);
+  addAllRouteSegments(routeNum: string, type: RouteSignType, dir: string): void {
+    this.getRouteSegmentIds(type, routeNum + dir).forEach((routeSegmentId: number): void => {
+      this.addFullRouteSegment(routeNum, routeSegmentId);
     });
   }
 
   // Calculate # of points, then iterate thru array to get center, and return coordinates
   getCenterOfRoute(routeNumAndDir: string, type: RouteSignType): Array<number> {
-    const segmentIds = this.getSegmentIds(type, routeNumAndDir);
-    const numPoints = segmentIds.map((segmentId) => this.segmentData[segmentId].len);
+    const routeSegmentIds = this.getRouteSegmentIds(type, routeNumAndDir);
+    const numPoints = routeSegmentIds
+      .map((routeSegmentId) => this.routeSegmentData[routeSegmentId].len);
     const totalNum = numPoints.reduce((accum, curr) => accum + curr, 0);
 
-    let segmentIdIdx = 0;
+    let routeSegmentIdIdx = 0;
     let midPointIdx = Math.floor(totalNum / 2);
-    while (segmentIdIdx < numPoints.length && midPointIdx > numPoints[segmentIdIdx]) {
-      midPointIdx -= numPoints[segmentIdIdx];
-      segmentIdIdx += 1;
+    while (routeSegmentIdIdx < numPoints.length && midPointIdx > numPoints[routeSegmentIdIdx]) {
+      midPointIdx -= numPoints[routeSegmentIdIdx];
+      routeSegmentIdIdx += 1;
     }
-    return [segmentIdIdx, midPointIdx];
+    return [routeSegmentIdIdx, midPointIdx];
   }
 
   getState(stateId: number): State {
@@ -179,14 +187,14 @@ export default class Highways implements IHighways {
   getZoomLevel(
     routeStr: string,
     routeType: RouteSignType,
-    segmentData: Array<SegmentPolyLine>,
-    segmentId: number,
+    routeSegmentData: Array<RouteSegmentPolyLine>,
+    routeSegmentId: number,
   ): number {
-    const wholeRouteSelected = segmentData.length > 1 ||
-      this.getSegmentIds(routeType, routeStr).length === 1;
+    const wholeRouteSelected = routeSegmentData.length > 1 ||
+      this.getRouteSegmentIds(routeType, routeStr).length === 1;
     const routeLen = wholeRouteSelected
       ? this.routeLengthMap[routeStr]
-      : this.segmentData[segmentId].len_m;
+      : this.routeSegmentData[routeSegmentId].len_m;
     return getZoomForRouteLength(routeLen);
   }
 

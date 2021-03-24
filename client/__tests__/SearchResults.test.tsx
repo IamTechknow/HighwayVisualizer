@@ -1,15 +1,15 @@
 import React from 'react';
 import { mount, ReactWrapper } from 'enzyme';
-import type { Segment } from '../types/types';
+import type { RouteSegment } from '../types/types';
 
 import SearchResults from '../components/SearchResults';
 import * as TestUtils from './utils/TestUtils';
 
 const routeClickMap: { [routeStr: string]: number } = {};
 const state = TestUtils.getTestStateData()[0];
-const segmentData = TestUtils.getTestSegmentDataByStateID(state.id);
+const routeSegmentData = TestUtils.getTestRouteSegmentDataByStateID(state.id);
 
-const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: Segment): void => {
+const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: RouteSegment): void => {
   const currVal = routeClickMap[segmentOfRoute.routeNum];
   routeClickMap[segmentOfRoute.routeNum] = currVal != null ? currVal + 1 : 1;
 };
@@ -17,7 +17,7 @@ const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: Segment)
 const mockSearchResults = () => mount(
   <SearchResults
     onRouteItemClick={onRouteItemClick}
-    segments={segmentData}
+    routeSegments={routeSegmentData}
     state={state}
   />,
 );
@@ -59,9 +59,9 @@ describe('SearchResults component test suite', () => {
     const searchHintHeader = comp.find('h3');
     const bulletPoints = comp.find('li');
     expect(searchHintHeader.length).toBe(0);
-    const expectedBulletPoints = segmentData
+    const expectedBulletPoints = routeSegmentData
       .flat()
-      .filter((segment) => segment.routeNum === '5')
+      .filter((routeSegment) => routeSegment.routeNum === '5')
       .length;
     expect(bulletPoints.length).toBe(expectedBulletPoints);
   });
@@ -75,9 +75,9 @@ describe('SearchResults component test suite', () => {
     bulletPoints.forEach((routeBullet): void => {
       routeBullet.simulate('click');
     });
-    const bulletPointsWithRoute5 = segmentData
+    const bulletPointsWithRoute5 = routeSegmentData
       .flat()
-      .filter((segment) => segment.routeNum === routeNum)
+      .filter((routeSegment) => routeSegment.routeNum === routeNum)
       .length;
     expect(routeClickMap[routeNum]).toBe(bulletPointsWithRoute5);
   });

@@ -5,7 +5,7 @@ export default (): React.ReactElement => (
     <h3>About</h3>
     <p>
       HighwayVisualizer is a tool designed to render geodata of highway systems
-      in the United States and to allow users to create and view segments of
+      in the United States and to allow users to create travel segments of
       highways they have traveled on.
     </p>
     <h3>Note on Travel Mapping</h3>

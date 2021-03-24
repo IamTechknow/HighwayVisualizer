@@ -7,15 +7,15 @@ import type { IHighways } from '../types/interfaces';
 import type {
   PopupCoord,
   RootState,
+  RouteSegment,
+  RouteSegmentPolyLine,
   State,
-  Segment,
-  SegmentPolyLine,
   SubmissionData,
+  TravelSegment,
   User,
-  UserSegment,
   UserSubmissionData,
 } from '../types/types';
-import { ReducerActionType, RouteSignType, SegmentCreateMode } from '../types/enums';
+import { ReducerActionType, RouteSignType, TravelSegmentCreateMode } from '../types/enums';
 
 import APIClient from './APIClient';
 import Highways from './Highways';
@@ -29,38 +29,38 @@ const highwayData: IHighways = new Highways();
 
 const initialRootState: RootState = {
   routeState: {},
-  segmentState: {
+  routeSegmentState: {
     concurrencies: [],
     lat: 0,
     lon: 0,
     popupCoords: null,
-    segmentData: [],
-    segmentId: null,
-    segments: [],
+    routeSegmentData: [],
+    routeSegmentId: null,
+    routeSegments: [],
     zoom: 7,
   },
 };
 
 const CreateApp = (): React.ReactElement => {
-  const [currMode, setCurrMode] = useState<SegmentCreateMode>(SegmentCreateMode.MANUAL);
+  const [currMode, setCurrMode] = useState<TravelSegmentCreateMode>(TravelSegmentCreateMode.MANUAL);
   const [currUserId, setUserId] = useState<number>(-1);
   const [initFailed, setInitFailed] = useState<boolean>(false);
   const [stateId, setStateId] = useState<number>(-1);
   const [states, setStates] = useState<State[]>([]);
   const [submitData, setSubmitData] = useState<SubmissionData | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [userSegments, setUserSegments] = useState<UserSegment[]>([]);
+  const [travelSegments, setTravelSegments] = useState<TravelSegment[]>([]);
 
   const [rootState, dispatch] = useReducer(rootReducer, initialRootState);
-  const { routeState, segmentState } = rootState;
+  const { routeState, routeSegmentState } = rootState;
   const {
-    concurrencies, lat, lon, popupCoords, segmentData, segmentId, segments, zoom,
-  } = segmentState;
+    concurrencies, lat, lon, popupCoords, routeSegmentData, routeSegmentId, routeSegments, zoom,
+  } = routeSegmentState;
   const { routeNum, routeType, dir } = routeState;
 
   const onClinchToggleFor = (i: number): void => {
-    highwayData.toggleUserSegment(i);
-    setUserSegments(highwayData.userSegments.slice());
+    highwayData.toggleTravelSegment(i);
+    setTravelSegments(highwayData.travelSegments.slice());
   };
 
   const onUserSubmit = (user: string): void => {
@@ -79,23 +79,23 @@ const CreateApp = (): React.ReactElement => {
       });
   };
 
-  const onSendUserSegments = (): void => {
-    APIClient.postUserSegments(currUserId, highwayData.userSegments)
+  const onSendTravelSegments = (): void => {
+    APIClient.postTravelSegments(currUserId, highwayData.travelSegments)
       .then((res) => {
-        highwayData.clearUserSegments();
+        highwayData.clearTravelSegments();
         setSubmitData(res);
         if (res.success) {
-          setUserSegments([]);
+          setTravelSegments([]);
         }
       });
   };
 
-  const onResetUserSegments = (): void => {
-    highwayData.clearUserSegments();
-    setUserSegments([]);
+  const onResetTravelSegments = (): void => {
+    highwayData.clearTravelSegments();
+    setTravelSegments([]);
   };
 
-  const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: Segment): void => {
+  const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: RouteSegment): void => {
     const {
       id, routeNum: newRouteNum, type: newRouteType, dir: newDir,
     } = segmentOfRoute;
@@ -103,22 +103,22 @@ const CreateApp = (): React.ReactElement => {
     dispatch({
       routePayload: {
         type: ReducerActionType.UPDATE_ROUTE_SHOW,
-        firstSegmentId: id,
+        firstRouteSegmentId: id,
         dir: newDir,
         routeNum: newRouteNum,
         routeType: newRouteType,
       },
     });
-    if (currMode === SegmentCreateMode.CLINCH) {
-      highwayData.addAllSegments(newRouteNum, newRouteType, newDir);
-      setUserSegments(highwayData.userSegments);
+    if (currMode === TravelSegmentCreateMode.CLINCH) {
+      highwayData.addAllRouteSegments(newRouteNum, newRouteType, newDir);
+      setTravelSegments(highwayData.travelSegments);
     }
   };
 
-  const onSegmentItemClick = (event: React.SyntheticEvent, segment: Segment): void => {
+  const onRouteSegmentItemClick = (event: React.SyntheticEvent, routeSegment: RouteSegment) => {
     const {
       id, routeNum: newRouteNum, type: newRouteType, dir: newDir,
-    } = segment;
+    } = routeSegment;
     event.stopPropagation();
     dispatch({
       routePayload: {
@@ -127,75 +127,83 @@ const CreateApp = (): React.ReactElement => {
         routeNum: newRouteNum,
         routeType: newRouteType,
       },
-      segmentPayload: {
-        type: ReducerActionType.UPDATE_SEGMENT_ID,
-        segmentId: id,
+      routeSegmentPayload: {
+        type: ReducerActionType.UPDATE_ROUTE_SEGMENT_ID,
+        routeSegmentId: id,
       },
     });
-    if (currMode === SegmentCreateMode.CLINCH) {
-      highwayData.addFullSegment(newRouteNum, id);
-      setUserSegments(highwayData.userSegments);
+    if (currMode === TravelSegmentCreateMode.CLINCH) {
+      highwayData.addFullRouteSegment(newRouteNum, id);
+      setTravelSegments(highwayData.travelSegments);
     }
   };
 
-  const onSegmentClick = (
+  const onRouteSegmentClick = (
     i: number,
-    clickedSegmentId: number,
+    clickedRouteSegmentId: number,
     event: Leaflet.LeafletMouseEvent,
   ): void => {
-    if (segmentData == null || routeNum == null) {
+    if (routeSegmentData == null || routeNum == null) {
       return;
     }
-    const segLatLng = HighwayUtils.findSegmentPoint(event.target, event.latlng, clickedSegmentId);
+    const routeSegLatLng = HighwayUtils.findSegmentPoint(
+      event.target,
+      event.latlng,
+      clickedRouteSegmentId,
+    );
     if (!popupCoords) {
       dispatch({
-        segmentPayload: {
+        routeSegmentPayload: {
           type: ReducerActionType.UPDATE_POPUP,
-          popupCoords: segLatLng,
+          popupCoords: routeSegLatLng,
         },
       });
     } else {
-      highwayData.addNewUserSegments(
+      highwayData.addNewTravelSegments(
         popupCoords,
-        segLatLng,
+        routeSegLatLng,
         routeNum,
-        clickedSegmentId,
-        segmentData,
+        clickedRouteSegmentId,
+        routeSegmentData,
       );
       dispatch({
-        segmentPayload: {
+        routeSegmentPayload: {
           type: ReducerActionType.UPDATE_POPUP,
           popupCoords: null,
         },
       });
-      setUserSegments(highwayData.userSegments);
+      setTravelSegments(highwayData.travelSegments);
     }
   };
 
-  // Change user and load user's segments if any
   const onUserChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
     const newUserId = Number.parseInt(event.target.value, 10);
     setUserId(newUserId);
   };
 
   // Process array of route segments. There will always be at least one
-  const setNewSegment = (
-    newSegmentData: Array<SegmentPolyLine>,
+  const setNewRouteSegment = (
+    newRouteSegmentData: Array<RouteSegmentPolyLine>,
     routeStr: string,
     currType: RouteSignType,
   ): void => {
-    const firstSegment = newSegmentData[0];
-    const [midSegmentId, midPointIdx] = newSegmentData.length > 1
+    const firstRouteSegment = newRouteSegmentData[0];
+    const [midRouteSegmentId, midPointIdx] = newRouteSegmentData.length > 1
       ? highwayData.getCenterOfRoute(routeStr, currType)
-      : [0, Math.floor(firstSegment.points.length / 2)];
-    const [centerLat, centerLon] = newSegmentData[midSegmentId].points[midPointIdx];
-    const newZoom = highwayData.getZoomLevel(routeStr, currType, newSegmentData, firstSegment.id);
+      : [0, Math.floor(firstRouteSegment.points.length / 2)];
+    const [centerLat, centerLon] = newRouteSegmentData[midRouteSegmentId].points[midPointIdx];
+    const newZoom = highwayData.getZoomLevel(
+      routeStr,
+      currType,
+      newRouteSegmentData,
+      firstRouteSegment.id,
+    );
     dispatch({
-      segmentPayload: {
-        type: ReducerActionType.UPDATE_SEGMENT,
+      routeSegmentPayload: {
+        type: ReducerActionType.UPDATE_ROUTE_SEGMENT,
         lat: centerLat,
         lon: centerLon,
-        segmentData: newSegmentData,
+        routeSegmentData: newRouteSegmentData,
         zoom: newZoom,
       },
     });
@@ -225,58 +233,62 @@ const CreateApp = (): React.ReactElement => {
       return;
     }
 
-    APIClient.getSegments(stateId)
-      .then((rawSegments): void => {
-        if (!rawSegments || rawSegments.length === 0) {
+    APIClient.getRouteSegments(stateId)
+      .then((rawRouteSegments): void => {
+        if (!rawRouteSegments || rawRouteSegments.length === 0) {
           return;
         }
-        highwayData.buildStateSegmentsData(rawSegments);
+        highwayData.buildStateSegmentsData(rawRouteSegments);
         const {
-          id, dir: firstSegmentDir, type: firstSegmentRouteType, routeNum: firstSegmentRouteNum,
-        } = rawSegments[0];
+          id, dir: firstRouteDir, type: firstRouteType, routeNum: firstRouteNum,
+        } = rawRouteSegments[0];
         dispatch({
-          segmentPayload: {
+          routeSegmentPayload: {
             type: ReducerActionType.UPDATE_STATE,
-            segments: APIClient.parseRawSegments(rawSegments),
+            routeSegments: APIClient.parseRawRouteSegments(rawRouteSegments),
           },
         });
         dispatch({
           routePayload: {
             type: ReducerActionType.UPDATE_ROUTE_INFO,
-            dir: firstSegmentDir,
-            routeNum: firstSegmentRouteNum,
-            routeType: firstSegmentRouteType,
+            dir: firstRouteDir,
+            routeNum: firstRouteNum,
+            routeType: firstRouteType,
           },
-          segmentPayload: {
-            type: ReducerActionType.UPDATE_SEGMENT_ID,
-            segmentId: id,
+          routeSegmentPayload: {
+            type: ReducerActionType.UPDATE_ROUTE_SEGMENT_ID,
+            routeSegmentId: id,
           },
         });
       });
   }, [stateId]);
 
-  // Respond to changes to route. Render the whole route if firstSegmentId is nonnull
+  // Respond to changes to route. Render the whole route if firstRouteSegmentId is nonnull
   useEffect((): void => {
     if (
       routeNum == null ||
       routeType == null ||
       dir == null ||
-      routeState.firstSegmentId == null ||
+      routeState.firstRouteSegmentId == null ||
       stateId == null) {
       return;
     }
 
     const routePromise = APIClient.getRoute(stateId, routeNum, routeType, dir)
-      .then((routeSegmentData) => setNewSegment(routeSegmentData, routeNum + dir, routeType));
+      .then((apiRouteSegmentData) => setNewRouteSegment(
+        apiRouteSegmentData,
+        routeNum + dir,
+        routeType,
+      ));
     const stateTitle = highwayData.getState(stateId).title;
     if (stateTitle === 'California') {
       routePromise
         .then(() => APIClient.getConcurrenyPoints(stateId, routeNum, dir))
-        .then((concurrentSegments): void => {
+        .then((concurrentRouteSegments) => {
           dispatch({
-            segmentPayload: {
+            routeSegmentPayload: {
               type: ReducerActionType.UPDATE_CONCURRENCIES,
-              concurrencies: concurrentSegments,
+              concurrencies: concurrentRouteSegments,
             },
           });
         });
@@ -285,26 +297,30 @@ const CreateApp = (): React.ReactElement => {
 
   // Respond to changes to segment ID
   useEffect((): void => {
-    if (segmentId == null || routeNum == null || dir == null || routeType == null) {
+    if (routeSegmentId == null || routeNum == null || dir == null || routeType == null) {
       return;
     }
-    APIClient.getSegment(segmentId)
+    APIClient.getRouteSegment(routeSegmentId)
       .then((singleSegmentData) => {
-        setNewSegment(singleSegmentData, routeNum + dir, routeType);
+        setNewRouteSegment(singleSegmentData, routeNum + dir, routeType);
       });
-  }, [segmentId]);
+  }, [routeSegmentId]);
 
   // Polyline implements EventedProps for a prop of event listeners
   const createPolyLineEventMap = (
     i: number,
-    polylineSegmentId: number,
+    polylineRouteSegmentId: number,
   ): Leaflet.LeafletEventHandlerFnMap => ({
-    click: (event: Leaflet.LeafletMouseEvent) => onSegmentClick(i, polylineSegmentId, event),
+    click: (event: Leaflet.LeafletMouseEvent) => onRouteSegmentClick(
+      i,
+      polylineRouteSegmentId,
+      event,
+    ),
   });
 
   const createPopup = (
     routeName: string,
-    popupSeg: Segment,
+    popupRouteSeg: RouteSegment,
     coord: PopupCoord,
   ): React.ReactElement<Leaflet.Popup> => (
     <Popup position={coord}>
@@ -315,11 +331,11 @@ const CreateApp = (): React.ReactElement => {
       </span>
       {' '}
       <br />
-      <strong>{`Segment ${popupSeg.segNum + 1}, Point ${coord.idx + 1} of ${popupSeg.len}`}</strong>
+      <strong>{`Segment ${popupRouteSeg.segNum + 1}, Point ${coord.idx + 1} of ${popupRouteSeg.len}`}</strong>
       {' '}
       <br />
       <span>
-        (Clicking on the segment again will create a user segment for travel stats)
+        (Clicking on the route segment again will create a travel segment)
       </span>
       {' '}
       <br />
@@ -340,9 +356,9 @@ const CreateApp = (): React.ReactElement => {
 
   // TODO: Remove and put loading messages
   if (
-    segments == null ||
-    segmentData == null ||
-    segmentId == null ||
+    routeSegments == null ||
+    routeSegmentData == null ||
+    routeSegmentId == null ||
     routeNum == null ||
     dir == null ||
     routeType == null ||
@@ -357,11 +373,11 @@ const CreateApp = (): React.ReactElement => {
     );
   }
 
-  const popupSeg = popupCoords != null
-    ? highwayData.segmentData[popupCoords.segmentId]
+  const popupRouteSeg = popupCoords != null
+    ? highwayData.routeSegmentData[popupCoords.routeSegmentId]
     : null;
-  const liveSegs = segmentData != null
-    ? HighwayUtils.getMapForLiveIds(segmentData)
+  const liveRouteSegs = routeSegmentData != null
+    ? HighwayUtils.getMapForLiveSegmentIds(routeSegmentData)
     : null;
 
   return (
@@ -375,39 +391,44 @@ const CreateApp = (): React.ReactElement => {
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
-        {segmentData && segmentData.map((seg, i: number): React.ReactElement<PolylineProps> => (
-          <Polyline
-            key={`seg-${seg.id}`}
-            eventHandlers={createPolyLineEventMap(i, seg.id)}
-            positions={seg.points}
-          />
-        ))}
-        {concurrencies && concurrencies.map((seg, i: number): React.ReactElement<PolylineProps> => (
-          <Polyline key={`concurrency-${seg.id}-${i}`} positions={seg.points} />
-        ))}
-        {/* Show unsubmitted user segments if selected route and segment is the same */}
-        {userSegments && userSegments.map(
-          (userSeg: UserSegment): React.ReactNode => liveSegs && liveSegs.has(userSeg.segmentId) &&
-            (
-              <Polyline
-                key={HighwayUtils.stringifyUserSegment(userSeg)}
-                positions={
-                  segmentData[liveSegs.get(userSeg.segmentId) ?? 0].points.slice(
-                    userSeg.startId,
-                    userSeg.endId + 1,
-                  )
-                }
-                color={userSeg.clinched ? 'lime' : 'yellow'}
-              />
-            ),
+        {routeSegmentData &&
+          routeSegmentData.map((routeSeg, i: number): React.ReactElement<PolylineProps> => (
+            <Polyline
+              key={`routeSeg-${routeSeg.id}`}
+              eventHandlers={createPolyLineEventMap(i, routeSeg.id)}
+              positions={routeSeg.points}
+            />
+          ))}
+        {concurrencies && concurrencies.map(
+          (routeSeg, i: number): React.ReactElement<PolylineProps> => (
+            <Polyline key={`concurrency-${routeSeg.id}-${i}`} positions={routeSeg.points} />
+          ),
         )}
-        {popupCoords && popupSeg && stateId != null && (
+        {/* Show unsubmitted user segments if selected route and segment is the same */}
+        {travelSegments &&
+          travelSegments.map(
+            (travelSeg: TravelSegment): React.ReactNode => liveRouteSegs &&
+              liveRouteSegs.has(travelSeg.routeSegmentId) &&
+              (
+                <Polyline
+                  key={HighwayUtils.stringifyTravelSegment(travelSeg)}
+                  positions={
+                    routeSegmentData[liveRouteSegs.get(travelSeg.routeSegmentId) ?? 0].points.slice(
+                      travelSeg.startId,
+                      travelSeg.endId + 1,
+                    )
+                  }
+                  color={travelSeg.clinched ? 'lime' : 'yellow'}
+                />
+              ),
+          )}
+        {popupCoords && popupRouteSeg && stateId != null && (
           createPopup(
             HighwayUtils.getRouteName(
-              popupSeg,
+              popupRouteSeg,
               highwayData.getState(stateId).identifier,
             ),
-            popupSeg,
+            popupRouteSeg,
             popupCoords,
           )
         )}
@@ -417,19 +438,19 @@ const CreateApp = (): React.ReactElement => {
         currUserId={currUserId}
         highwayData={highwayData}
         onClinchToggleFor={onClinchToggleFor}
-        onResetUserSegments={onResetUserSegments}
+        onResetTravelSegments={onResetTravelSegments}
         onRouteItemClick={onRouteItemClick}
-        onSegmentItemClick={onSegmentItemClick}
-        onSendUserSegments={onSendUserSegments}
+        onRouteSegmentItemClick={onRouteSegmentItemClick}
+        onSendTravelSegments={onSendTravelSegments}
         onSetMode={setCurrMode}
         onUpdateState={setStateId}
         onUserChange={onUserChange}
         onUserSubmit={onUserSubmit}
-        segments={segments}
+        routeSegments={routeSegments}
         stateId={stateId}
         states={states}
         submitData={submitData}
-        userSegments={userSegments}
+        travelSegments={travelSegments}
         users={users}
       />
     </div>

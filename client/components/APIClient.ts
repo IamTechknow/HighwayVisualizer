@@ -1,12 +1,12 @@
 import type {
   State,
-  Segment,
-  SegmentPolyLine,
+  RouteSegment,
+  RouteSegmentPolyLine,
   SubmissionData,
   User,
-  UserSegment,
+  TravelSegment,
   UserSubmissionData,
-  UserStatsAPIPayload,
+  TravelStatsAPIPayload,
 } from '../types/types';
 import { RouteSignType } from '../types/enums';
 
@@ -26,12 +26,12 @@ export default class APIClient {
       .then((res) => res.json());
   }
 
-  static getSegments(stateId: number): Promise<Array<Segment>> {
+  static getRouteSegments(stateId: number): Promise<Array<RouteSegment>> {
     return fetch(`${__API__}/api/segments/${stateId}`)
       .then((res) => res.json());
   }
 
-  static getSegment(segmentId: number): Promise<Array<SegmentPolyLine>> {
+  static getRouteSegment(segmentId: number): Promise<Array<RouteSegmentPolyLine>> {
     return fetch(`${__API__}/api/points/${segmentId}`)
       .then((res) => res.json());
   }
@@ -41,7 +41,7 @@ export default class APIClient {
     routeNum: string,
     type: RouteSignType,
     dir: string,
-  ): Promise<Array<SegmentPolyLine>> {
+  ): Promise<Array<RouteSegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/points/${type}/${routeNum}/${query}`)
       .then((res) => res.json());
@@ -51,13 +51,13 @@ export default class APIClient {
     stateId: number,
     routeNum: string,
     dir: string,
-  ): Promise<Array<SegmentPolyLine>> {
+  ): Promise<Array<RouteSegmentPolyLine>> {
     const query = `?stateId=${stateId}&dir=${dir}`;
     return fetch(`${__API__}/api/concurrencies/${routeNum}${query}`)
       .then((res) => res.json());
   }
 
-  static getUserStats(userId: string): Promise<UserStatsAPIPayload> {
+  static getTravelStats(userId: string): Promise<TravelStatsAPIPayload> {
     return fetch(`${__API__}/api/user_segments/${userId}`)
       .then((res) => res.json());
   }
@@ -66,13 +66,13 @@ export default class APIClient {
     return APIClient.postUserData<UserSubmissionData>('/api/newUser', JSON.stringify({ user }));
   }
 
-  static postUserSegments(
+  static postTravelSegments(
     userId: number,
-    userSegments: Array<UserSegment>,
+    travelSegments: Array<TravelSegment>,
   ): Promise<SubmissionData> {
     return APIClient.postUserData<SubmissionData>(
       '/api/user_segments/new',
-      JSON.stringify({ userId, userSegments }),
+      JSON.stringify({ userId, travelSegments }),
     );
   }
 
@@ -87,11 +87,11 @@ export default class APIClient {
     }).then((res) => res.json());
   }
 
-  static parseRawSegments(rawSegments: Array<Segment>): Array<Array<Segment>> {
+  static parseRawRouteSegments(rawRouteSegments: Array<RouteSegment>): Array<Array<RouteSegment>> {
     const set = new Set();
-    const organized: Array<Array<Segment>> = [];
+    const organized: Array<Array<RouteSegment>> = [];
     let count = -1;
-    rawSegments.forEach((seg: Segment): void => {
+    rawRouteSegments.forEach((seg: RouteSegment): void => {
       const key = `${seg.routeNum}${seg.dir}_${seg.type}`;
       if (set.has(key)) {
         organized[count].push(seg);

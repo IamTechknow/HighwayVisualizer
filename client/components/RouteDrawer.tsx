@@ -4,16 +4,16 @@ import {
 } from 'react-feather';
 import type { IHighways } from '../types/interfaces';
 import type {
-  State, Segment, SubmissionData, User as UserType, UserSegment,
+  State, RouteSegment, SubmissionData, User as UserType, TravelSegment,
 } from '../types/types';
-import { SegmentCreateMode } from '../types/enums';
+import { TravelSegmentCreateMode } from '../types/enums';
 
 import AboutContent from './AboutContent';
 import SearchResults from './SearchResults';
-import SegmentContent from './SegmentContent';
+import RouteSegmentContent from './RouteSegmentContent';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
-import UserSegmentContent from './UserSegmentContent';
+import TravelSegmentContent from './TravelSegmentContent';
 
 const ICON_SIZE = 16;
 
@@ -22,19 +22,19 @@ interface Props {
   currUserId: number,
   highwayData: IHighways,
   onClinchToggleFor: (i: number) => void,
-  onResetUserSegments: () => void,
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
-  onSegmentItemClick: (event: React.SyntheticEvent, segment: Segment) => void,
-  onSendUserSegments: () => void,
-  onSetMode: (mode: SegmentCreateMode) => void,
+  onResetTravelSegments: () => void,
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
+  onSendTravelSegments: () => void,
+  onSetMode: (mode: TravelSegmentCreateMode) => void,
   onUpdateState: (stateId: number) => void,
   onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
   onUserSubmit: (newUser: string) => void,
-  segments: Array<Array<Segment>>,
+  routeSegments: Array<Array<RouteSegment>>,
   stateId: number,
   states: Array<State>,
   submitData: SubmissionData | null,
-  userSegments: Array<UserSegment>,
+  travelSegments: Array<TravelSegment>,
   users: Array<UserType>,
 }
 
@@ -43,23 +43,23 @@ const RouteDrawer = ({
   currUserId,
   highwayData,
   onClinchToggleFor,
-  onResetUserSegments,
+  onResetTravelSegments,
   onRouteItemClick,
-  onSegmentItemClick,
-  onSendUserSegments,
+  onRouteSegmentItemClick,
+  onSendTravelSegments,
   onSetMode,
   onUpdateState,
   onUserChange,
   onUserSubmit,
-  segments,
+  routeSegments,
   stateId,
   states,
   submitData = null,
-  userSegments,
+  travelSegments,
   users,
 }: Props): React.ReactElement<Props> => {
   const [isCollapsed, setCollapsed] = useState<boolean>(false);
-  const [selectedId, setSelectedId] = useState<string>('segments');
+  const [selectedId, setSelectedId] = useState<string>('routeSegments');
 
   const _onClose = (): void => {
     setCollapsed(true);
@@ -84,28 +84,28 @@ const RouteDrawer = ({
       onToggle={_onToggle}
     >
       <SidebarTab id="users" header="User Settings" icon={<User size={ICON_SIZE} />}>
-        <UserSegmentContent
+        <TravelSegmentContent
           currMode={currMode}
           currUserId={currUserId}
           highwayData={highwayData}
           onClinchToggleFor={onClinchToggleFor}
-          onResetUserSegments={onResetUserSegments}
-          onSendUserSegments={onSendUserSegments}
+          onResetTravelSegments={onResetTravelSegments}
+          onSendTravelSegments={onSendTravelSegments}
           onSetMode={onSetMode}
           onUserChange={onUserChange}
           onUserSubmit={onUserSubmit}
           submitData={submitData}
-          userSegments={userSegments}
+          travelSegments={travelSegments}
           users={users}
         />
       </SidebarTab>
-      <SidebarTab id="segments" header="Segments" icon={<Map size={ICON_SIZE} />}>
-        <SegmentContent
+      <SidebarTab id="routeSegments" header="Route Segments" icon={<Map size={ICON_SIZE} />}>
+        <RouteSegmentContent
           highwayData={highwayData}
           onRouteItemClick={onRouteItemClick}
-          onSegmentItemClick={onSegmentItemClick}
+          onRouteSegmentItemClick={onRouteSegmentItemClick}
           onUpdateState={onUpdateState}
-          segments={segments}
+          routeSegments={routeSegments}
           stateId={stateId}
           states={states}
         />
@@ -113,7 +113,7 @@ const RouteDrawer = ({
       <SidebarTab id="search" header="Search" icon={<Search size={ICON_SIZE} />}>
         <SearchResults
           onRouteItemClick={onRouteItemClick}
-          segments={segments}
+          routeSegments={routeSegments}
           state={stateId != null ? highwayData.getState(stateId) : null}
         />
       </SidebarTab>

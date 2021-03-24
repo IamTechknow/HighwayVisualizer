@@ -5,20 +5,20 @@ import {
 } from 'react-leaflet';
 
 import { RouteComponentProps } from 'react-router';
-import type { UserRouteProps, UserStatSegment, UserStatsAPIPayload } from '../types/types';
+import type { UserProps, TravelStatSegment, TravelStatsAPIPayload } from '../types/types';
 
 import APIClient from './APIClient';
-import { stringifyUserSegment } from '../utils/HighwayUtils';
+import { stringifyTravelSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 
-const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactElement => {
+const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement => {
   const [isCollapsed, setCollapsed] = useState(false);
   const [scale, setScale] = useState(MILES);
   const [selectedId, setSelectedId] = useState('users');
-  const [userStats, setUserStats] = useState<UserStatsAPIPayload | undefined>();
+  const [userTravelStats, setUserTravelStats] = useState<TravelStatsAPIPayload | undefined>();
 
   const onSidebarToggle = (id: string): void => {
     if (selectedId === id) {
@@ -38,26 +38,26 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
   };
 
   useEffect((): void => {
-    APIClient.getUserStats(match.params.user)
-      .then((result: UserStatsAPIPayload): void => {
-        setUserStats(result);
+    APIClient.getTravelStats(match.params.user)
+      .then((result: TravelStatsAPIPayload): void => {
+        setUserTravelStats(result);
       });
   }, []);
 
-  if (userStats == null || !userStats.loaded) {
+  if (userTravelStats == null || !userTravelStats.loaded) {
     return (
       <div>
-        <h3>{`Getting ${match.params.user}'s segments...`}</h3>
+        <h3>{`Getting ${match.params.user}'s travel segments...`}</h3>
       </div>
     );
   }
-  const { notFound, stats, userSegments } = userStats;
+  const { notFound, travelStats, travelSegments } = userTravelStats;
 
   if (notFound) {
     return (
       <div>
         <h3>
-          {`No segments found for ${match.params.user}. Either create the user or submit segments `}
+          {`No travel segments found for ${match.params.user}. Either create the user or submit travel segments `}
           <a href="/">here.</a>
         </h3>
       </div>
@@ -66,18 +66,18 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
 
   return (
     <div>
-      <MapContainer className="mapStyle" center={userSegments[0].points[0]} zoom={7} zoomControl={false}>
+      <MapContainer className="mapStyle" center={travelSegments[0].points[0]} zoom={7} zoomControl={false}>
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
 
-        {userSegments && userSegments.map(
-          (userSeg: UserStatSegment): React.ReactElement<PolylineProps> => (
+        {travelSegments && travelSegments.map(
+          (travelSeg: TravelStatSegment): React.ReactElement<PolylineProps> => (
             <Polyline
-              key={stringifyUserSegment(userSeg)}
-              positions={userSeg.points ?? []}
-              color={userSeg.clinched ? 'lime' : 'yellow'}
+              key={stringifyTravelSegment(travelSeg)}
+              positions={travelSeg.points ?? []}
+              color={travelSeg.clinched ? 'lime' : 'yellow'}
             />
           ),
         )}
@@ -89,9 +89,9 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
         onClose={() => setCollapsed(true)}
         onToggle={(id) => onSidebarToggle(id)}
       >
-        <SidebarTab id="users" header="User Stats" icon={<User size={16} />}>
+        <SidebarTab id="users" header="Travel Stats" icon={<User size={16} />}>
           <div id="tabContent">
-            <h3>{`${match.params.user}'s traveling statistics`}</h3>
+            <h3>{`${match.params.user}'s travel statistics`}</h3>
 
             <p>Unit conversion</p>
             <select onChange={(event) => setScale(Number.parseFloat(event.target.value))}>
@@ -105,7 +105,7 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
                 <tr>
                   <th>State</th>
                   <th>Route</th>
-                  <th>Segment</th>
+                  <th>Route Segment</th>
                   <th>{`Traveled (${getUnit(scale)})`}</th>
                   <th>{`Total (${getUnit(scale)})`}</th>
                   <th>Percentage</th>
@@ -113,11 +113,11 @@ const UserApp = ({ match }: RouteComponentProps<UserRouteProps>): React.ReactEle
               </thead>
               <tbody>
                 {
-                  stats.map((stat) => (
-                    <tr key={`${stat.state}_${stat.route}_${stat.segment}`}>
+                  travelStats.map((stat) => (
+                    <tr key={`${stat.state}_${stat.route}_${stat.routeSegment}`}>
                       <td>{stat.state}</td>
                       <td>{stat.route}</td>
-                      <td>{stat.segment}</td>
+                      <td>{stat.routeSegment}</td>
                       <td>{(stat.traveled / scale).toFixed(2)}</td>
                       <td>{(stat.total / scale).toFixed(2)}</td>
                       <td>

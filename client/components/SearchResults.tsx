@@ -1,29 +1,31 @@
 import React, { useMemo, useState } from 'react';
-import type { Segment, State } from '../types/types';
+import type { RouteSegment, State } from '../types/types';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 
 const KEY_ENTER = 'Enter', MAX_RESULTS = 30;
 
 interface Props {
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
-  segments: Array<Array<Segment>>,
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  routeSegments: Array<Array<RouteSegment>>,
   state: State | null,
 }
 
 const SearchResults = ({
   onRouteItemClick,
-  segments,
+  routeSegments,
   state,
 }: Props): React.ReactElement<Props> => {
-  if (segments.length === 0 || state == null) {
+  if (routeSegments.length === 0 || state == null) {
     return <h3>Loading...</h3>;
   }
 
-  const [searchResults, setSearchResults] = useState<Segment[]>([]);
-  const fullRoutes = useMemo<Segment[]>(
-    (): Segment[] => segments.flat().filter((routeObj: Segment): boolean => routeObj.segNum === 0),
-    [segments],
+  const [searchResults, setSearchResults] = useState<RouteSegment[]>([]);
+  const fullRoutes = useMemo<RouteSegment[]>(
+    (): RouteSegment[] => routeSegments.flat().filter(
+      (routeSeg: RouteSegment) => routeSeg.segNum === 0,
+    ),
+    [routeSegments],
   );
 
   const onSearchRoutes = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -35,15 +37,15 @@ const SearchResults = ({
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
     const routeNum = queries.length > 0 ? queries[queries.length - 1] : null;
-    let filteredSegments = fullRoutes;
+    let filteredRouteSegments = fullRoutes;
     if (queries.length > 1) {
       const highwayType = HighwayUtils.getType(queries[0]);
-      filteredSegments = fullRoutes.filter(
-        (routeObj: Segment): boolean => routeObj.type === highwayType,
+      filteredRouteSegments = fullRoutes.filter(
+        (routeSeg: RouteSegment) => routeSeg.type === highwayType,
       );
     }
-    const results = filteredSegments.filter(
-      (routeObj: Segment): boolean => routeNum != null && routeObj.routeNum.indexOf(routeNum) >= 0,
+    const results = filteredRouteSegments.filter(
+      (routeSeg: RouteSegment) => routeNum != null && routeSeg.routeNum.indexOf(routeNum) >= 0,
     );
     setSearchResults(results.slice(0, MAX_RESULTS));
   };
@@ -76,19 +78,21 @@ const SearchResults = ({
           : (
             <ul>
               {
-                searchResults.map((firstSeg: Segment): React.ReactNode => (
+                searchResults.map((firstRouteSeg: RouteSegment): React.ReactNode => (
                   <li
-                    key={firstSeg.id}
+                    key={firstRouteSeg.id}
                     className="clickable"
-                    onClick={(event: React.MouseEvent): void => onRouteItemClick(event, firstSeg)}
+                    onClick={
+                      (event: React.MouseEvent): void => onRouteItemClick(event, firstRouteSeg)
+                    }
                     onKeyDown={(event: React.KeyboardEvent): void => {
                       if (event.key === KEY_ENTER) {
-                        onRouteItemClick(event, firstSeg);
+                        onRouteItemClick(event, firstRouteSeg);
                       }
                     }}
                     role="presentation"
                   >
-                    {HighwayUtils.getRouteName(firstSeg, state.identifier)}
+                    {HighwayUtils.getRouteName(firstRouteSeg, state.identifier)}
                   </li>
                 ))
               }

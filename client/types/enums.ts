@@ -5,7 +5,7 @@ export enum RouteSignType {
   STATE = 4,
 }
 
-export enum SegmentCreateMode {
+export enum TravelSegmentCreateMode {
   MANUAL,
   CLINCH,
 }
@@ -15,7 +15,7 @@ export enum ReducerActionType {
   UPDATE_POPUP,
   UPDATE_ROUTE_INFO,
   UPDATE_ROUTE_SHOW,
-  UPDATE_SEGMENT,
-  UPDATE_SEGMENT_ID,
+  UPDATE_ROUTE_SEGMENT,
+  UPDATE_ROUTE_SEGMENT_ID,
   UPDATE_STATE,
 }

@@ -1,7 +1,7 @@
 import * as Leaflet from 'leaflet';
 import { RouteSignType } from '../types/enums';
 import type {
-  PopupCoord, Segment, SegmentPolyLine, UserSegment,
+  PopupCoord, RouteSegment, RouteSegmentPolyLine, TravelSegment,
 } from '../types/types';
 
 const R = 6371e3; // Mean radius of Earth in meters
@@ -38,9 +38,9 @@ export const calcHavensine = (point: Leaflet.LatLng, radX2: number, radY2: numbe
   return R * c;
 };
 
-export const getMapForLiveIds = (
-  segments: Array<SegmentPolyLine>,
-): Map<number, number> => new Map(segments.map((seg, i) => [seg.id, i]));
+export const getMapForLiveSegmentIds = (
+  routeSegments: Array<RouteSegmentPolyLine>,
+): Map<number, number> => new Map(routeSegments.map((seg, i) => [seg.id, i]));
 
 export const getRoutePrefix = (typeEnum: RouteSignType): string => ROUTE_NAMES[typeEnum];
 
@@ -66,11 +66,11 @@ const shouldUseRouteDir = (stateIdentifier: string): boolean => {
 };
 
 export const getRouteName = (
-  segment: Segment,
+  routeSegment: RouteSegment,
   stateIdentifier: string,
   useRouteTitle = true,
 ): string => {
-  const { dir, routeNum, type } = segment;
+  const { dir, routeNum, type } = routeSegment;
   if (!useRouteTitle) {
     const abbreviation = stateIdentifier === 'District' && type === RouteSignType.STATE
       ? 'DC '
@@ -93,7 +93,7 @@ export const getRouteName = (
 export const findSegmentPoint = (
   polyline: Leaflet.Polyline,
   clicked: Leaflet.LatLng,
-  segmentId: number,
+  routeSegmentId: number,
 ): PopupCoord => {
   const points = <Leaflet.LatLng[]>polyline.getLatLngs();
   let shortestDist = Number.MAX_VALUE;
@@ -136,7 +136,7 @@ export const findSegmentPoint = (
     }
   }
 
-  return { idx: closest, segmentId, ...points[closest] };
+  return { idx: closest, routeSegmentId, ...points[closest] };
 };
 
 export const getZoomForRouteLength = (len: number): number => {
@@ -170,9 +170,9 @@ export const getZoomForRouteLength = (len: number): number => {
   return 6;
 };
 
-export const stringifyUserSegment = (userSegment: UserSegment): string => {
+export const stringifyTravelSegment = (travelSegment: TravelSegment): string => {
   const {
-    clinched, endId, segmentId, startId,
-  } = userSegment;
-  return `userSeg-${segmentId}-${startId}-${endId}-${clinched}`;
+    clinched, endId, routeSegmentId, startId,
+  } = travelSegment;
+  return `userSeg-${routeSegmentId}-${startId}-${endId}-${clinched}`;
 };

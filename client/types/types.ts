@@ -3,35 +3,35 @@ import { ReducerActionType, RouteSignType } from './enums';
 
 export interface PopupCoord extends Leaflet.LatLngLiteral {
   readonly idx: number,
-  readonly segmentId: number,
+  readonly routeSegmentId: number,
 }
 
 export interface RootPayload {
   routePayload?: RouteReducerPayload,
-  segmentPayload?: SegmentReducerPayload,
+  routeSegmentPayload?: RouteSegmentReducerPayload,
 }
 
 export interface RootState {
   routeState: RouteState,
-  segmentState: SegmentState,
+  routeSegmentState: RouteSegmentState,
 }
 
 export interface RouteReducerPayload {
   type: ReducerActionType | null,
   dir: string,
-  firstSegmentId?: number,
+  firstRouteSegmentId?: number,
   routeNum: string,
   routeType: RouteSignType,
 }
 
 export interface RouteState {
   dir?: string,
-  firstSegmentId?: number | null,
+  firstRouteSegmentId?: number | null,
   routeNum?: string,
   routeType?: RouteSignType,
 }
 
-export interface Segment {
+export interface RouteSegment {
   readonly id: number,
   readonly routeNum: string,
   readonly type: RouteSignType,
@@ -41,31 +41,31 @@ export interface Segment {
   readonly len_m: number,
 }
 
-export interface SegmentPolyLine {
+export interface RouteSegmentPolyLine {
   readonly id: number,
   readonly points: Array<Leaflet.LatLngTuple>,
 }
 
-export interface SegmentReducerPayload {
+export interface RouteSegmentReducerPayload {
   type: ReducerActionType | null,
-  concurrencies?: Array<SegmentPolyLine>,
+  concurrencies?: Array<RouteSegmentPolyLine>,
   lat?: number,
   lon?: number,
   popupCoords?: PopupCoord | null,
-  segmentData?: Array<SegmentPolyLine>,
-  segmentId?: number | null,
-  segments?: Array<Array<Segment>>,
+  routeSegmentData?: Array<RouteSegmentPolyLine>,
+  routeSegmentId?: number | null,
+  routeSegments?: Array<Array<RouteSegment>>,
   zoom?: number,
 }
 
-export interface SegmentState {
-  concurrencies?: Array<SegmentPolyLine>,
+export interface RouteSegmentState {
+  concurrencies?: Array<RouteSegmentPolyLine>,
   lat?: number,
   lon?: number,
   popupCoords?: PopupCoord | null,
-  segmentData?: Array<SegmentPolyLine>,
-  segmentId?: number | null,
-  segments?: Array<Array<Segment>>,
+  routeSegmentData?: Array<RouteSegmentPolyLine>,
+  routeSegmentId?: number | null,
+  routeSegments?: Array<Array<RouteSegment>>,
   zoom?: number,
 }
 
@@ -81,36 +81,36 @@ export interface User {
   user: string,
 }
 
-export interface UserRouteProps {
+export interface UserProps {
   user: string,
 }
 
-export interface UserSegment {
+export interface TravelSegment {
   routeNum: string,
-  segmentId: number,
+  routeSegmentId: number,
   startId: number,
   endId: number,
   clinched: boolean,
 }
 
-export interface UserStatSegment extends UserSegment {
+export interface TravelStatSegment extends TravelSegment {
   points: Array<Leaflet.LatLngTuple>,
 }
 
-export interface UserStat {
+export interface TravelStat {
   readonly percentage: string,
   readonly route: string,
-  readonly segment: number,
+  readonly routeSegment: number,
   readonly state: string,
   readonly total: number,
   readonly traveled: number,
 }
 
-export interface UserStatsAPIPayload {
+export interface TravelStatsAPIPayload {
   readonly loaded: boolean
   readonly notFound: boolean
-  readonly stats: Array<UserStat>,
-  readonly userSegments: Array<UserStatSegment>
+  readonly travelStats: Array<TravelStat>,
+  readonly travelSegments: Array<TravelStatSegment>
 }
 
 export interface SubmissionData {

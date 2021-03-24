@@ -151,7 +151,7 @@ class Models {
         if (result[0].length < 0) {
           return [];
         }
-        return db.execute('SELECT segment_id as segmentId, clinched, start_id as startId, end_id as endId FROM user_segments WHERE user_id = ?;', [result[0][0].id])
+        return db.execute('SELECT segment_id as routeSegmentId, clinched, start_id as startId, end_id as endId FROM user_segments WHERE user_id = ?;', [result[0][0].id])
           .then(
             (userSegResult) => {
               const [userSegmentData] = userSegResult;
@@ -272,16 +272,16 @@ class Models {
 
     for (let obj of userSegs) {
       // Get the base point ID for the segment, then calculate the start and end IDs
-      const { endId, segmentId, startId } = obj;
-      const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [segmentId]).then((result) => result[0][0].base);
+      const { endId, routeSegmentId, startId } = obj;
+      const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [routeSegmentId]).then((result) => result[0][0].base);
       const pointStartID = base + startId;
       const pointEndID = base + endId;
-      const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + segmentId;
+      const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + routeSegmentId;
       queries.push(queryBase + ` AND id >= ${pointStartID} AND id <= ${pointEndID}`);
     }
-    const userSegments = await Models.processPointQueries(db, [...queries, ''], userSegs);
-    const stats = await Models.calcStats(db, userSegments);
-    return { stats, userSegments };
+    const travelSegments = await Models.processPointQueries(db, [...queries, ''], userSegs);
+    const travelStats = await Models.calcStats(db, travelSegments);
+    return { travelStats, travelSegments };
   }
 
   /**
@@ -298,7 +298,7 @@ class Models {
 
     for (let userSeg of userSegments) {
       let metersTraveled = Utils.calcSegmentDistance(userSeg.points);
-      let segment = await db.execute('SELECT * FROM segments WHERE id = ?', [userSeg.segmentId]).then((result) => result[0][0]);
+      let segment = await db.execute('SELECT * FROM segments WHERE id = ?', [userSeg.routeSegmentId]).then((result) => result[0][0]);
       let total = segment.len_m;
 
       let state;
@@ -312,7 +312,7 @@ class Models {
       total = ~~(total * 100) / 100;
       const percentage = ~~((metersTraveled / total) * 10000) / 100
 
-      stats.push({ state, route: segment.route_num, segment: segment.segment_num + 1, traveled: metersTraveled, total, percentage });
+      stats.push({ state, route: segment.route_num, routeSegment: segment.segment_num + 1, traveled: metersTraveled, total, percentage });
     }
 
     return stats;

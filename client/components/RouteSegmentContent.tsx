@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import type { IHighways } from '../types/interfaces';
-import type { State, Segment } from '../types/types';
+import type { State, RouteSegment } from '../types/types';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
@@ -9,31 +9,32 @@ const KEY_ENTER = 'Enter', ROUTES_PER_ROW = 8;
 
 interface Props {
   highwayData: IHighways,
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: Segment) => void,
-  onSegmentItemClick: (event: React.SyntheticEvent, segment: Segment) => void,
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
   onUpdateState: (stateId: number) => void,
-  segments: Array<Array<Segment>>,
+  routeSegments: Array<Array<RouteSegment>>,
   stateId: number,
   states: Array<State>,
 }
 
-const SegmentContent = ({
+const RouteSegmentContent = ({
   highwayData,
   onRouteItemClick,
-  onSegmentItemClick,
+  onRouteSegmentItemClick,
   onUpdateState,
-  segments,
+  routeSegments,
   stateId,
   states,
 }: Props): React.ReactElement<Props> => {
-  const [currSegments, setSegments] = useState<Array<Segment>>(segments[0] ?? []);
+  const [currRouteSegments, setRouteSegments] =
+    useState<Array<RouteSegment>>(routeSegments[0] ?? []);
 
   const _onRouteItemClick = (
     event: React.SyntheticEvent,
-    clickedSegments: Array<Segment>,
+    clickedRouteSegments: Array<RouteSegment>,
   ): void => {
-    setSegments(clickedSegments);
-    onRouteItemClick(event, clickedSegments[0]);
+    setRouteSegments(clickedRouteSegments);
+    onRouteItemClick(event, clickedRouteSegments[0]);
   };
 
   const _onStateSelect = (event: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -41,12 +42,12 @@ const SegmentContent = ({
   };
 
   const _getRouteName = (
-    firstSegment: Segment,
+    firstRouteSegment: RouteSegment,
     currStateId: number | null,
     useRouteTitle = true,
   ): string => (currStateId != null
     ? HighwayUtils.getRouteName(
-      firstSegment,
+      firstRouteSegment,
       highwayData.getState(currStateId).identifier,
       useRouteTitle,
     )
@@ -61,19 +62,19 @@ const SegmentContent = ({
   };
 
   // Give enough space for routes based on # of digits
-  const routeMatrix: Segment[][][] = [];
+  const routeMatrix: RouteSegment[][][] = [];
   let segmentIdx = 0;
-  while (segmentIdx < segments.length) {
+  while (segmentIdx < routeSegments.length) {
     let routesPerRow = ROUTES_PER_ROW;
-    const currIdx = Math.min(segments.length - 1, segmentIdx + routesPerRow - 1);
-    const lastRouteInRow = segments[currIdx][0];
+    const currIdx = Math.min(routeSegments.length - 1, segmentIdx + routesPerRow - 1);
+    const lastRouteInRow = routeSegments[currIdx][0];
     const lastRouteNum = getNumFromRoute(lastRouteInRow.routeNum);
     if (lastRouteNum >= 100) {
       routesPerRow = ROUTES_PER_ROW - 1;
     } else if (lastRouteNum >= 1000) {
       routesPerRow = ROUTES_PER_ROW - 2;
     }
-    routeMatrix.push(segments.slice(segmentIdx, segmentIdx + routesPerRow));
+    routeMatrix.push(routeSegments.slice(segmentIdx, segmentIdx + routesPerRow));
     segmentIdx += routesPerRow;
   }
 
@@ -91,30 +92,30 @@ const SegmentContent = ({
       <Collapsible title="Routes" open>
         <div className="routeTable">
           {stateId != null ? routeMatrix.map(
-            (segmentSubArray: Segment[][], i: number): React.ReactNode => (
-              <span key={`segmentSet-${i}`} className="routeRow">
+            (routeSubArray: RouteSegment[][], i: number): React.ReactNode => (
+              <span key={`routeSegmentSet-${i}`} className="routeRow">
                 {
-                  segmentSubArray.map((segmentSet: Segment[]): React.ReactNode => {
-                    const segment = segmentSet[0];
-                    const { dir, routeNum, type } = segment;
+                  routeSubArray.map((routeSegmentSet: RouteSegment[]): React.ReactNode => {
+                    const routeSegment = routeSegmentSet[0];
+                    const { dir, routeNum, type } = routeSegment;
                     return (
                       <div
                         key={`${routeNum}${dir}_${type}`}
                         className="clickable"
                         onClick={
-                          (event: React.MouseEvent): void => _onRouteItemClick(event, segmentSet)
+                          (event: React.MouseEvent) => _onRouteItemClick(event, routeSegmentSet)
                         }
                         onKeyDown={
-                          (event: React.KeyboardEvent): void => {
+                          (event: React.KeyboardEvent) => {
                             if (event.key === KEY_ENTER) {
-                              _onRouteItemClick(event, segmentSet);
+                              _onRouteItemClick(event, routeSegmentSet);
                             }
                           }
                         }
                         role="link"
                         tabIndex={0}
                       >
-                        {_getRouteName(segment, stateId, false)}
+                        {_getRouteName(routeSegment, stateId, false)}
                       </div>
                     );
                   })
@@ -125,17 +126,17 @@ const SegmentContent = ({
         </div>
       </Collapsible>
 
-      <Collapsible title={`${_getRouteName(currSegments[0], stateId)} Segments`} open>
+      <Collapsible title={`${_getRouteName(currRouteSegments[0], stateId)} Segments`} open>
         <ul>
           {
-            currSegments.map((segment: Segment, i: number): React.ReactNode => (
+            currRouteSegments.map((routeSegment: RouteSegment, i: number): React.ReactNode => (
               <li
-                key={`segment-${segment.id}`}
+                key={`routeSegment-${routeSegment.id}`}
                 className="clickable"
-                onClick={(event: React.MouseEvent): void => onSegmentItemClick(event, segment)}
-                onKeyDown={(event: React.KeyboardEvent): void => {
+                onClick={(event: React.MouseEvent) => onRouteSegmentItemClick(event, routeSegment)}
+                onKeyDown={(event: React.KeyboardEvent) => {
                   if (event.key === KEY_ENTER) {
-                    onSegmentItemClick(event, segment);
+                    onRouteSegmentItemClick(event, routeSegment);
                   }
                 }}
                 role="presentation"
@@ -150,4 +151,4 @@ const SegmentContent = ({
   );
 };
 
-export default SegmentContent;
+export default RouteSegmentContent;

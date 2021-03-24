@@ -1,54 +1,54 @@
 import React from 'react';
 import { mount } from 'enzyme';
 import type { IHighways } from '../types/interfaces';
-import type { Segment } from '../types/types';
+import type { RouteSegment } from '../types/types';
 
 import APIClient from '../components/APIClient';
 import Highways from '../components/Highways';
-import SegmentContent from '../components/SegmentContent';
+import RouteSegmentContent from '../components/RouteSegmentContent';
 import * as TestUtils from './utils/TestUtils';
 
 const highwayData: IHighways = new Highways();
 const routeClickMap: { [routeStr: string]: number } = {};
-const segmentClickMap: { [segmentNum: number]: number } = {};
+const routeSegmentClickMap: { [segmentNum: number]: number } = {};
 const stateData = TestUtils.getTestStateData();
 
-const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: Segment): void => {
+const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => {
   const currVal = routeClickMap[segmentOfRoute.routeNum];
   routeClickMap[segmentOfRoute.routeNum] = currVal != null ? currVal + 1 : 1;
 };
 
-const onSegmentItemClick = (_event: React.SyntheticEvent, segment: Segment): void => {
-  const currVal = segmentClickMap[segment.id];
-  segmentClickMap[segment.id] = currVal != null ? currVal + 1 : 1;
+const onRouteSegmentItemClick = (_event: React.SyntheticEvent, routeSegment: RouteSegment) => {
+  const currVal = routeSegmentClickMap[routeSegment.id];
+  routeSegmentClickMap[routeSegment.id] = currVal != null ? currVal + 1 : 1;
 };
 
-const onUpdateState = (stateId: number): void => {
-  const rawSegmentData = TestUtils.getTestRawSegmentDataByStateID(stateId);
-  highwayData.buildStateSegmentsData(rawSegmentData);
+const onUpdateState = (stateId: number) => {
+  const rawRouteSegmentData = TestUtils.getTestRawRouteSegmentDataByStateID(stateId);
+  highwayData.buildStateSegmentsData(rawRouteSegmentData);
 };
 
-const mockSegmentContent = (initialStateId: number) => {
-  const rawSegmentData = TestUtils.getTestRawSegmentDataByStateID(stateData[0].id);
-  const segmentDataByRoute = APIClient.parseRawSegments(rawSegmentData);
+const mockRouteSegmentContent = (initialStateId: number) => {
+  const rawRouteSegmentData = TestUtils.getTestRawRouteSegmentDataByStateID(stateData[0].id);
+  const segmentDataByRoute = APIClient.parseRawRouteSegments(rawRouteSegmentData);
   highwayData.setStates(stateData);
-  highwayData.buildStateSegmentsData(rawSegmentData);
+  highwayData.buildStateSegmentsData(rawRouteSegmentData);
   return mount(
-    <SegmentContent
+    <RouteSegmentContent
       highwayData={highwayData}
       onRouteItemClick={onRouteItemClick}
-      onSegmentItemClick={onSegmentItemClick}
+      onRouteSegmentItemClick={onRouteSegmentItemClick}
       onUpdateState={onUpdateState}
-      segments={segmentDataByRoute}
+      routeSegments={segmentDataByRoute}
       stateId={initialStateId}
       states={stateData}
     />,
   );
 };
 
-describe('SegmentContent component test suite', () => {
+describe('RouteSegmentContent component test suite', () => {
   it('should render all available states', () => {
-    const comp = mockSegmentContent(stateData[0].id);
+    const comp = mockRouteSegmentContent(stateData[0].id);
     const selectElement = comp.find('select');
     const stateOptions = selectElement.first().find('option');
     const expectedStates = stateData.length;
@@ -56,8 +56,8 @@ describe('SegmentContent component test suite', () => {
   });
 
   it('should render all available routes for the selected state', () => {
-    const segmentDataByRoute = TestUtils.getTestSegmentDataByStateID(stateData[0].id);
-    const comp = mockSegmentContent(stateData[0].id);
+    const segmentDataByRoute = TestUtils.getTestRouteSegmentDataByStateID(stateData[0].id);
+    const comp = mockRouteSegmentContent(stateData[0].id);
     const routeTable = comp.find('.routeTable');
     const routeRows = routeTable.first().find('.routeRow');
     expect(routeRows.length).toBeGreaterThan(1);
@@ -66,19 +66,19 @@ describe('SegmentContent component test suite', () => {
     expect(clickables.length).toBe(expectedRoutes);
   });
 
-  it('should render all available segments for the selected route', () => {
-    const comp = mockSegmentContent(stateData[0].id);
-    const segmentList = comp.find('ul');
-    const clickables = segmentList.first().find('.clickable');
-    const expectedSegments = TestUtils.getTestSegmentDataByStateID(stateData[0].id)[0].length;
+  it('should render all available route segments for the selected route', () => {
+    const comp = mockRouteSegmentContent(stateData[0].id);
+    const routeSegmentList = comp.find('ul');
+    const clickables = routeSegmentList.first().find('.clickable');
+    const expectedSegments = TestUtils.getTestRouteSegmentDataByStateID(stateData[0].id)[0].length;
     expect(clickables.length).toBe(expectedSegments);
   });
 
   it('should be able to switch data between states', () => {
     const { id: initialStateID } = stateData[0];
     const { id: finalStateID } = stateData[1];
-    const comp = mockSegmentContent(initialStateID);
-    const finalSegments = TestUtils.getTestSegmentDataByStateID(finalStateID);
+    const comp = mockRouteSegmentContent(initialStateID);
+    const finalRouteSegments = TestUtils.getTestRouteSegmentDataByStateID(finalStateID);
 
     const selectElement = comp.find('select');
     selectElement.simulate('change', {
@@ -87,7 +87,7 @@ describe('SegmentContent component test suite', () => {
       },
     }).update();
     comp.setProps({
-      segments: finalSegments,
+      routeSegments: finalRouteSegments,
       stateId: finalStateID,
     }).update();
 
@@ -95,7 +95,7 @@ describe('SegmentContent component test suite', () => {
     expect(updatedSelect.props().value).toBe(finalStateID);
     const routeTable = comp.find('.routeTable');
     const clickables = routeTable.first().find('.clickable');
-    const expectedDCRoutes = finalSegments.length;
+    const expectedDCRoutes = finalRouteSegments.length;
     expect(clickables.length).toBe(expectedDCRoutes);
   });
 });

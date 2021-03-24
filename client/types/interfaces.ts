@@ -1,37 +1,37 @@
 import { RouteSignType } from './enums';
 import type {
-  PopupCoord, State, Segment, SegmentPolyLine, UserSegment,
+  PopupCoord, State, RouteSegment, RouteSegmentPolyLine, TravelSegment,
 } from './types';
 
 // All instance methods are defined here. TS doesn't allow properties to be declared static
 export interface IHighways {
-  segmentData: { [segmentId: number]: Segment },
+  routeSegmentData: { [routeSegmentId: number]: RouteSegment },
   idCache: { [id: number]: { [routeStr: string]: Array<number> } },
-  userSegments: Array<UserSegment>,
+  travelSegments: Array<TravelSegment>,
   routeLengthMap: { [routeStr: string]: number },
   stateCache: { [stateId: number]: State },
 
-  addAllSegments(routeNum: string, type: RouteSignType, dir: string): void,
-  addFullSegment(routeNum: string, segmentId: number): void,
-  addNewUserSegments(
+  addAllRouteSegments(routeNum: string, type: RouteSignType, dir: string): void,
+  addFullRouteSegment(routeNum: string, routeSegmentId: number): void,
+  addNewTravelSegments(
     startMarker: PopupCoord,
     endMarker: PopupCoord,
     routeNum: string,
-    segmentId: number,
-    segmentData: Array<SegmentPolyLine>
+    routeSegmentId: number,
+    routeSegmentData: Array<RouteSegmentPolyLine>
   ): void,
-  addSegment(userSegment: UserSegment): void,
-  buildStateSegmentsData(raw: Array<Segment>): void,
-  clearUserSegments(): void,
+  addTravelSegment(travelSegment: TravelSegment): void,
+  buildStateSegmentsData(raw: Array<RouteSegment>): void,
+  clearTravelSegments(): void,
   getCenterOfRoute(routeNumAndDir: string, type: RouteSignType): Array<number>,
-  getSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number>,
-  getSegmentNum(segmentId: number): number,
+  getRouteSegmentIds(type: RouteSignType, routeNumAndDir: string): Array<number>,
+  getRouteSegmentNum(routeSegmentId: number): number,
   getState(stateId: number): State,
   getZoomLevel(routeStr: string,
     routeType: RouteSignType,
-    segmentData: Array<SegmentPolyLine>,
-    segmentId: number
+    routeSegmentData: Array<RouteSegmentPolyLine>,
+    routeSegmentId: number
   ): number,
   setStates(stateArr: Array<State>): void,
-  toggleUserSegment(idx: number): void,
+  toggleTravelSegment(idx: number): void,
 }

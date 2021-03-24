@@ -1,20 +1,20 @@
 import type {
-  RootPayload, RootState, RouteReducerPayload, SegmentReducerPayload,
+  RootPayload, RootState, RouteReducerPayload, RouteSegmentReducerPayload,
 } from '../../types/types';
 
 import RouteReducer from './RouteReducer';
-import SegmentReducer from './SegmentReducer';
+import RouteSegmentReducer from './RouteSegmentReducer';
 
-// Dispatch function: payload should have nullable fields for routePayload, segmentPayload
+// Dispatch function: payload should have nullable fields for routePayload, routeSegmentPayload
 // if null, default switch case just returns state
 export default (state: RootState, payload: RootPayload): RootState => {
-  const { routeState: prevRouteState, segmentState: prevSegmentState } = state;
+  const { routeState: prevRouteState, routeSegmentState: prevSegmentState } = state;
   const {
     routePayload = <RouteReducerPayload>{},
-    segmentPayload = <SegmentReducerPayload>{},
+    routeSegmentPayload = <RouteSegmentReducerPayload>{},
   } = payload;
   return {
     routeState: RouteReducer(prevRouteState, routePayload),
-    segmentState: SegmentReducer(prevSegmentState, segmentPayload),
+    routeSegmentState: RouteSegmentReducer(prevSegmentState, routeSegmentPayload),
   };
 };

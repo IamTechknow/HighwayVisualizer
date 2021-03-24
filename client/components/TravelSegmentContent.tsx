@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type { IHighways } from '../types/interfaces';
-import type { SubmissionData, User as UserType, UserSegment } from '../types/types';
-import { SegmentCreateMode } from '../types/enums';
+import type { SubmissionData, User as UserType, TravelSegment } from '../types/types';
+import { TravelSegmentCreateMode } from '../types/enums';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
@@ -11,35 +11,35 @@ interface Props {
   currUserId: number,
   highwayData: IHighways,
   onClinchToggleFor: (i: number) => void,
-  onResetUserSegments: () => void,
-  onSendUserSegments: () => void,
-  onSetMode: (mode: SegmentCreateMode) => void,
+  onResetTravelSegments: () => void,
+  onSendTravelSegments: () => void,
+  onSetMode: (mode: TravelSegmentCreateMode) => void,
   onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
   onUserSubmit: (newUser: string) => void,
   submitData: SubmissionData | null,
-  userSegments: Array<UserSegment>,
+  travelSegments: Array<TravelSegment>,
   users: Array<UserType>,
 }
 
-const UserSegmentContent = ({
+const TravelSegmentContent = ({
   currMode,
   currUserId,
   highwayData,
   onClinchToggleFor,
-  onResetUserSegments,
-  onSendUserSegments,
+  onResetTravelSegments,
+  onSendTravelSegments,
   onSetMode,
   onUserChange,
   onUserSubmit,
   submitData,
-  userSegments,
+  travelSegments,
   users,
 }: Props): React.ReactElement<Props> => {
   const [currNameInput, setNameInput] = useState<string>('');
 
-  const getIdForUserSegment = (userSeg: UserSegment): string => {
-    const { endId, segmentId, startId } = userSeg;
-    return `userSeg-${segmentId}-${startId}-${endId}`;
+  const getIdForTravelSegment = (travelSeg: TravelSegment): string => {
+    const { endId, routeSegmentId, startId } = travelSeg;
+    return `travelSeg-${routeSegmentId}-${startId}-${endId}`;
   };
 
   const onUserNameChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
@@ -51,24 +51,24 @@ const UserSegmentContent = ({
     onUserSubmit(currNameInput);
   };
 
-  const getUserSegmentTitle = (userSeg: UserSegment) => {
-    const { segmentId, routeNum } = userSeg;
-    const prefix = HighwayUtils.getRoutePrefix(highwayData.segmentData[segmentId].type);
-    return `${prefix} ${routeNum} Segment ${highwayData.getSegmentNum(segmentId)}`;
+  const getTravelSegmentTitle = (travelSeg: TravelSegment) => {
+    const { routeSegmentId, routeNum } = travelSeg;
+    const prefix = HighwayUtils.getRoutePrefix(highwayData.routeSegmentData[routeSegmentId].type);
+    return `${prefix} ${routeNum} Segment ${highwayData.getRouteSegmentNum(routeSegmentId)}`;
   };
 
-  const userSegmentsInState = userSegments.filter(
-    (userSeg: UserSegment) => userSeg.segmentId in highwayData.segmentData,
+  const travelSegmentsInState = travelSegments.filter(
+    (travelSeg: TravelSegment) => travelSeg.routeSegmentId in highwayData.routeSegmentData,
   );
 
   return (
     <div className="tabContent">
       {submitData && <h3>{submitData.message}</h3>}
       <h3>
-        {currMode === SegmentCreateMode.CLINCH ? 'Clinch Mode' : 'Create Mode'}
+        {currMode === TravelSegmentCreateMode.CLINCH ? 'Clinch Mode' : 'Create Mode'}
         <span className="segRow">
-          <button type="button" onClick={() => onSetMode(SegmentCreateMode.MANUAL)}>Manual</button>
-          <button type="button" onClick={() => onSetMode(SegmentCreateMode.CLINCH)}>Clinch</button>
+          <button type="button" onClick={() => onSetMode(TravelSegmentCreateMode.MANUAL)}>Manual</button>
+          <button type="button" onClick={() => onSetMode(TravelSegmentCreateMode.CLINCH)}>Clinch</button>
         </span>
       </h3>
 
@@ -105,22 +105,25 @@ const UserSegmentContent = ({
         </form>
       </Collapsible>
 
-      <Collapsible title="User Segments" open>
+      <Collapsible title="Travel Segments" open>
         {
-          userSegmentsInState.length > 0
+          travelSegmentsInState.length > 0
             ? (
               <ul>
                 {
-                  userSegmentsInState.map((userSeg: UserSegment, i: number): React.ReactNode => {
-                    const userSegKey = getIdForUserSegment(userSeg);
+                  travelSegmentsInState.map((
+                    travelSeg: TravelSegment,
+                    i: number,
+                  ): React.ReactNode => {
+                    const travelSegKey = getIdForTravelSegment(travelSeg);
                     return (
-                      <div key={userSegKey} className="userSegRow">
+                      <div key={travelSegKey} className="travelSegRow">
                         <li>
-                          <label className="clickable" htmlFor={userSegKey}>
-                            {getUserSegmentTitle(userSeg)}
+                          <label className="clickable" htmlFor={travelSegKey}>
+                            {getTravelSegmentTitle(travelSeg)}
                           </label>
                           <input
-                            id={userSegKey}
+                            id={travelSegKey}
                             type="checkbox"
                             onClick={(): void => { onClinchToggleFor(i); }}
                           />
@@ -130,20 +133,20 @@ const UserSegmentContent = ({
                   })
                 }
               </ul>
-            ) : <h3>No unsubmitted user segments in current state</h3>
+            ) : <h3>No unsubmitted travel segments in current state</h3>
         }
 
         <button
-          disabled={currUserId < 0 || userSegments.length === 0}
-          onClick={onSendUserSegments}
+          disabled={currUserId < 0 || travelSegments.length === 0}
+          onClick={onSendTravelSegments}
           type="button"
         >
-          Submit User Segments
+          Submit Travel Segments
         </button>
-        <button type="button" onClick={onResetUserSegments}>Clear User Segments</button>
+        <button type="button" onClick={onResetTravelSegments}>Clear Travel Segments</button>
       </Collapsible>
     </div>
   );
 };
 
-export default UserSegmentContent;
+export default TravelSegmentContent;
