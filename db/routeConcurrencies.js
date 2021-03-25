@@ -162,8 +162,8 @@ const shouldSkipSegments = (isSeg1MainlineDir, isSeg2MainlineDir, isSeg3Mainline
 
 const getPossibleConcurrency = (route1, route2, seg1, seg2, route2Seg, wrongWay) => {
   const startPoint = seg1.points[seg1.points.length - 1], endPoint = seg2.points[0];
-  const closestToStart = Utils.findClosestSegmentPoint(route2Seg.points, startPoint);
-  const closestToEnd = Utils.findClosestSegmentPoint(route2Seg.points, endPoint);
+  const closestToStart = Utils.findClosestRouteSegmentPoint(route2Seg.points, startPoint);
+  const closestToEnd = Utils.findClosestRouteSegmentPoint(route2Seg.points, endPoint);
   return {
     success: closestToStart.d < CONCURRENCY_THRESHOLD && closestToEnd.d < CONCURRENCY_THRESHOLD,
     route1,

@@ -79,12 +79,12 @@ const calcDir = (left, right) => {
   let xDelta = pLeftFirst[1] - pRightLast[1], yDelta = pLeftFirst[0] - pRightLast[0];
 
   // return whether the left element should be closer to the south/west, should be if delta is negative.
-  return Math.abs(xDelta) > Math.abs(yDelta) ? { delta: xDelta, dir: 'E'} : { delta: yDelta, dir: 'N'};
+  return Math.abs(xDelta) > Math.abs(yDelta) ? { delta: xDelta, dir: 'E' } : { delta: yDelta, dir: 'N' };
 };
 
 // Account for features with Route_Sign = 1 (unsigned)
 const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => {
-  const [ F_System, Route_Name, Route_Numb ] = getPropertyFields(
+  const [F_System, Route_Name, Route_Numb] = getPropertyFields(
     properties,
     isShapefileData
       ? ['F_System', 'Route_Name', 'Route_Numb']
@@ -235,7 +235,7 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
         return calcDir(left[0], right[right.length - 1]).delta;
       });
 
-      const {dir} = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
+      const { dir } = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
       const routeNum = `${route}`, oppositeDir = dir === 'E' ? 'W' : 'S';
       for (let i = 0; i < finalArray.length; i += 1) {
         const routeDir = finalArray[i][0].properties[facilityTypeKey] === NON_INVENTORY_FACILITY_CODE
@@ -243,8 +243,8 @@ const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, 
           : `${dir}`;
         const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
         const queryArgs = [routeNum, type, i, routeDir, stateID, coords.length, basePointID];
-        const segmentID = await db.query('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
-        await Utils.insertSegment(db, segmentID, coords);
+        const routeSegmentID = await db.query('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
+        await Utils.insertSegment(db, routeSegmentID, coords);
         basePointID += coords.length;
       }
       emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);

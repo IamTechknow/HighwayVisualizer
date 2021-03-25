@@ -6,7 +6,6 @@ const DB = require('.');
 const caltransFeatureParser = require('./parsers/caltransFeatureParser.js');
 
 const CA_DATA = 'db/SHN_Lines.shp', CA_DB = 'db/SHN_Lines.dbf';
-const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
   FEATURES_DONE_EVENT = 'featuresDone';
 

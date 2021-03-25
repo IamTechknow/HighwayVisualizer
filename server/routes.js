@@ -20,7 +20,7 @@ const TYPE_ENUM = require('../db/routeEnum.js');
  * @param {express.Request} req
  * @param {express.Response} res
  */
-const usersRouter = (_req, res) => res.sendFile(path.join(__dirname, '../public/index.html'));
+const userPageRouter = (_req, res) => res.sendFile(path.join(__dirname, '../public/index.html'));
 
 /**
  * Higher-order Middleware function which provides all available state highway systems to
@@ -51,26 +51,26 @@ const usersAPIRouter = (db, redisClient) => {
 };
 
 /**
- * Higher-order Middleware function which provides all segments for a given state ID.
+ * Higher-order Middleware function which provides all route segments for a given state ID.
  * @memberof module:highwayvisualizer/routes
  * @param {mysql2.Connection} db
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const segmentsPerStateAPIRouter = (db, redisClient) => {
-  return (req, res) => Models.getSegmentsBy(db, req.params.stateId)
+const routeSegmentsPerStateAPIRouter = (db, redisClient) => {
+  return (req, res) => Models.getRouteSegmentsBy(db, req.params.stateId)
     .then((result) => _sendOkJSON(redisClient, result, req, res))
     .catch((err) => _catchError(err, res));
 }
 
 /**
- * Higher-order Middleware function which provides all coordinates for a given segment ID.
+ * Higher-order Middleware function which provides all coordinates for a given route segment ID.
  * @memberof module:highwayvisualizer/routes
  * @param {mysql2.Connection} db
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const pointsPerSegmentAPIRouter = (db, redisClient) => {
+const pointsPerRouteSegmentAPIRouter = (db, redisClient) => {
   return (req, res) => {
     let segmentInteger = req.params.segmentId ?
       Number.parseInt(req.params.segmentId, 10) : undefined;
@@ -78,7 +78,7 @@ const pointsPerSegmentAPIRouter = (db, redisClient) => {
     if (!segmentInteger) {
       _sendErrorJSON(redisClient, 'Segment ID is invalid', req, res);
     } else {
-      Models.getPointsForSegment(db, segmentInteger)
+      Models.getPointsForRouteSegment(db, segmentInteger)
         .then((result) => _sendOkJSON(redisClient, result, req, res))
         .catch((err) => _catchError(err, res));
     }
@@ -147,14 +147,14 @@ const concurrenciesPerRouteAPIRouter = (db, redisClient) => {
 };
 
 /**
- * Higher-order Middleware function which provides all user segments for a given user.
+ * Higher-order Middleware function which provides all travel segments for a given user.
  * @memberof module:highwayvisualizer/routes
  * @param {mysql2.Connection} db
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const userSegmentsAPIRouter = (db, redisClient) => {
-  return (req, res) => Models.getUserSegmentsBy(db, req.params.user)
+const travelSegmentsAPIRouter = (db, redisClient) => {
+  return (req, res) => Models.getTravelSegmentsBy(db, req.params.user)
     .then((result) => {
       let retval = { loaded: true, notFound: result === false };
       if (result) {
@@ -196,20 +196,20 @@ const newUserAPIRouter = (db, redisClient) => {
 };
 
 /**
- * Higher-order Middleware function which allows a new user segment to be created.
+ * Higher-order Middleware function which allows a new travel segment to be created.
  * @memberof module:highwayvisualizer/routes
  * @param {mysql2.Connection} db
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const newUserSegmentAPIRouter = (db, redisClient) => {
+const newTravelSegmentAPIRouter = (db, redisClient) => {
   return (req, res) => {
     const userId = req.body.userId;
     if (userId <= 0) {
       _sendErrorJSON(redisClient, 'No user was provided, please ensure a user was selected.', req, res);
       return;
     }
-    Models.createUserSegment(db, userId, req.body.userSegments)
+    Models.createTravelSegment(db, userId, req.body.travelSegments)
       .then((result) => {
         const noun = result.affectedRows > 1 ? 'segments' : 'segment';
         const payload = {
@@ -247,13 +247,13 @@ const _catchError = (err, res) => {
 
 module.exports = {
   concurrenciesPerRouteAPIRouter,
+  newTravelSegmentAPIRouter,
   newUserAPIRouter,
-  newUserSegmentAPIRouter,
   pointsPerRouteAPIRouter,
-  pointsPerSegmentAPIRouter,
-  segmentsPerStateAPIRouter,
+  pointsPerRouteSegmentAPIRouter,
+  routeSegmentsPerStateAPIRouter,
   statesAPIRouter,
-  userSegmentsAPIRouter,
+  travelSegmentsAPIRouter,
   usersAPIRouter,
-  usersRouter,
+  userPageRouter,
 };

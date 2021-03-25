@@ -7,13 +7,10 @@
  * @requires /db/Utils.js:Utils
  */
 
-const {getRouteConcurrenciesForState} = require('../routeConcurrencies.js');
+const { getRouteConcurrenciesForState } = require('../routeConcurrencies.js');
 const TYPE_ENUM = require('../routeEnum.js');
 const routePrefixes = require('../routePrefixes.js');
 const Utils = require('../Utils.js');
-
-/** @constant {string} */
-const STATES = 'states', SEGMENTS = 'segments', POINTS = 'points';
 
 /** @constant {string} */
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
@@ -58,16 +55,16 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials) => 
       for (let i = 0; i < numFeatures; i += 1) {
         const len = feature.geometry.coordinates[i].length;
         const queryArgs = [routeNum, type, i, dir, stateID, len, basePointID];
-        const segmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-        await Utils.insertSegment(db, segmentID, feature.geometry.coordinates[i]);
+        const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
+        await Utils.insertSegment(db, routeSegmentID, feature.geometry.coordinates[i]);
         emitter.emit(INSERTED_FEATURE_EVENT);
         basePointID += len;
       }
     } else {
       const len = feature.geometry.coordinates.length;
       const queryArgs = [routeNum, type, 0, dir, stateID, len, basePointID];
-      const segmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-      await Utils.insertSegment(db, segmentID, feature.geometry.coordinates);
+      const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
+      await Utils.insertSegment(db, routeSegmentID, feature.geometry.coordinates);
       emitter.emit(INSERTED_FEATURE_EVENT);
       basePointID += len;
     }

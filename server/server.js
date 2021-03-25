@@ -47,7 +47,7 @@ const createServer = (db, redisClient) => {
   }
 
   app.use(Middleware.headerMiddleware);
-  app.get('/users/:user', Routes.usersRouter);
+  app.get('/users/:user', Routes.userPageRouter);
   app.get('/api/states',
     Middleware.getRedisMiddleware(redisClient),
     Routes.statesAPIRouter(db, redisClient),
@@ -56,12 +56,12 @@ const createServer = (db, redisClient) => {
   app.get(
     '/api/segments/:stateId',
     Middleware.getRedisMiddleware(redisClient),
-    Routes.segmentsPerStateAPIRouter(db, redisClient)
+    Routes.routeSegmentsPerStateAPIRouter(db, redisClient)
   );
   app.get(
     '/api/points/:segmentId',
     Middleware.getRedisMiddleware(redisClient),
-    Routes.pointsPerSegmentAPIRouter(db, redisClient)
+    Routes.pointsPerRouteSegmentAPIRouter(db, redisClient)
   );
   app.get(
     '/api/points/:type/:routeNum',
@@ -73,9 +73,9 @@ const createServer = (db, redisClient) => {
     Middleware.getRedisMiddleware(redisClient),
     Routes.concurrenciesPerRouteAPIRouter(db, redisClient),
   );
-  app.get('/api/user_segments/:user', Routes.userSegmentsAPIRouter(db, redisClient));
+  app.get('/api/user_segments/:user', Routes.travelSegmentsAPIRouter(db, redisClient));
   app.post('/api/newUser', Routes.newUserAPIRouter(db, redisClient));
-  app.post('/api/user_segments/new', Routes.newUserSegmentAPIRouter(db, redisClient));
+  app.post('/api/user_segments/new', Routes.newTravelSegmentAPIRouter(db, redisClient));
 
   if (process.env.NODE_ENV === 'production') {
     const sslOptions = {

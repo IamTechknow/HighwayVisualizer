@@ -1,5 +1,5 @@
 /**
- * @fileOverview Contains utility methods to work with points and segments in the form of a static
+ * @fileOverview Contains utility methods to work with points and route segments in the form of a static
  *               class. These methods may be used in other modules and classes.
  */
 
@@ -19,7 +19,7 @@ class Utils {
    * @param {number} angle - The angle in degrees from -180 to 180.
    * @return {number} The angle in radians.
    */
-  static toRadians (angle) {
+  static toRadians(angle) {
     return angle * FACTOR;
   }
 
@@ -50,49 +50,50 @@ class Utils {
 
   /**
    * Calculates the total "great-circle" distance of a polyline by using calcHavensine().
-   * @param {Array[]} seg - An array containing geographical points represented by arrays.
+   * @param {Array[]} routeSeg - An array containing geographical points represented by arrays.
    *        Each subarray contains the latitude and longitude of a point.
    * @return {number} The total distance of the polyline in meters.
    */
-  static calcSegmentDistance(seg) {
+  static calcSegmentDistance(routeSeg) {
     let metersTraveled = 0;
-    for (let i = 0; i < seg.length - 1; i += 1) {
-      const [lat2, lng2] = seg[i + 1];
-      metersTraveled += Utils.calcHavensine(seg[i], Utils.toRadians(lat2), Utils.toRadians(lng2));
+    for (let i = 0; i < routeSeg.length - 1; i += 1) {
+      const [lat2, lng2] = routeSeg[i + 1];
+      metersTraveled += Utils.calcHavensine(routeSeg[i], Utils.toRadians(lat2), Utils.toRadians(lng2));
     }
     return metersTraveled;
   }
 
   /**
-   * Inserts a polyline into a MySQL database by creating records a segment's coordinates
-   * and updating the segment's record with the calculated segment's distance in meters.
-   * Logs the result of the inserted segment.
+   * Inserts a polyline into a MySQL database by creating records of a route segment's coordinates
+   * and updating the route segment's record with the calculated route segment's distance
+   * in meters.
    *
    * @async
    * @param {object} db - A database client that can perform queries from the mysql2 module.
-   * @param {number} segmentID - Row ID of the segment to insert.
+   * @param {number} routeSegmentID - Row ID of the route segment to insert.
    * @param {Array[]} coords - An array containing geographical points represented by arrays.
    *        Each subarray contains the longitude and latitude of a point, in that order.
    */
-  static insertSegment = async (db, segmentID, coords) => {
-    const items = coords.map(tup => [segmentID, tup[1], tup[0]]);
+  static insertSegment = async (db, routeSegmentID, coords) => {
+    const items = coords.map(tup => [routeSegmentID, tup[1], tup[0]]);
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-    await db.query('UPDATE segments SET len_m = ? WHERE id = ?;', [lenInMeters, segmentID]);
+    await db.query('UPDATE segments SET len_m = ? WHERE id = ?;', [lenInMeters, routeSegmentID]);
     await db.query('INSERT INTO points (segment_key, lat, lon) VALUES ?;', [items]);
   }
 
   /**
-   * Given a segment and a origin coordinate of comparsion, calculate the point on the segment
-   * closest to the origin. Utilizes a binary search technique to quickly find the point.
+   * Given a route segment and a origin coordinate of comparsion, calculate the point on the
+   * route segment closest to the origin. Utilizes a binary search technique to quickly
+   * find the point.
    *
    * @param {Array[]} points - An array containing geographical points represented by arrays.
    *        Each subarray contains the latitude and longitude of a point.
    * @param {number[]} origin - An array containing the latitude and longitude of the point to
    *        compare.
    * @return {object} An object with idx and d fields representing the closest point in the
-   *         segment relative to the origin, and the distance in meters.
+   *         route segment relative to the origin, and the distance in meters.
    */
-  static findClosestSegmentPoint(points, origin) {
+  static findClosestRouteSegmentPoint(points, origin) {
     let shortestDistance = Number.MAX_VALUE;
     let closest;
     const [lat2, lng2] = origin;

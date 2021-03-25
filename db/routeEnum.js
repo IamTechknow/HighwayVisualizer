@@ -5,7 +5,7 @@
 /**
  * Route signing enum module. These values are defined in Chapter 4 of the HPMS Field Manual,
  * Item 18. A FHWA feature may use these values in the route_signing field. Also used internally
- * for all segment database records.
+ * for all route segment database records.
  *
  * @readonly
  * @enum {number}
