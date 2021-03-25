@@ -72,13 +72,13 @@ const routeSegmentsPerStateAPIRouter = (db, redisClient) => {
  */
 const pointsPerRouteSegmentAPIRouter = (db, redisClient) => {
   return (req, res) => {
-    let segmentInteger = req.params.segmentId ?
-      Number.parseInt(req.params.segmentId, 10) : undefined;
+    let routeSegmentId = req.params.routeSegmentId ?
+      Number.parseInt(req.params.routeSegmentId, 10) : undefined;
 
-    if (!segmentInteger) {
-      _sendErrorJSON(redisClient, 'Segment ID is invalid', req, res);
+    if (!routeSegmentId) {
+      _sendErrorJSON(redisClient, 'Route segment ID is invalid', req, res);
     } else {
-      Models.getPointsForRouteSegment(db, segmentInteger)
+      Models.getPointsForRouteSegment(db, routeSegmentId)
         .then((result) => _sendOkJSON(redisClient, result, req, res))
         .catch((err) => _catchError(err, res));
     }
@@ -214,7 +214,7 @@ const newTravelSegmentAPIRouter = (db, redisClient) => {
         const noun = result.affectedRows > 1 ? 'segments' : 'segment';
         const payload = {
           success: true,
-          message: `Successfully created ${result.affectedRows} user ${noun}!`,
+          message: `Successfully created ${result.affectedRows} travel ${noun}!`,
         };
         _sendOkJSON(redisClient, payload, req, res, 201);
       }).catch((err) => _catchError(err, res));

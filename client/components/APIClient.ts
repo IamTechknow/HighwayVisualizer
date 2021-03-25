@@ -27,12 +27,12 @@ export default class APIClient {
   }
 
   static getRouteSegments(stateId: number): Promise<Array<RouteSegment>> {
-    return fetch(`${__API__}/api/segments/${stateId}`)
+    return fetch(`${__API__}/api/route_segments/${stateId}`)
       .then((res) => res.json());
   }
 
-  static getRouteSegment(segmentId: number): Promise<Array<RouteSegmentPolyLine>> {
-    return fetch(`${__API__}/api/points/${segmentId}`)
+  static getRouteSegment(routeSegmentId: number): Promise<Array<RouteSegmentPolyLine>> {
+    return fetch(`${__API__}/api/points/${routeSegmentId}`)
       .then((res) => res.json());
   }
 
@@ -58,7 +58,7 @@ export default class APIClient {
   }
 
   static getTravelStats(userId: string): Promise<TravelStatsAPIPayload> {
-    return fetch(`${__API__}/api/user_segments/${userId}`)
+    return fetch(`${__API__}/api/travel_segments/${userId}`)
       .then((res) => res.json());
   }
 
@@ -71,7 +71,7 @@ export default class APIClient {
     travelSegments: Array<TravelSegment>,
   ): Promise<SubmissionData> {
     return APIClient.postUserData<SubmissionData>(
-      '/api/user_segments/new',
+      '/api/travel_segments/new',
       JSON.stringify({ userId, travelSegments }),
     );
   }
