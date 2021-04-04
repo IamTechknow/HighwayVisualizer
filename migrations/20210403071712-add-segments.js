@@ -52,7 +52,7 @@ exports.up = function (db) {
     len_m: {
       defaultValue: 0.0,
       notNull: true,
-      type: 'decimal',
+      type: 'double',
     },
     base: {
       notNull: true,

@@ -29,11 +29,11 @@ exports.up = function (db) {
     },
     lat: {
       notNull: true,
-      type: 'decimal',
+      type: 'double',
     },
     lon: {
       notNull: true,
-      type: 'decimal',
+      type: 'double',
     },
   })
     .then(() => db.addIndex('points', 'POINT_IDX', ['segment_key']));
