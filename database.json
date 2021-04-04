@@ -1,0 +1,18 @@
+{
+  "defaultEnv": "local",
+  "init": {
+    "driver": "mysql",
+    "host": "localhost",
+    "flags": { "ENV": "MYSQL_FLAGS" },
+    "user": { "ENV": "DB_USERNAME" },
+    "password": { "ENV": "DB_PASSWORD" }
+  },
+  "local": {
+    "driver": "mysql",
+    "host": "localhost",
+    "database": "highways",
+    "user": { "ENV": "DB_USERNAME" },
+    "password": { "ENV": "DB_PASSWORD" },
+    "multipleStatements": true
+  }
+}

@@ -4,7 +4,17 @@
 
 ## Instructions
 
-Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Ensure the redis instance has started as well. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window and run `npm run seed --seed && npm run build && npm run debug`. Now you may go to localhost to access the site!
+Clone this repo, then install the NPM packages. Ensure the mysql daemon has started with `mysqld --console` if not already active as a system service. Ensure the redis instance has started as well. Download the ZIP file of the Shapefile for California's state highway system, extract `SHN_Lines.shp` and `SHN_Lines.dbf` to the `db` folder. Start a terminal window at the project root and run the following:
+
+```bash
+npm run migrate
+npm run seed
+npm run debug
+# Open another terminal window in the same directory before next command
+npm run react
+```
+
+Now you may go to localhost to access the site!
 
 ## Video
 
