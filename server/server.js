@@ -4,6 +4,7 @@
  * @module highwayvisualizer
  * @requires NPM:compression
  * @requires NPM:express
+ * @requires NPM:express-validator
  * @requires fs
  * @requires https
  * @requires NPM:morgan
@@ -11,10 +12,12 @@
  * 
  * @requires /server/middleware.js:highwayvisualizer/middleware
  * @requires /server/routes.js:highwayvisualizer/routes
+ * @requires /db/routeEnum.js:highwayvisualizer/routeEnum
  */
 
 const compression = require('compression');
 const express = require('express');
+const { check } = require('express-validator');
 const fs = require('fs');
 const https = require('https');
 const morgan = require('morgan');
@@ -22,9 +25,25 @@ const path = require('path');
 
 const Middleware = require('./middleware');
 const Routes = require('./routes');
+const TYPE_ENUM = require('../db/routeEnum.js');
 
 /** @constant {number} */
 const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
+/** @constant {object} */
+const ROUTE_NUM_LENGTH_SPEC = {
+  min: 1,
+  max: 4,
+};
+/** @constant {object} */
+const ROUTE_DIR_LENGTH_SPEC = {
+  min: 1,
+  max: 1,
+};
+/** @constant {object} */
+const USER_LENGTH_SPEC = {
+  min: 3,
+  max: 16,
+};
 
 /**
  * Create the application server. This allows dependency injection
@@ -56,24 +75,40 @@ const createServer = (db, redisClient) => {
   app.get(
     '/api/route_segments/:stateId',
     Middleware.getRedisMiddleware(redisClient),
+    getGTZeroValidator('stateId'),
     Routes.routeSegmentsPerStateAPIRouter(db, redisClient)
   );
   app.get(
     '/api/points/:routeSegmentId',
     Middleware.getRedisMiddleware(redisClient),
+    getGTZeroValidator('routeSegmentId'),
     Routes.pointsPerRouteSegmentAPIRouter(db, redisClient)
   );
   app.get(
     '/api/points/:type/:routeNum',
     Middleware.getRedisMiddleware(redisClient),
+    getGTZeroValidator('stateId'),
+    check('type').isInt({
+      min: TYPE_ENUM.INTERSTATE,
+      max: TYPE_ENUM.STATE,
+    }),
+    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC),
+    check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
     Routes.pointsPerRouteAPIRouter(db, redisClient),
   );
   app.get(
     '/api/concurrencies/:routeNum',
     Middleware.getRedisMiddleware(redisClient),
+    getGTZeroValidator('stateId'),
+    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC),
+    check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
     Routes.concurrenciesPerRouteAPIRouter(db, redisClient),
   );
-  app.get('/api/travel_segments/:user', Routes.travelSegmentsAPIRouter(db, redisClient));
+  app.get(
+    '/api/travel_segments/:user',
+    check('user').isString().isLength(USER_LENGTH_SPEC),
+    Routes.travelSegmentsAPIRouter(db, redisClient),
+  );
   app.post('/api/newUser', Routes.newUserAPIRouter(db, redisClient));
   app.post('/api/travel_segments/new', Routes.newTravelSegmentAPIRouter(db, redisClient));
 
@@ -87,5 +122,7 @@ const createServer = (db, redisClient) => {
 
   return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
 };
+
+const getGTZeroValidator = (field) => check(field).isInt({ gt: 0 });
 
 module.exports = { createServer };

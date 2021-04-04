@@ -3,14 +3,15 @@
  * @fileOverview Module for all supported API endpoints.
  *
  * @module highwayvisualizer/routes
+ * @requires NPM:express-validator
  * @requires path
  * @requires /db/models.js:highwayDAO
  * @requires /db/routeEnum.js:highwayDAO
  */
+const { validationResult } = require('express-validator');
 const path = require('path');
 
 const Models = require('../db/models');
-const TYPE_ENUM = require('../db/routeEnum.js');
 
 /**
  * Middleware function which directs users to the index page. Client sided routing renders the
@@ -72,16 +73,14 @@ const routeSegmentsPerStateAPIRouter = (db, redisClient) => {
  */
 const pointsPerRouteSegmentAPIRouter = (db, redisClient) => {
   return (req, res) => {
-    let routeSegmentId = req.params.routeSegmentId ?
-      Number.parseInt(req.params.routeSegmentId, 10) : undefined;
-
-    if (!routeSegmentId) {
-      _sendErrorJSON(redisClient, 'Route segment ID is invalid', req, res);
-    } else {
-      Models.getPointsForRouteSegment(db, routeSegmentId)
-        .then((result) => _sendOkJSON(redisClient, result, req, res))
-        .catch((err) => _catchError(err, res));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+    let routeSegmentId = Number.parseInt(req.params.routeSegmentId, 10);
+    Models.getPointsForRouteSegment(db, routeSegmentId)
+      .then((result) => _sendOkJSON(redisClient, result, req, res))
+      .catch((err) => _catchError(err, res));
   };
 }
 
@@ -94,26 +93,16 @@ const pointsPerRouteSegmentAPIRouter = (db, redisClient) => {
  */
 const pointsPerRouteAPIRouter = (db, redisClient) => {
   return (req, res) => {
-    const stateId = req.query.stateId ?
-      Number.parseInt(req.query.stateId, 10) : undefined;
-    const type = req.params.type ?
-      Number.parseInt(req.params.type, 10) : undefined;
-    // Route numbers are strings that can have suffixes
-    const routeNum = req.params.routeNum;
-
-    if (!stateId) {
-      _sendErrorJSON(redisClient, 'State ID must be provided', req, res);
-    } else if (!type) {
-      _sendErrorJSON(redisClient, 'Route type must be provided', req, res);
-    } else if (type < TYPE_ENUM.INTERSTATE || type > TYPE_ENUM.STATE) {
-      _sendErrorJSON(redisClient, 'Route type is invalid', req, res);
-    } else if (!routeNum) {
-      _sendErrorJSON(redisClient, 'Route number is invalid', req, res);
-    } else {
-      Models.getPointsForRoute(db, stateId, type, routeNum, req.query.dir)
-        .then((result) => _sendOkJSON(redisClient, result, req, res))
-        .catch((err) => _catchError(err, res));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+    const stateId = Number.parseInt(req.query.stateId, 10);
+    const type = Number.parseInt(req.params.type, 10);
+    const routeNum = req.params.routeNum;
+    Models.getPointsForRoute(db, stateId, type, routeNum, req.query.dir)
+      .then((result) => _sendOkJSON(redisClient, result, req, res))
+      .catch((err) => _catchError(err, res));
   };
 };
 
@@ -130,19 +119,15 @@ const pointsPerRouteAPIRouter = (db, redisClient) => {
  */
 const concurrenciesPerRouteAPIRouter = (db, redisClient) => {
   return (req, res) => {
-    const stateId = req.query.stateId ?
-      Number.parseInt(req.query.stateId, 10) : undefined;
-    const routeNum = req.params.routeNum;
-
-    if (!stateId) {
-      _sendErrorJSON(redisClient, 'State ID must be provided', req, res);
-    } else if (!routeNum) {
-      _sendErrorJSON(redisClient, 'Route number is invalid', req, res);
-    } else {
-      Models.getPointsForConcurrencies(db, stateId, routeNum, req.query.dir)
-        .then((result) => _sendOkJSON(redisClient, result, req, res))
-        .catch((err) => _catchError(err, res));
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
     }
+    const stateId = Number.parseInt(req.query.stateId, 10);
+    const routeNum = req.params.routeNum;
+    Models.getPointsForConcurrencies(db, stateId, routeNum, req.query.dir)
+      .then((result) => _sendOkJSON(redisClient, result, req, res))
+      .catch((err) => _catchError(err, res));
   };
 };
 
