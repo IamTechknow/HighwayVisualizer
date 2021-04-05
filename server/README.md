@@ -10,9 +10,9 @@ Points by Segment | GET | /api/points/:segmentId | Get all coordinates for a US 
 Points by Route | GET | /api/points/:type/:routeNum | Get all coordinates for a US state route
 Concurrencies by Route | GET | /api/concurrencies/:routeNum | Get all coordinates for route concurrencies for the given route
 Users | GET | /api/users | Get the ID and name for each user
-User Segments by User | GET | /api/user_segments/:user | Get the user submitted segments for the user
+Travel Segments by User | GET | /api/travel_segments/:user | Get the user's travel segments
 Create new user | POST (JSON) | /api/newUser | Create a new user (does not support authentication)
-Submit user segment | POST (JSON) | /api/user_segments/new | Submit a user segment for the specified user (does not support authentication)
+Submit travel segment | POST (JSON) | /api/travel_segments/new | Submit a travel segment for the specified user (does not support authentication)
 
 ## API Types
 
@@ -51,41 +51,41 @@ Parameter | Value(s) | Description
 id | number | Unique ID of the user
 user | string | Name of the User
 
-### UserSegment
+### TravelSegment
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
 routeNum | string | Route number for the state's highway system, may contain letters
 segmentId | integer | Unique ID of the segment
-startId | integer | Number of the point the user submitted segment starts
-endId | integer | Number of the point the user submitted segment ends
+startId | integer | Number of the point the travel segment starts
+endId | integer | Number of the point the travel segment ends
 clinched | boolean | Whether the user has traveled through this segment entirely
 
-### UserStatSegment (inherits all fields in user segment)
+### TravelStatSegment (inherits all fields in travel segment)
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
-points | Number[][] | Array of 2-tuple coordinates representing the user submitted segment
+points | Number[][] | Array of 2-tuple coordinates representing the travel segment
 
-### UserStat
+### TravelStat
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
 percentage | string | String representation of percentage of segment traveled
-route | string | Route number of the user submitted segment
+route | string | Route number of the travel segment
 segment | number | Unique ID of the segment
 state | string | State title
-total | number | Total length of the user submitted segment
-traveled | number | Length of the submitted segment traveled by the user
+total | number | Total length of the travel segment
+traveled | number | Length of the segment traveled by the user
 
-### UserStatsAPIPayload
+### TravelStatsAPIPayload
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
 loaded | boolean | Value not used currently
 notFound | boolean | Whether stats for the user were found
-stats | UserStat[] | Statistics for given user submitted segments
-userSegments | UserStatSegment[] | Polylines for the user submitted segments
+stats | TravelStat[] | Statistics for given travel segments
+travelSegments | TravelStatSegment[] | Polylines for the travel segments
 
 ## States
 
@@ -152,11 +152,11 @@ Parameter | Value(s) | Description
 ------------- | ------------- | -------------
 (No parameters supported) |
 
-## User Segments
+## Travel Segments
 
-`/api/user_segments/:user`
+`/api/travel_segments/:user`
 
-Return value: `UserStatsAPIPayload`
+Return value: `TravelStatsAPIPayload`
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
@@ -170,11 +170,11 @@ Parameter | Value(s) | Description
 ------------- | ------------- | -------------
 user | string | Name for the new user. It must be between 3 to 16 characters and contain only lowercase letters, numbers, dashes, or underscores.
 
-## Submit user segment
+## Submit travel segment
 
-`/api/user_segments/new`
+`/api/travel_segments/new`
 
 Parameter | Value(s) | Description
 ------------- | ------------- | -------------
-userId | string | Unique ID of the user to associate the new user segments
-userSegments | UserSegment[] | Serialized array of user segments to add
+userId | string | Unique ID of the user to associate the travel segments
+travelSegments | TravelSegment[] | Serialized array of travel segments to add
