@@ -79,6 +79,9 @@ class Models {
     const keyQuery = `SELECT id, direction as dir FROM segments WHERE route_num = ? AND state_key = ? AND type = ?${dir ? ' AND direction = ?' : ''};`;
     const args = dir ? [routeNum, stateId, type, dir] : [routeNum, stateId, type];
     const keys = await db.query(keyQuery, args).then((result) => result[0]);
+    if (keys.length === 0) {
+      return [];
+    }
 
     const routeSegments = keys.map(key => {
       return dir !== undefined ? { id: key.id } : { dir: key.dir, id: key.id };
@@ -270,8 +273,8 @@ class Models {
   static async getPointsByUser(db, travelSegData) {
     if (travelSegData.length === 0) {
       return {
-        travelStats: [],
         travelSegments: [],
+        travelStats: [],
       };
     }
     const queries = [];

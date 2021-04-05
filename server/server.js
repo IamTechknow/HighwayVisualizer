@@ -92,7 +92,7 @@ const createServer = (db, redisClient) => {
       min: TYPE_ENUM.INTERSTATE,
       max: TYPE_ENUM.STATE,
     }),
-    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC),
+    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC).custom(routeNumValidator),
     check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
     Routes.pointsPerRouteAPIRouter(db, redisClient),
   );
@@ -100,7 +100,7 @@ const createServer = (db, redisClient) => {
     '/api/concurrencies/:routeNum',
     Middleware.getRedisMiddleware(redisClient),
     getGTZeroValidator('stateId'),
-    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC),
+    check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC).custom(routeNumValidator),
     check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
     Routes.concurrenciesPerRouteAPIRouter(db, redisClient),
   );
@@ -124,5 +124,18 @@ const createServer = (db, redisClient) => {
 };
 
 const getGTZeroValidator = (field) => check(field).isInt({ gt: 0 });
+
+const routeNumValidator = (routeNum) => {
+  if (!isNaN(routeNum)) {
+    return true;
+  }
+  if (routeNum.length <= 1) {
+    return false;
+  }
+  const lastChar = routeNum[routeNum.length - 1];
+  const secToLastChar = routeNum[routeNum.length - 2];
+  // English letters will return true below
+  return (lastChar.toLowerCase() !== lastChar.toUpperCase()) && !isNaN(secToLastChar);
+};
 
 module.exports = { createServer };
