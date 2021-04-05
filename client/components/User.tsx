@@ -53,7 +53,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
   }
   const { notFound, travelStats, travelSegments } = userTravelStats;
 
-  if (notFound) {
+  if (notFound || travelSegments.length === 0) {
     return (
       <div>
         <h3>

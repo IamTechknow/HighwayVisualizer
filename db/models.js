@@ -268,6 +268,12 @@ class Models {
    *         of a given route segment and an array of objects with segment and coordinate data.
    */
   static async getPointsByUser(db, travelSegData) {
+    if (travelSegData.length === 0) {
+      return {
+        travelStats: [],
+        travelSegments: [],
+      };
+    }
     const queries = [];
 
     for (let obj of travelSegData) {
