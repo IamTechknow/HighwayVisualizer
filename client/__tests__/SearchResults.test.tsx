@@ -22,6 +22,7 @@ const mockSearchResults = () => mount(
   />,
 );
 
+// TODO: simulate() is decrepated and will be removed in Enzyme 4
 const updateSearchBar = (searchBar: ReactWrapper, input: string) => {
   searchBar.simulate('change', {
     target: {
@@ -74,11 +75,12 @@ describe('SearchResults component test suite', () => {
     const bulletPoints = comp.find('li');
     bulletPoints.forEach((routeBullet): void => {
       routeBullet.simulate('click');
+      routeBullet.simulate('keydown', { key: 'Enter' });
     });
     const bulletPointsWithRoute5 = routeSegmentData
       .flat()
       .filter((routeSegment) => routeSegment.routeNum === routeNum)
       .length;
-    expect(routeClickMap[routeNum]).toBe(bulletPointsWithRoute5);
+    expect(routeClickMap[routeNum]).toBe(bulletPointsWithRoute5 * 2);
   });
 });
