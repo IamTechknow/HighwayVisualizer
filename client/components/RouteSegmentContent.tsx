@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import type { IHighways } from '../types/interfaces';
-import type { State, RouteSegment } from '../types/types';
+import type {
+  State, RouteDrawerRouteData, RouteDataCallbackMap, RouteSegment,
+} from '../types/types';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
@@ -9,23 +11,17 @@ const KEY_ENTER = 'Enter', ROUTES_PER_ROW = 8;
 
 interface Props {
   highwayData: IHighways,
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
-  onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
-  onUpdateState: (stateId: number) => void,
-  routeSegments: Array<Array<RouteSegment>>,
-  stateId: number,
-  states: Array<State>,
+  routeData: RouteDrawerRouteData,
+  routeDataCallbackMap: RouteDataCallbackMap,
 }
 
 const RouteSegmentContent = ({
   highwayData,
-  onRouteItemClick,
-  onRouteSegmentItemClick,
-  onUpdateState,
-  routeSegments,
-  stateId,
-  states,
+  routeData,
+  routeDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
+  const { routeSegments, stateId, states } = routeData;
+  const { onRouteItemClick, onRouteSegmentItemClick, onUpdateState } = routeDataCallbackMap;
   const [currRouteSegments, setRouteSegments] =
     useState<Array<RouteSegment>>(routeSegments[0] ?? []);
 

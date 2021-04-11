@@ -34,19 +34,7 @@ const RouteDrawer = ({
   userData,
   userDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
-  const { routeSegments, stateId, states } = routeData;
-  const { onRouteItemClick, onRouteSegmentItemClick, onUpdateState } = routeDataCallbackMap;
-  const {
-    currMode, currUserId, submitData, travelSegments, users,
-  } = userData;
-  const {
-    onClinchToggleFor,
-    onResetTravelSegments,
-    onSendTravelSegments,
-    onSetMode,
-    onUserChange,
-    onUserSubmit,
-  } = userDataCallbackMap;
+  const { routeSegments, stateId } = routeData;
   const [isCollapsed, setCollapsed] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string>('routeSegments');
 
@@ -74,34 +62,21 @@ const RouteDrawer = ({
     >
       <SidebarTab id="users" header="User Settings" icon={<User size={ICON_SIZE} />}>
         <TravelSegmentContent
-          currMode={currMode}
-          currUserId={currUserId}
           highwayData={highwayData}
-          onClinchToggleFor={onClinchToggleFor}
-          onResetTravelSegments={onResetTravelSegments}
-          onSendTravelSegments={onSendTravelSegments}
-          onSetMode={onSetMode}
-          onUserChange={onUserChange}
-          onUserSubmit={onUserSubmit}
-          submitData={submitData}
-          travelSegments={travelSegments}
-          users={users}
+          userData={userData}
+          userDataCallbackMap={userDataCallbackMap}
         />
       </SidebarTab>
       <SidebarTab id="routeSegments" header="Route Segments" icon={<Map size={ICON_SIZE} />}>
         <RouteSegmentContent
           highwayData={highwayData}
-          onRouteItemClick={onRouteItemClick}
-          onRouteSegmentItemClick={onRouteSegmentItemClick}
-          onUpdateState={onUpdateState}
-          routeSegments={routeSegments}
-          stateId={stateId}
-          states={states}
+          routeData={routeData}
+          routeDataCallbackMap={routeDataCallbackMap}
         />
       </SidebarTab>
       <SidebarTab id="search" header="Search" icon={<Search size={ICON_SIZE} />}>
         <SearchResults
-          onRouteItemClick={onRouteItemClick}
+          onRouteItemClick={routeDataCallbackMap.onRouteItemClick}
           routeSegments={routeSegments}
           state={stateId != null ? highwayData.getState(stateId) : null}
         />

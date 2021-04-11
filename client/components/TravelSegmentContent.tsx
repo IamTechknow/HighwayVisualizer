@@ -1,40 +1,35 @@
 import React, { useState } from 'react';
 import type { IHighways } from '../types/interfaces';
-import type { SubmissionData, User as UserType, TravelSegment } from '../types/types';
+import type {
+  RouteDrawerUserData, TravelSegment, UserDataCallbackMap,
+} from '../types/types';
 import { TravelSegmentCreateMode } from '../types/enums';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 import Collapsible from './Collapsible';
 
 interface Props {
-  currMode: number,
-  currUserId: number,
   highwayData: IHighways,
-  onClinchToggleFor: (i: number) => void,
-  onResetTravelSegments: () => void,
-  onSendTravelSegments: () => void,
-  onSetMode: (mode: TravelSegmentCreateMode) => void,
-  onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
-  onUserSubmit: (newUser: string) => void,
-  submitData: SubmissionData | null,
-  travelSegments: Array<TravelSegment>,
-  users: Array<UserType>,
+  userData: RouteDrawerUserData,
+  userDataCallbackMap: UserDataCallbackMap,
 }
 
 const TravelSegmentContent = ({
-  currMode,
-  currUserId,
   highwayData,
-  onClinchToggleFor,
-  onResetTravelSegments,
-  onSendTravelSegments,
-  onSetMode,
-  onUserChange,
-  onUserSubmit,
-  submitData,
-  travelSegments,
-  users,
+  userData,
+  userDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
+  const {
+    currMode, currUserId, submitData, travelSegments, users,
+  } = userData;
+  const {
+    onClinchToggleFor,
+    onResetTravelSegments,
+    onSendTravelSegments,
+    onSetMode,
+    onUserChange,
+    onUserSubmit,
+  } = userDataCallbackMap;
   const [currNameInput, setNameInput] = useState<string>('');
 
   const getIdForTravelSegment = (travelSeg: TravelSegment): string => {

@@ -37,12 +37,16 @@ const mockRouteSegmentContent = (initialStateId: number) => {
   return mount(
     <RouteSegmentContent
       highwayData={highwayData}
-      onRouteItemClick={onRouteItemClick}
-      onRouteSegmentItemClick={onRouteSegmentItemClick}
-      onUpdateState={onUpdateState}
-      routeSegments={segmentDataByRoute}
-      stateId={initialStateId}
-      states={stateData}
+      routeData={{
+        routeSegments: segmentDataByRoute,
+        stateId: initialStateId,
+        states: stateData,
+      }}
+      routeDataCallbackMap={{
+        onRouteItemClick,
+        onRouteSegmentItemClick,
+        onUpdateState,
+      }}
     />,
   );
 };
@@ -88,8 +92,11 @@ describe('RouteSegmentContent component test suite', () => {
       },
     }).update();
     comp.setProps({
-      routeSegments: finalRouteSegments,
-      stateId: finalStateID,
+      routeData: {
+        routeSegments: finalRouteSegments,
+        stateId: finalStateID,
+        states: stateData,
+      },
     }).update();
 
     const updatedSelect = comp.find('select');
