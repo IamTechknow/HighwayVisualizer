@@ -4,9 +4,11 @@ import {
 } from 'react-feather';
 import type { IHighways } from '../types/interfaces';
 import type {
-  State, RouteSegment, SubmissionData, User as UserType, TravelSegment,
+  RouteDataCallbackMap,
+  RouteDrawerRouteData,
+  RouteDrawerUserData,
+  UserDataCallbackMap,
 } from '../types/types';
-import { TravelSegmentCreateMode } from '../types/enums';
 
 import AboutContent from './AboutContent';
 import SearchResults from './SearchResults';
@@ -18,46 +20,33 @@ import TravelSegmentContent from './TravelSegmentContent';
 const ICON_SIZE = 16;
 
 interface Props {
-  currMode: number,
-  currUserId: number,
   highwayData: IHighways,
-  onClinchToggleFor: (i: number) => void,
-  onResetTravelSegments: () => void,
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
-  onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
-  onSendTravelSegments: () => void,
-  onSetMode: (mode: TravelSegmentCreateMode) => void,
-  onUpdateState: (stateId: number) => void,
-  onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
-  onUserSubmit: (newUser: string) => void,
-  routeSegments: Array<Array<RouteSegment>>,
-  stateId: number,
-  states: Array<State>,
-  submitData: SubmissionData | null,
-  travelSegments: Array<TravelSegment>,
-  users: Array<UserType>,
+  routeData: RouteDrawerRouteData,
+  routeDataCallbackMap: RouteDataCallbackMap,
+  userData: RouteDrawerUserData,
+  userDataCallbackMap: UserDataCallbackMap,
 }
 
 const RouteDrawer = ({
-  currMode,
-  currUserId,
   highwayData,
-  onClinchToggleFor,
-  onResetTravelSegments,
-  onRouteItemClick,
-  onRouteSegmentItemClick,
-  onSendTravelSegments,
-  onSetMode,
-  onUpdateState,
-  onUserChange,
-  onUserSubmit,
-  routeSegments,
-  stateId,
-  states,
-  submitData = null,
-  travelSegments,
-  users,
+  routeData,
+  routeDataCallbackMap,
+  userData,
+  userDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
+  const { routeSegments, stateId, states } = routeData;
+  const { onRouteItemClick, onRouteSegmentItemClick, onUpdateState } = routeDataCallbackMap;
+  const {
+    currMode, currUserId, submitData, travelSegments, users,
+  } = userData;
+  const {
+    onClinchToggleFor,
+    onResetTravelSegments,
+    onSendTravelSegments,
+    onSetMode,
+    onUserChange,
+    onUserSubmit,
+  } = userDataCallbackMap;
   const [isCollapsed, setCollapsed] = useState<boolean>(false);
   const [selectedId, setSelectedId] = useState<string>('routeSegments');
 

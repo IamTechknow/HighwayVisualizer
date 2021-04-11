@@ -1,5 +1,5 @@
 import * as Leaflet from 'leaflet';
-import { ReducerActionType, RouteSignType } from './enums';
+import { ReducerActionType, RouteSignType, TravelSegmentCreateMode } from './enums';
 
 export interface PopupCoord extends Leaflet.LatLngLiteral {
   readonly idx: number,
@@ -14,6 +14,26 @@ export interface RootPayload {
 export interface RootState {
   routeState: RouteState,
   routeSegmentState: RouteSegmentState,
+}
+
+export interface RouteDataCallbackMap {
+  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
+  onUpdateState: (stateId: number) => void,
+}
+
+export interface RouteDrawerRouteData {
+  routeSegments: Array<Array<RouteSegment>>,
+  stateId: number,
+  states: Array<State>,
+}
+
+export interface RouteDrawerUserData {
+  currMode: number,
+  currUserId: number,
+  submitData: SubmissionData | null,
+  travelSegments: Array<TravelSegment>,
+  users: Array<User>,
 }
 
 export interface RouteReducerPayload {
@@ -116,6 +136,15 @@ export interface TravelStatsAPIPayload {
 export interface SubmissionData {
   readonly message: string,
   readonly success: boolean,
+}
+
+export interface UserDataCallbackMap {
+  onClinchToggleFor: (i: number) => void,
+  onResetTravelSegments: () => void,
+  onSendTravelSegments: () => void,
+  onSetMode: (mode: TravelSegmentCreateMode) => void,
+  onUserChange: (event: React.ChangeEvent<HTMLSelectElement>) => void,
+  onUserSubmit: (newUser: string) => void,
 }
 
 export interface UserSubmissionData extends SubmissionData {

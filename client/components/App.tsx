@@ -434,24 +434,32 @@ const CreateApp = (): React.ReactElement => {
         )}
       </MapContainer>
       <RouteDrawer
-        currMode={currMode}
-        currUserId={currUserId}
         highwayData={highwayData}
-        onClinchToggleFor={onClinchToggleFor}
-        onResetTravelSegments={onResetTravelSegments}
-        onRouteItemClick={onRouteItemClick}
-        onRouteSegmentItemClick={onRouteSegmentItemClick}
-        onSendTravelSegments={onSendTravelSegments}
-        onSetMode={setCurrMode}
-        onUpdateState={setStateId}
-        onUserChange={onUserChange}
-        onUserSubmit={onUserSubmit}
-        routeSegments={routeSegments}
-        stateId={stateId}
-        states={states}
-        submitData={submitData}
-        travelSegments={travelSegments}
-        users={users}
+        routeData={{
+          routeSegments,
+          stateId,
+          states,
+        }}
+        routeDataCallbackMap={{
+          onRouteItemClick,
+          onRouteSegmentItemClick,
+          onUpdateState: setStateId,
+        }}
+        userData={{
+          currMode,
+          currUserId,
+          submitData,
+          travelSegments,
+          users,
+        }}
+        userDataCallbackMap={{
+          onClinchToggleFor,
+          onResetTravelSegments,
+          onSendTravelSegments,
+          onSetMode: setCurrMode,
+          onUserChange,
+          onUserSubmit,
+        }}
       />
     </div>
   );
