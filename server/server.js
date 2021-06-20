@@ -9,7 +9,7 @@
  * @requires https
  * @requires NPM:morgan
  * @requires path
- * 
+ *
  * @requires /server/middleware.js:highwayvisualizer/middleware
  * @requires /server/routes.js:highwayvisualizer/routes
  * @requires /db/routeEnum.js:highwayvisualizer/routeEnum
@@ -54,6 +54,7 @@ const USER_LENGTH_SPEC = {
  */
 const createServer = (db, redisClient) => {
   let app = express();
+  app.disable('x-powered-by');
   app.use(compression({ threshold: 8192 }));
   app.use(express.static(path.resolve(__dirname, '../public')));
   app.use(express.json());
