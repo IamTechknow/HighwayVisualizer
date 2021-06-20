@@ -18,8 +18,6 @@
 const compression = require('compression');
 const express = require('express');
 const { check } = require('express-validator');
-const fs = require('fs');
-const https = require('https');
 const morgan = require('morgan');
 const path = require('path');
 
@@ -28,7 +26,7 @@ const Routes = require('./routes');
 const TYPE_ENUM = require('../db/routeEnum.js');
 
 /** @constant {number} */
-const PORT = process.env.NODE_ENV === 'production' ? 443 : 80;
+const PORT = 3000;
 /** @constant {object} */
 const ROUTE_NUM_LENGTH_SPEC = {
   min: 1,
@@ -47,8 +45,7 @@ const USER_LENGTH_SPEC = {
 
 /**
  * Create the application server. This allows dependency injection
- * of the DB and redis client for normal use or mocking during tests. Handles SSL certificate
- * depending on environment variables NODE_ENV, CERT_PATH, and KEY_PATH.
+ * of the DB and redis client for normal use or mocking during tests.
  *
  * @memberof module:highwayvisualizer
  * @param {mysql2.Connection} db
@@ -111,15 +108,6 @@ const createServer = (db, redisClient) => {
   );
   app.post('/api/newUser', Routes.newUserAPIRouter(db, redisClient));
   app.post('/api/travel_segments/new', Routes.newTravelSegmentAPIRouter(db, redisClient));
-
-  if (process.env.NODE_ENV === 'production') {
-    const sslOptions = {
-      cert: fs.readFileSync(process.env.CERT_PATH),
-      key: fs.readFileSync(process.env.KEY_PATH),
-    };
-    app = https.createServer(sslOptions, app);
-  }
-
   return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
 };
 

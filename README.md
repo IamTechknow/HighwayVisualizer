@@ -14,7 +14,7 @@ npm run debug
 npm run react
 ```
 
-Now you may go to localhost to access the site!
+Now you may go to localhost:3000 to access the site!
 
 ## Video
 
