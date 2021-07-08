@@ -68,7 +68,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      __API__: JSON.stringify('http://localhost'),
+      __API__: JSON.stringify('http://localhost:3000'),
     }),
   ],
 };

@@ -7,7 +7,7 @@ import UserApp from './components/User';
 
 import 'leaflet/dist/leaflet.css';
 import './app.css';
-import 'leaflet-sidebar-v2/css/leaflet-sidebar.css'
+import 'leaflet-sidebar-v2/css/leaflet-sidebar.css';
 
 ReactDOM.render((
   <BrowserRouter>
