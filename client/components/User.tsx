@@ -5,30 +5,19 @@ import {
 } from 'react-leaflet';
 
 import { RouteComponentProps } from 'react-router';
-import type { UserProps, TravelStatSegment, TravelStatsAPIPayload } from '../types/types';
+import type {
+  UserProps, TravelStatSegment, TravelStatsAPIPayload, TravelStat,
+} from '../types/types';
 
 import APIClient from './APIClient';
 import { stringifyTravelSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
-import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 
 const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement => {
-  const [isCollapsed, setCollapsed] = useState(false);
   const [scale, setScale] = useState(MILES);
-  const [selectedId, setSelectedId] = useState('users');
   const [userTravelStats, setUserTravelStats] = useState<TravelStatsAPIPayload | undefined>();
-
-  const onSidebarToggle = (id: string): void => {
-    if (selectedId === id) {
-      setCollapsed(!isCollapsed);
-    }
-    if (isCollapsed) {
-      setCollapsed(false);
-    }
-    setSelectedId(id);
-  };
 
   const getUnit = (scaleNum: number): string => {
     if (scaleNum === METERS) {
@@ -36,6 +25,49 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
     }
     return scaleNum === KM ? 'km' : 'mi';
   };
+
+  const renderTravelStats = (travelStats: TravelStat[]): JSX.Element => (
+    <div id="tabContent">
+      <h3>{`${match.params.user}'s travel statistics`}</h3>
+
+      <p>Unit conversion</p>
+      <select onChange={(event) => setScale(Number.parseFloat(event.target.value))}>
+        <option value={METERS}>Meters</option>
+        <option value={KM}>Kilometers</option>
+        <option value={MILES}>Miles</option>
+      </select>
+
+      <table>
+        <thead>
+          <tr>
+            <th>State</th>
+            <th>Route</th>
+            <th>Route Segment</th>
+            <th>{`Traveled (${getUnit(scale)})`}</th>
+            <th>{`Total (${getUnit(scale)})`}</th>
+            <th>Percentage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            travelStats.map((stat) => (
+              <tr key={`${stat.state}_${stat.route}_${stat.routeSegment}`}>
+                <td>{stat.state}</td>
+                <td>{stat.route}</td>
+                <td>{stat.routeSegment}</td>
+                <td>{(stat.traveled / scale).toFixed(2)}</td>
+                <td>{(stat.total / scale).toFixed(2)}</td>
+                <td>
+                  {stat.percentage}
+                  %
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+  );
 
   useEffect((): void => {
     APIClient.getTravelStats(match.params.user)
@@ -83,55 +115,16 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
         )}
       </MapContainer>
       <Sidebar
-        id="sidebar"
-        collapsed={isCollapsed}
-        selected={selectedId}
-        onClose={() => setCollapsed(true)}
-        onToggle={(id) => onSidebarToggle(id)}
-      >
-        <SidebarTab id="users" header="Travel Stats" icon={<User size={16} />}>
-          <div id="tabContent">
-            <h3>{`${match.params.user}'s travel statistics`}</h3>
-
-            <p>Unit conversion</p>
-            <select onChange={(event) => setScale(Number.parseFloat(event.target.value))}>
-              <option value={METERS}>Meters</option>
-              <option value={KM}>Kilometers</option>
-              <option value={MILES}>Miles</option>
-            </select>
-
-            <table>
-              <thead>
-                <tr>
-                  <th>State</th>
-                  <th>Route</th>
-                  <th>Route Segment</th>
-                  <th>{`Traveled (${getUnit(scale)})`}</th>
-                  <th>{`Total (${getUnit(scale)})`}</th>
-                  <th>Percentage</th>
-                </tr>
-              </thead>
-              <tbody>
-                {
-                  travelStats.map((stat) => (
-                    <tr key={`${stat.state}_${stat.route}_${stat.routeSegment}`}>
-                      <td>{stat.state}</td>
-                      <td>{stat.route}</td>
-                      <td>{stat.routeSegment}</td>
-                      <td>{(stat.traveled / scale).toFixed(2)}</td>
-                      <td>{(stat.total / scale).toFixed(2)}</td>
-                      <td>
-                        {stat.percentage}
-                        %
-                      </td>
-                    </tr>
-                  ))
-                }
-              </tbody>
-            </table>
-          </div>
-        </SidebarTab>
-      </Sidebar>
+        routes={[
+          {
+            Content: () => renderTravelStats(travelStats),
+            FeatherIcon: () => <User size={16} />,
+            activeHash: '',
+            header: 'Travel Stats',
+            path: '/',
+          },
+        ]}
+      />
     </div>
   );
 };

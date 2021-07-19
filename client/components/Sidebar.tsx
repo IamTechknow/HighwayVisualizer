@@ -1,76 +1,100 @@
-import React from 'react';
-import type { Props as SidebarTabProps } from './SidebarTab';
+import React, { useState } from 'react';
+import {
+  ArrowLeft, Icon,
+} from 'react-feather';
+import {
+  HashRouter, Link, Route, Switch, useLocation,
+} from 'react-router-dom';
 
 interface Props {
-  children: React.ReactElement<SidebarTabProps> | React.ReactElement<SidebarTabProps>[],
-  collapsed?: boolean,
-  id: string,
-  onClose: () => void,
-  onToggle: (tabId: string) => void,
-  position?: string,
-  selected: string,
+  routes: Array<SidebarRoute>,
 }
 
-// Sidebar implementation for latest version of leaflet-sidebar-v2
+export interface SidebarRoute {
+  Content: React.FC,
+  FeatherIcon: Icon,
+  activeHash: string,
+  exact?: boolean,
+  header: string,
+  path: string,
+}
+
+// Sidebar implementation for leaflet-sidebar-v2 with react-router-dom
 // Renders HTML with defined CSS classes, does not use Sidebar JS modules
 const Sidebar = ({
-  children: tabs,
-  collapsed = false,
-  id,
-  onClose,
-  onToggle,
-  position = 'left',
-  selected,
+  routes,
 }: Props): React.ReactElement<Props> => {
-  const _onClose = (e: React.SyntheticEvent): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    onClose();
+  const [isCollapsed, setCollapsed] = useState<boolean>(false);
+  const { hash } = useLocation();
+
+  const _onClose = () => {
+    setCollapsed(true);
   };
 
-  const _onToggle = (e: React.MouseEvent, tabId: string): void => {
-    e.preventDefault();
-    e.stopPropagation();
-    onToggle(tabId);
+  const _onToggle = (activeHash: string) => {
+    if (hash === activeHash) {
+      setCollapsed(!isCollapsed);
+    }
+    if (isCollapsed) {
+      setCollapsed(false);
+    }
   };
 
-  // Use tab props defined in route drawer to render the tab itself
-  const renderTab = (tab: React.ReactElement<SidebarTabProps>): React.ReactNode => {
-    const { icon, id: tabId } = tab.props;
-    const activeText = tabId === selected ? ' active' : '';
-    return (
-      <li className={activeText} key={tabId}>
-        <a href={`#${tabId}`} role="tab" onClick={(e: React.MouseEvent): void => _onToggle(e, tabId)}>
-          {icon}
-        </a>
-      </li>
-    );
-  };
+  const collapsedClass = isCollapsed ? 'collapsed' : '';
 
-  const renderTabContent = (
-    children: React.ReactElement<SidebarTabProps> | React.ReactElement<SidebarTabProps>[],
-  ): React.ReactElement<SidebarTabProps>[] => React.Children.map(children,
-    (e: React.ReactElement<SidebarTabProps>) => React.cloneElement(e, {
-      onClose: _onClose,
-      active: e.props.id === selected,
-    }));
-
-  const positionClass = `leaflet-sidebar-${position}`;
-  const collapsedClass = collapsed ? 'collapsed' : '';
   return (
-    <div
-      id={id}
-      className={`leaflet-sidebar leaflet-touch ${positionClass} ${collapsedClass}`}
-    >
-      <div className="leaflet-sidebar-tabs">
-        <ul role="tablist">
-          {React.Children.map(tabs, renderTab.bind(this))}
-        </ul>
+    <HashRouter hashType="noslash">
+      <div className={`leaflet-sidebar leaflet-touch leaflet-sidebar-left ${collapsedClass}`}>
+        <div className="leaflet-sidebar-tabs">
+          <ul role="tablist">
+            {
+              routes.map(({ FeatherIcon, activeHash, path }) => (
+                <li
+                  className={hash === activeHash ? 'active' : ''}
+                  key={path}
+                  onClick={() => _onToggle(activeHash)}
+                  onKeyDown={() => _onToggle(activeHash)}
+                  role="tab"
+                >
+                  <Link to={path}><FeatherIcon /></Link>
+                </li>
+              ))
+            }
+          </ul>
+        </div>
+        <div className="leaflet-sidebar-content">
+          <Switch>
+            {
+              routes.map(({
+                Content, exact, header, path,
+              }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  exact={exact}
+                >
+                  <div className="leaflet-sidebar-pane active">
+                    <h1 className="leaflet-sidebar-header">
+                      {header}
+                      <div
+                        className="leaflet-sidebar-close leaflet-sidebar-close-offset"
+                        onClick={_onClose}
+                        onKeyDown={_onClose}
+                        role="button"
+                        tabIndex={-1}
+                      >
+                        <ArrowLeft />
+                      </div>
+                    </h1>
+                    <Content />
+                  </div>
+                </Route>
+              ))
+            }
+          </Switch>
+        </div>
       </div>
-      <div className="leaflet-sidebar-content">
-        {renderTabContent(tabs)}
-      </div>
-    </div>
+    </HashRouter>
   );
 };
 
