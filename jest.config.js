@@ -21,4 +21,5 @@ module.exports = {
   "modulePathIgnorePatterns": ["__tests__/utils"],
   "verbose": true,
   "snapshotSerializers": ["enzyme-to-json/serializer"],
+  "testEnvironment": "jsdom",
 };
