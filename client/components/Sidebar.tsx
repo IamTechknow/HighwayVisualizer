@@ -42,11 +42,36 @@ const Sidebar = ({
     }
   };
 
-  const collapsedClass = isCollapsed ? 'collapsed' : '';
+  const _renderTabRoute = (route: SidebarRoute): React.ReactElement<Route> => {
+    const {
+      Content, exact, header, path,
+    } = route;
+    return (
+      <Route key={path} path={path} exact={exact}>
+        <div className="leaflet-sidebar-pane active">
+          <h1 className="leaflet-sidebar-header">
+            {header}
+            <div
+              className="leaflet-sidebar-close leaflet-sidebar-close-offset"
+              onClick={_onClose}
+              onKeyDown={_onClose}
+              role="button"
+              tabIndex={-1}
+            >
+              <ArrowLeft />
+            </div>
+          </h1>
+          <Content />
+        </div>
+      </Route>
+    );
+  };
+
+  const collapsedClass = isCollapsed ? ' collapsed' : '';
 
   return (
     <HashRouter hashType="noslash">
-      <div className={`leaflet-sidebar leaflet-touch leaflet-sidebar-left ${collapsedClass}`}>
+      <div className={`leaflet-sidebar leaflet-touch leaflet-sidebar-left${collapsedClass}`}>
         <div className="leaflet-sidebar-tabs">
           <ul role="tablist">
             {
@@ -69,35 +94,7 @@ const Sidebar = ({
           </ul>
         </div>
         <div className="leaflet-sidebar-content">
-          <Switch>
-            {
-              routes.map(({
-                Content, exact, header, path,
-              }) => (
-                <Route
-                  key={path}
-                  path={path}
-                  exact={exact}
-                >
-                  <div className="leaflet-sidebar-pane active">
-                    <h1 className="leaflet-sidebar-header">
-                      {header}
-                      <div
-                        className="leaflet-sidebar-close leaflet-sidebar-close-offset"
-                        onClick={_onClose}
-                        onKeyDown={_onClose}
-                        role="button"
-                        tabIndex={-1}
-                      >
-                        <ArrowLeft />
-                      </div>
-                    </h1>
-                    <Content />
-                  </div>
-                </Route>
-              ))
-            }
-          </Switch>
+          <Switch>{routes.map(_renderTabRoute)}</Switch>
         </div>
       </div>
     </HashRouter>
