@@ -6,6 +6,8 @@ import {
   HashRouter, Link, Route, Switch, useLocation,
 } from 'react-router-dom';
 
+const KEY_ENTER = 'Enter';
+
 interface Props {
   routes: Array<SidebarRoute>,
 }
@@ -53,7 +55,11 @@ const Sidebar = ({
                   className={hash === activeHash ? 'active' : ''}
                   key={path}
                   onClick={() => _onToggle(activeHash)}
-                  onKeyDown={() => _onToggle(activeHash)}
+                  onKeyDown={(event: React.KeyboardEvent) => {
+                    if (event.key === KEY_ENTER) {
+                      _onToggle(activeHash);
+                    }
+                  }}
                   role="tab"
                 >
                   <Link to={path}><FeatherIcon /></Link>
