@@ -26,15 +26,19 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
     return scaleNum === KM ? 'km' : 'mi';
   };
 
+  const _onSetScale = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setScale(Number.parseFloat(event.target.value));
+  };
+
   const renderTravelStats = (travelStats: TravelStat[]): JSX.Element => (
     <div id="tabContent">
       <h3>{`${match.params.user}'s travel statistics`}</h3>
 
       <p>Unit conversion</p>
-      <select onChange={(event) => setScale(Number.parseFloat(event.target.value))}>
-        <option value={METERS}>Meters</option>
-        <option value={KM}>Kilometers</option>
+      <select value={scale} onChange={_onSetScale}>
         <option value={MILES}>Miles</option>
+        <option value={KM}>Kilometers</option>
+        <option value={METERS}>Meters</option>
       </select>
 
       <table>
