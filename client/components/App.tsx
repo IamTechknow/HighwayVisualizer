@@ -58,12 +58,12 @@ const CreateApp = (): React.ReactElement => {
   } = routeSegmentState;
   const { routeNum, routeType, dir } = routeState;
 
-  const onClinchToggleFor = (i: number): void => {
+  const onClinchToggleFor = (i: number) => {
     highwayData.toggleTravelSegment(i);
     setTravelSegments(highwayData.travelSegments.slice());
   };
 
-  const onUserSubmit = (user: string): void => {
+  const onUserSubmit = (user: string) => {
     if (!user) { // Do not allow '' as a user
       return;
     }
@@ -79,7 +79,7 @@ const CreateApp = (): React.ReactElement => {
       });
   };
 
-  const onSendTravelSegments = (): void => {
+  const onSendTravelSegments = () => {
     APIClient.postTravelSegments(currUserId, highwayData.travelSegments)
       .then((res) => {
         highwayData.clearTravelSegments();
@@ -90,12 +90,12 @@ const CreateApp = (): React.ReactElement => {
       });
   };
 
-  const onResetTravelSegments = (): void => {
+  const onResetTravelSegments = () => {
     highwayData.clearTravelSegments();
     setTravelSegments([]);
   };
 
-  const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: RouteSegment): void => {
+  const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => {
     const {
       id, routeNum: newRouteNum, type: newRouteType, dir: newDir,
     } = segmentOfRoute;
@@ -142,7 +142,7 @@ const CreateApp = (): React.ReactElement => {
     i: number,
     clickedRouteSegmentId: number,
     event: Leaflet.LeafletMouseEvent,
-  ): void => {
+  ) => {
     if (routeSegmentData == null || routeNum == null) {
       return;
     }
@@ -176,7 +176,7 @@ const CreateApp = (): React.ReactElement => {
     }
   };
 
-  const onUserChange = (event: React.ChangeEvent<HTMLSelectElement>): void => {
+  const onUserChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newUserId = Number.parseInt(event.target.value, 10);
     setUserId(newUserId);
   };
@@ -186,7 +186,7 @@ const CreateApp = (): React.ReactElement => {
     newRouteSegmentData: Array<RouteSegmentPolyLine>,
     routeStr: string,
     currType: RouteSignType,
-  ): void => {
+  ) => {
     const firstRouteSegment = newRouteSegmentData[0];
     const [midRouteSegmentId, midPointIdx] = newRouteSegmentData.length > 1
       ? highwayData.getCenterOfRoute(routeStr, currType)
@@ -209,7 +209,7 @@ const CreateApp = (): React.ReactElement => {
     });
   };
 
-  useEffect((): void => {
+  useEffect(() => {
     APIClient.getStates()
       .then((newStates) => {
         if (newStates.length === 0) {
@@ -228,13 +228,13 @@ const CreateApp = (): React.ReactElement => {
   }, []);
 
   // Respond to changes to state ID. Rebuild highway data for the state and change the route
-  useEffect((): void => {
+  useEffect(() => {
     if (stateId == null || stateId === -1) {
       return;
     }
 
     APIClient.getRouteSegments(stateId)
-      .then((rawRouteSegments): void => {
+      .then((rawRouteSegments) => {
         if (!rawRouteSegments || rawRouteSegments.length === 0) {
           return;
         }
@@ -264,7 +264,7 @@ const CreateApp = (): React.ReactElement => {
   }, [stateId]);
 
   // Respond to changes to route. Render the whole route if firstRouteSegmentId is nonnull
-  useEffect((): void => {
+  useEffect(() => {
     if (
       routeNum == null ||
       routeType == null ||
@@ -296,7 +296,7 @@ const CreateApp = (): React.ReactElement => {
   }, [routeState]);
 
   // Respond to changes to segment ID
-  useEffect((): void => {
+  useEffect(() => {
     if (routeSegmentId == null || routeNum == null || dir == null || routeType == null) {
       return;
     }
