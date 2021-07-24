@@ -13,6 +13,14 @@ module.exports = {
     project: './tsconfig.json',
     sourceType: 'module',
   },
+  overrides: [
+    {
+      files: ['**/*.tsx'],
+      rules: {
+        'react/prop-types': 'off',
+      },
+    },
+  ],
   plugins: ['@typescript-eslint'],
   rules: {
     'linebreak-style': 'off',
