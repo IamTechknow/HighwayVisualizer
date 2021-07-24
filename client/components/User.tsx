@@ -12,6 +12,7 @@ import type {
 import APIClient from './APIClient';
 import { stringifyTravelSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
+import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 
@@ -118,17 +119,16 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
           ),
         )}
       </MapContainer>
-      <Sidebar
-        routes={[
-          {
-            Content: () => renderTravelStats(travelStats),
-            FeatherIcon: () => <User size={16} />,
-            activeHash: '',
-            header: 'Travel Stats',
-            path: '/',
-          },
-        ]}
-      />
+      <Sidebar>
+        <SidebarTab
+          activeHash=""
+          header="Travel Stats"
+          icon={<User size={16} />}
+          path="/"
+        >
+          {renderTravelStats(travelStats)}
+        </SidebarTab>
+      </Sidebar>
     </div>
   );
 };
