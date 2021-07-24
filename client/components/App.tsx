@@ -24,6 +24,8 @@ import MapUpdater from './MapUpdater';
 import RouteDrawer from './RouteDrawer';
 import rootReducer from './reducers/rootReducer';
 
+const SEGMENT_WEIGHT = 6;
+
 // TODO: Refactor to reducer and create reducer utils
 const highwayData: IHighways = new Highways();
 
@@ -397,11 +399,16 @@ const CreateApp = (): React.ReactElement => {
               key={`routeSeg-${routeSeg.id}`}
               eventHandlers={createPolyLineEventMap(i, routeSeg.id)}
               positions={routeSeg.points}
+              weight={SEGMENT_WEIGHT}
             />
           ))}
         {concurrencies && concurrencies.map(
           (routeSeg, i: number): React.ReactElement<PolylineProps> => (
-            <Polyline key={`concurrency-${routeSeg.id}-${i}`} positions={routeSeg.points} />
+            <Polyline
+              key={`concurrency-${routeSeg.id}-${i}`}
+              positions={routeSeg.points}
+              weight={SEGMENT_WEIGHT}
+            />
           ),
         )}
         {/* Show unsubmitted user segments if selected route and segment is the same */}
@@ -419,6 +426,7 @@ const CreateApp = (): React.ReactElement => {
                     )
                   }
                   color={travelSeg.clinched ? 'lime' : 'yellow'}
+                  weight={SEGMENT_WEIGHT}
                 />
               ),
           )}

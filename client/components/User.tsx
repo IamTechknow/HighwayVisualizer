@@ -15,6 +15,7 @@ import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
 
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
+const SEGMENT_WEIGHT = 6;
 
 const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement => {
   const [scale, setScale] = useState(MILES);
@@ -115,6 +116,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
               key={stringifyTravelSegment(travelSeg)}
               positions={travelSeg.points ?? []}
               color={travelSeg.clinched ? 'lime' : 'yellow'}
+              weight={SEGMENT_WEIGHT}
             />
           ),
         )}
