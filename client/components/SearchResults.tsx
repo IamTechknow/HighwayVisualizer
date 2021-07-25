@@ -22,9 +22,9 @@ const SearchResults = ({
 
   const [searchResults, setSearchResults] = useState<RouteSegment[]>([]);
   const fullRoutes = useMemo<RouteSegment[]>(
-    (): RouteSegment[] => routeSegments.flat().filter(
-      (routeSeg: RouteSegment) => routeSeg.segNum === 0,
-    ),
+    (): RouteSegment[] => routeSegments.map(
+      (arr: RouteSegment[]) => arr[0],
+    ).flat(),
     [routeSegments],
   );
 
