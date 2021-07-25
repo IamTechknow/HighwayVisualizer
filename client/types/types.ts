@@ -17,12 +17,17 @@ export interface RootState {
 }
 
 export interface RouteDataCallbackMap {
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  onRouteItemClick: (
+    event: React.SyntheticEvent,
+    segmentOfRoute: RouteSegment,
+    newIdx: number
+  ) => void,
   onRouteSegmentItemClick: (event: React.SyntheticEvent, routeSegment: RouteSegment) => void,
   onUpdateState: (stateId: number) => void,
 }
 
 export interface RouteDrawerRouteData {
+  currRouteSegmentsIdx: number,
   routeSegments: Array<Array<RouteSegment>>,
   stateId: number,
   states: Array<State>,
@@ -69,6 +74,7 @@ export interface RouteSegmentPolyLine {
 export interface RouteSegmentReducerPayload {
   type: ReducerActionType | null,
   concurrencies?: Array<RouteSegmentPolyLine>,
+  currRouteSegmentsIdx?: number,
   lat?: number,
   lon?: number,
   popupCoords?: PopupCoord | null,
@@ -80,6 +86,7 @@ export interface RouteSegmentReducerPayload {
 
 export interface RouteSegmentState {
   concurrencies?: Array<RouteSegmentPolyLine>,
+  currRouteSegmentsIdx?: number,
   lat?: number,
   lon?: number,
   popupCoords?: PopupCoord | null,
@@ -87,6 +94,11 @@ export interface RouteSegmentState {
   routeSegmentId?: number | null,
   routeSegments?: Array<Array<RouteSegment>>,
   zoom?: number,
+}
+
+export interface SearchResultData {
+  idx: number,
+  routeSeg: RouteSegment,
 }
 
 export interface State {

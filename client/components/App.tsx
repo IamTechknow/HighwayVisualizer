@@ -32,6 +32,7 @@ const highwayData: IHighways = new Highways();
 const initialRootState: RootState = {
   routeState: {},
   routeSegmentState: {
+    currRouteSegmentsIdx: 0,
     concurrencies: [],
     lat: 0,
     lon: 0,
@@ -56,7 +57,15 @@ const CreateApp = (): React.ReactElement => {
   const [rootState, dispatch] = useReducer(rootReducer, initialRootState);
   const { routeState, routeSegmentState } = rootState;
   const {
-    concurrencies, lat, lon, popupCoords, routeSegmentData, routeSegmentId, routeSegments, zoom,
+    currRouteSegmentsIdx,
+    concurrencies,
+    lat,
+    lon,
+    popupCoords,
+    routeSegmentData,
+    routeSegmentId,
+    routeSegments,
+    zoom,
   } = routeSegmentState;
   const { routeNum, routeType, dir } = routeState;
 
@@ -97,7 +106,11 @@ const CreateApp = (): React.ReactElement => {
     setTravelSegments([]);
   };
 
-  const onRouteItemClick = (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => {
+  const onRouteItemClick = (
+    event: React.SyntheticEvent,
+    segmentOfRoute: RouteSegment,
+    newIdx: number,
+  ) => {
     const {
       id, routeNum: newRouteNum, type: newRouteType, dir: newDir,
     } = segmentOfRoute;
@@ -109,6 +122,10 @@ const CreateApp = (): React.ReactElement => {
         dir: newDir,
         routeNum: newRouteNum,
         routeType: newRouteType,
+      },
+      routeSegmentPayload: {
+        type: ReducerActionType.UPDATE_SELECTED_ROUTE,
+        currRouteSegmentsIdx: newIdx,
       },
     });
     if (currMode === TravelSegmentCreateMode.CLINCH) {
@@ -366,7 +383,8 @@ const CreateApp = (): React.ReactElement => {
     routeType == null ||
     lat == null ||
     lon == null ||
-    zoom == null
+    zoom == null ||
+    currRouteSegmentsIdx == null
   ) {
     return (
       <div>
@@ -444,6 +462,7 @@ const CreateApp = (): React.ReactElement => {
       <RouteDrawer
         highwayData={highwayData}
         routeData={{
+          currRouteSegmentsIdx,
           routeSegments,
           stateId,
           states,

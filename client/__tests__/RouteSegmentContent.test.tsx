@@ -38,6 +38,7 @@ const mockRouteSegmentContent = (initialStateId: number) => {
     <RouteSegmentContent
       highwayData={highwayData}
       routeData={{
+        currRouteSegmentsIdx: 0,
         routeSegments: segmentDataByRoute,
         stateId: initialStateId,
         states: stateData,
@@ -93,6 +94,7 @@ describe('RouteSegmentContent component test suite', () => {
     }).update();
     comp.setProps({
       routeData: {
+        currRouteSegmentsIdx: 0,
         routeSegments: finalRouteSegments,
         stateId: finalStateID,
         states: stateData,

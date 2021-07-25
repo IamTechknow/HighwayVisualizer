@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import type { IHighways } from '../types/interfaces';
 import type {
   State, RouteDrawerRouteData, RouteDataCallbackMap, RouteSegment,
@@ -20,17 +20,19 @@ const RouteSegmentContent = ({
   routeData,
   routeDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
-  const { routeSegments, stateId, states } = routeData;
+  const {
+    currRouteSegmentsIdx, routeSegments, stateId, states,
+  } = routeData;
   const { onRouteItemClick, onRouteSegmentItemClick, onUpdateState } = routeDataCallbackMap;
-  const [currRouteSegments, setRouteSegments] =
-    useState<Array<RouteSegment>>(routeSegments[0] ?? []);
+  const currRouteSegments = routeSegments[currRouteSegmentsIdx];
 
+  // Send idx as well
   const _onRouteItemClick = (
     event: React.SyntheticEvent,
     clickedRouteSegments: Array<RouteSegment>,
+    newIdx: number,
   ): void => {
-    setRouteSegments(clickedRouteSegments);
-    onRouteItemClick(event, clickedRouteSegments[0]);
+    onRouteItemClick(event, clickedRouteSegments[0], newIdx);
   };
 
   const _onStateSelect = (event: React.ChangeEvent<HTMLSelectElement>): void => {
@@ -59,6 +61,8 @@ const RouteSegmentContent = ({
 
   // Give enough space for routes based on # of digits
   const routeMatrix: RouteSegment[][][] = [];
+  // Map 1D coordinate to idx in route segments data model
+  const segmentIdxMap: number[] = [0];
   let segmentIdx = 0;
   while (segmentIdx < routeSegments.length) {
     let routesPerRow = ROUTES_PER_ROW;
@@ -72,6 +76,7 @@ const RouteSegmentContent = ({
     }
     routeMatrix.push(routeSegments.slice(segmentIdx, segmentIdx + routesPerRow));
     segmentIdx += routesPerRow;
+    segmentIdxMap.push(Math.min(segmentIdx));
   }
 
   return (
@@ -88,23 +93,28 @@ const RouteSegmentContent = ({
       <Collapsible title="Routes" open>
         <div className="routeTable">
           {stateId != null ? routeMatrix.map(
-            (routeSubArray: RouteSegment[][], i: number): React.ReactNode => (
-              <span key={`routeSegmentSet-${i}`} className="routeRow">
+            (routeSubArray: RouteSegment[][], r: number): React.ReactNode => (
+              <span key={`routeSegmentSet-${r}`} className="routeRow">
                 {
-                  routeSubArray.map((routeSegmentSet: RouteSegment[]): React.ReactNode => {
+                  routeSubArray.map((routeSegmentSet: RouteSegment[], c): React.ReactNode => {
                     const routeSegment = routeSegmentSet[0];
                     const { dir, routeNum, type } = routeSegment;
+                    const clickedIdx = segmentIdxMap[r] + c;
                     return (
                       <div
                         key={`${routeNum}${dir}_${type}`}
                         className="clickable"
                         onClick={
-                          (event: React.MouseEvent) => _onRouteItemClick(event, routeSegmentSet)
+                          (event: React.MouseEvent) => _onRouteItemClick(
+                            event,
+                            routeSegmentSet,
+                            clickedIdx,
+                          )
                         }
                         onKeyDown={
                           (event: React.KeyboardEvent) => {
                             if (event.key === KEY_ENTER) {
-                              _onRouteItemClick(event, routeSegmentSet);
+                              _onRouteItemClick(event, routeSegmentSet, clickedIdx);
                             }
                           }
                         }

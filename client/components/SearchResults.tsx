@@ -1,12 +1,16 @@
 import React, { useMemo, useState } from 'react';
-import type { RouteSegment, State } from '../types/types';
+import type { RouteSegment, SearchResultData, State } from '../types/types';
 
 import * as HighwayUtils from '../utils/HighwayUtils';
 
 const KEY_ENTER = 'Enter', MAX_RESULTS = 30;
 
 interface Props {
-  onRouteItemClick: (event: React.SyntheticEvent, segmentOfRoute: RouteSegment) => void,
+  onRouteItemClick: (
+    event: React.SyntheticEvent,
+    segmentOfRoute: RouteSegment,
+    newIdx: number,
+  ) => void,
   routeSegments: Array<Array<RouteSegment>>,
   state: State | null,
 }
@@ -20,7 +24,7 @@ const SearchResults = ({
     return <h3>Loading...</h3>;
   }
 
-  const [searchResults, setSearchResults] = useState<RouteSegment[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResultData[]>([]);
   const fullRoutes = useMemo<RouteSegment[]>(
     (): RouteSegment[] => routeSegments.map(
       (arr: RouteSegment[]) => arr[0],
@@ -37,15 +41,18 @@ const SearchResults = ({
     const dashSplit = query.split('-');
     const queries = dashSplit.length > 1 ? dashSplit : query.split(' ');
     const routeNum = queries.length > 0 ? queries[queries.length - 1] : null;
-    let filteredRouteSegments = fullRoutes;
+    const searchData = fullRoutes.map(
+      (routeSeg: RouteSegment, i: number): SearchResultData => ({ idx: i, routeSeg }),
+    );
+    let filteredRouteSegments = searchData;
     if (queries.length > 1) {
       const highwayType = HighwayUtils.getType(queries[0]);
-      filteredRouteSegments = fullRoutes.filter(
-        (routeSeg: RouteSegment) => routeSeg.type === highwayType,
+      filteredRouteSegments = searchData.filter(
+        ({ routeSeg }) => routeSeg.type === highwayType,
       );
     }
     const results = filteredRouteSegments.filter(
-      (routeSeg: RouteSegment) => routeNum != null && routeSeg.routeNum.indexOf(routeNum) >= 0,
+      ({ routeSeg }) => routeNum != null && routeSeg.routeNum.indexOf(routeNum) >= 0,
     );
     setSearchResults(results.slice(0, MAX_RESULTS));
   };
@@ -78,21 +85,21 @@ const SearchResults = ({
           : (
             <ul>
               {
-                searchResults.map((firstRouteSeg: RouteSegment): React.ReactNode => (
+                searchResults.map(({ idx, routeSeg }: SearchResultData): React.ReactNode => (
                   <li
-                    key={firstRouteSeg.id}
+                    key={routeSeg.id}
                     className="clickable"
                     onClick={
-                      (event: React.MouseEvent): void => onRouteItemClick(event, firstRouteSeg)
+                      (event: React.MouseEvent): void => onRouteItemClick(event, routeSeg, idx)
                     }
                     onKeyDown={(event: React.KeyboardEvent): void => {
                       if (event.key === KEY_ENTER) {
-                        onRouteItemClick(event, firstRouteSeg);
+                        onRouteItemClick(event, routeSeg, idx);
                       }
                     }}
                     role="presentation"
                   >
-                    {HighwayUtils.getRouteName(firstRouteSeg, state.identifier)}
+                    {HighwayUtils.getRouteName(routeSeg, state.identifier)}
                   </li>
                 ))
               }

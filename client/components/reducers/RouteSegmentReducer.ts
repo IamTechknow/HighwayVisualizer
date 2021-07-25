@@ -11,6 +11,7 @@ export default (
       return {
         ...routeSegmentState,
         concurrencies: [],
+        currRouteSegmentsIdx: 0,
         popupCoords: null,
         routeSegmentData: [],
         routeSegmentId: null,
@@ -40,6 +41,11 @@ export default (
       return {
         ...routeSegmentState,
         popupCoords: payload.popupCoords,
+      };
+    case ReducerActionType.UPDATE_SELECTED_ROUTE:
+      return {
+        ...routeSegmentState,
+        currRouteSegmentsIdx: payload.currRouteSegmentsIdx,
       };
     default:
       return routeSegmentState;

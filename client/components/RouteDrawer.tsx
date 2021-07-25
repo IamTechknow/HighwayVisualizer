@@ -27,8 +27,6 @@ interface Props {
   userDataCallbackMap: UserDataCallbackMap,
 }
 
-// FIXME: Here, revert back to using sidebar tabs and passing content into children.
-// If that doesn't work with React router, rollback!
 const RouteDrawer = ({
   highwayData,
   routeData,
@@ -36,7 +34,7 @@ const RouteDrawer = ({
   userData,
   userDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
-  const { routeSegments, stateId } = routeData;
+  const { currRouteSegmentsIdx, routeSegments, stateId } = routeData;
   return (
     <Sidebar>
       <SidebarTab
