@@ -30,6 +30,4 @@ const seedData = (db) => shapefile.read(CA_DATA, CA_DB)
     return caltransFeatureParser(db, progressEmitter, collection.features, 'California', 'CA');
   });
 
-// Check if the database is empty before populating it with mock data.
-// Remember that the results will be a 2D array, first element has actual results
 module.exports = seedData;

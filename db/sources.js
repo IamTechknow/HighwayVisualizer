@@ -41,6 +41,11 @@ const fhwaArcgisServers = STATES.reduce(
   (accum, state) => { return {...accum, [state]: `https://geo.dot.gov/server/rest/services/Hosted/${state}_2018_PR/FeatureServer`}; }, {}
 );
 
+/** @constant {object} */
+const fhwaArcgisServers2019 = STATES.reduce(
+  (accum, state) => { return {...accum, [state]: `https://geo.dot.gov/server/rest/services/Hosted/HPMS_Full_${state}_2019/FeatureServer`}; }, {}
+);
+
 /**
  * Provides curated URLs for the requested US state identifier and source type.
  *
@@ -49,16 +54,22 @@ const fhwaArcgisServers = STATES.reduce(
  *
  * @param {number} sourceType - An enum value from the sourceEnum.
  * @param {string} stateIdentifier - One of the fifty US State names.
+ * @param {number} year - May currently be 2018 or 2019 for FHWA ArcGIS servers.
  * @return {string[]} Returns an array with URLs for the state, or an empty array
  *         for an unknown state or if no sources are available for the given type.
  */
-const getDataSourcesForState = (sourceType, stateIdentifier) => {
+const getDataSourcesForState = (sourceType, stateIdentifier, year = 2019) => {
   if (sourceType === SOURCE_ENUM.SHAPEFILE) {
     return [fhwaShapefileURLs[stateIdentifier]].concat(shapefileURLs[stateIdentifier] || []);
   }
   if (sourceType === SOURCE_ENUM.ARCGIS_FEATURE_SERVER) {
-    return [fhwaArcgisServers[stateIdentifier]]
-      .concat(otherArcgisServerURLs[stateIdentifier] || []);
+    if (year !== 2018 && year !== 2019) {
+       throw new Error('Only 2018 and 2019 are supported for FHWA ArcGIS servers');
+    }
+    const fhwaServers = year === 2019
+      ? [fhwaArcgisServers2019[stateIdentifier]]
+      : [fhwaArcgisServers[stateIdentifier]];
+    return fhwaServers.concat(otherArcgisServerURLs[stateIdentifier] || []);
   }
   throw new Error('Invalid data source type for ' + stateIdentifier);
 };

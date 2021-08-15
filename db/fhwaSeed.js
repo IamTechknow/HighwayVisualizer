@@ -49,14 +49,14 @@ const seedData = async (db, args) => {
       .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials))
       .catch(err => console.error(err));
   }
-  return getDataFromFeatureServer(db, stateIdentifier)
+  return getDataFromFeatureServer(db, stateIdentifier, year)
     .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials, false))
     .catch(err => console.error(err));
 };
 
-const getDataFromFeatureServer = async (db, stateIdentifier) => {
+const getDataFromFeatureServer = async (db, stateIdentifier, year = 2019) => {
   console.log(`Getting 2018 feature data for ${stateIdentifier}...`);
-  const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateIdentifier)[0];
+  const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateIdentifier, year)[0];
   const layers = await ArcGISClient.queryLayers(serverURL);
   if (!layers || layers.length < 1) {
     return {
