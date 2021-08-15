@@ -19,6 +19,18 @@ const queryLayers = (serviceURL) => fetch(serviceURL + '/layers?f=json')
   .then(root => root.layers);
 
 /**
+ * Calculates the bbox GeoJSON field for a given ArcGIS layer.
+ * EPSG 3857 and 4326 are supported. If the extent data is given in EPSG 3857, it will be converted
+ * to EPSG 4326.
+ *
+ * @param {string} serviceURL - The ArcGIS feature server URL.
+ * @param {number} layerId - The integer ID of a layer starting at zero.
+ * @return {Promise} Returns a Promise that resolves with a 4-tuple array bbox value.
+ */
+const getLayerBBox = (serviceURL, layerId) => queryLayers(serviceURL)
+  .then(layerArray => getBoundingBoxForLayer(layerArray[layerId].extent));
+
+/**
  * Retrieves the layer's fields in an ArcGIS feature server.
  * @param {string} serviceURL - The ArcGIS feature server URL.
  * @param {number} layerId - The integer ID of a layer starting at zero.
@@ -68,11 +80,22 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
  *        as the ArcGIS feature server version must be 10.4 and up.
  * @param {number} geometryPrecision - Decimal precision for coordinate values.
  *        Defaults to 7 digits for balanced accuracy and output size.
+ * @param {number[]} bbox - A 4-tuple representing the bbox value for the GeoJSON feature collection
+ *        from a call to getLayerBBox().
  * @return {Promise} Returns a Promise that resolves with a GeoJSON feature collection object
  *         that contains all features represented by the ids array parameter.
  *         If any errors were encountered from a GeoJSON chunk, the error field will be non-null.
+ *         The bbox field is optional.
  */
-const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', requestGeoJSON = false, geometryPrecision = 7) => {
+const queryLayerFeaturesWithIDs = (
+  serviceURL,
+  layerId,
+  ids,
+  outFields = '*',
+  requestGeoJSON = false,
+  geometryPrecision = 7,
+  bbox = null,
+) => {
   const idSubsets = [];
   for (let i = 0; i < ids.length; i += 100) {
     idSubsets.push(
@@ -97,6 +120,7 @@ const queryLayerFeaturesWithIDs = (serviceURL, layerId, ids, outFields = '*', re
     const allFeatures = chunks.filter(chunk => chunk.features)
       .reduce((accum, chunk) => accum.concat(chunk.features), []);
     return {
+      bbox,
       error: anyErrors.length > 0 ? anyErrors[0].error : null,
       features: allFeatures,
       type: 'FeatureCollection',
@@ -197,8 +221,31 @@ const validateFilter = (field, op, value, esriType) => {
   }
 };
 
+const getBoundingBoxForLayer = (extentObj) => {
+  const {xmin, ymin, xmax, ymax, spatialReference} = extentObj;
+  const epsg = spatialReference.latestWkid;
+  if (epsg !== 3857 && epsg !== 4326) {
+    throw Error('Only EPSG 3857 and 4326 are supported for calculating the bbox');
+  }
+  if (epsg === 4326) {
+    return [xmin, ymin, xmax, ymax];
+  }
+  return [...convertFromEPSG3857To4326(xmin, ymin), ...convertFromEPSG3857To4326(xmax, ymax)];
+};
+
+// Converts from x, y to lng, lat
+// Source to convert from EPSG 3857 to 4326: https://gist.github.com/onderaltintas/6649521
+const convertFromEPSG3857To4326(x, y) {
+  const MAX_EXTENT = 20037508.34;
+  return [
+    x * 180 / MAX_EXTENT,
+    Math.atan(Math.exp(y * Math.PI / MAX_EXTENT)) * 360 / Math.PI - 90,
+  ];
+};
+
 /** @module ArcGISClient */
 module.exports = {
+  getLayerBBox,
   queryLayers,
   queryLayerFields,
   queryLayerFeatureIDs,
