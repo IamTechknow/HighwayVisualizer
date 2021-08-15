@@ -59,6 +59,7 @@ const CreateApp = (): React.ReactElement => {
   const {
     currRouteSegmentsIdx,
     concurrencies,
+    boundingBox,
     lat,
     lon,
     popupCoords,
@@ -259,8 +260,14 @@ const CreateApp = (): React.ReactElement => {
         }
         highwayData.buildStateSegmentsData(rawRouteSegments);
         const {
-          id, dir: firstRouteDir, type: firstRouteType, routeNum: firstRouteNum,
+          dir: firstRouteDir, type: firstRouteType, routeNum: firstRouteNum,
         } = rawRouteSegments[0];
+        dispatch({
+          routeSegmentPayload: {
+            type: ReducerActionType.UPDATE_MAP_BOUNDS,
+            boundingBox: highwayData.getState(stateId).boundingBox,
+          },
+        });
         dispatch({
           routeSegmentPayload: {
             type: ReducerActionType.UPDATE_STATE,
@@ -273,10 +280,6 @@ const CreateApp = (): React.ReactElement => {
             dir: firstRouteDir,
             routeNum: firstRouteNum,
             routeType: firstRouteType,
-          },
-          routeSegmentPayload: {
-            type: ReducerActionType.UPDATE_ROUTE_SEGMENT_ID,
-            routeSegmentId: id,
           },
         });
       });
@@ -377,7 +380,6 @@ const CreateApp = (): React.ReactElement => {
   if (
     routeSegments == null ||
     routeSegmentData == null ||
-    routeSegmentId == null ||
     routeNum == null ||
     dir == null ||
     routeType == null ||
@@ -406,7 +408,7 @@ const CreateApp = (): React.ReactElement => {
         className="mapStyle"
         zoomControl={false}
       >
-        <MapUpdater center={[lat, lon]} zoom={zoom} />
+        <MapUpdater bounds={boundingBox} center={[lat, lon]} zoom={zoom} />
         <TileLayer
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"

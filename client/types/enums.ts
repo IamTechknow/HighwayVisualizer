@@ -12,6 +12,7 @@ export enum TravelSegmentCreateMode {
 
 export enum ReducerActionType {
   UPDATE_CONCURRENCIES,
+  UPDATE_MAP_BOUNDS,
   UPDATE_POPUP,
   UPDATE_ROUTE_INFO,
   UPDATE_ROUTE_SHOW,

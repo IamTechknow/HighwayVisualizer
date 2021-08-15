@@ -34,7 +34,19 @@ const userPageRouter = (_req, res) => res.sendFile(path.join(__dirname, '../publ
  */
 const statesAPIRouter = (db, redisClient) => {
   return (req, res) => Models.getStates(db)
-    .then((result) => _sendOkJSON(redisClient, result, req, res))
+    .then((result) => {
+      const apiResults = result.map(record => {
+        const { id, title, identifier, initials, latMin, lonMin, latMax, lonMax } = record;
+        return {
+          id,
+          title,
+          identifier,
+          initials,
+          boundingBox: [[latMin, lonMin], [latMax, lonMax]],
+        };
+      });
+      _sendOkJSON(redisClient, apiResults, req, res);
+    })
     .catch((err) => _catchError(err, res));
 };
 

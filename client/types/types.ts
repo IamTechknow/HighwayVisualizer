@@ -73,6 +73,7 @@ export interface RouteSegmentPolyLine {
 
 export interface RouteSegmentReducerPayload {
   type: ReducerActionType | null,
+  boundingBox?: Leaflet.BoundsLiteral,
   concurrencies?: Array<RouteSegmentPolyLine>,
   currRouteSegmentsIdx?: number,
   lat?: number,
@@ -85,6 +86,7 @@ export interface RouteSegmentReducerPayload {
 }
 
 export interface RouteSegmentState {
+  boundingBox?: Leaflet.BoundsLiteral | null,
   concurrencies?: Array<RouteSegmentPolyLine>,
   currRouteSegmentsIdx?: number,
   lat?: number,
@@ -106,6 +108,7 @@ export interface State {
   readonly identifier: string,
   readonly title: string,
   readonly initials: string,
+  readonly boundingBox: Leaflet.BoundsLiteral
 }
 
 export interface User {

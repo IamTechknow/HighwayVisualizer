@@ -20,6 +20,7 @@ export default (
     case ReducerActionType.UPDATE_ROUTE_SEGMENT:
       return {
         ...routeSegmentState,
+        boundingBox: null,
         concurrencies: [],
         lat: payload.lat,
         lon: payload.lon,
@@ -46,6 +47,11 @@ export default (
       return {
         ...routeSegmentState,
         currRouteSegmentsIdx: payload.currRouteSegmentsIdx,
+      };
+    case ReducerActionType.UPDATE_MAP_BOUNDS:
+      return {
+        ...routeSegmentState,
+        boundingBox: payload.boundingBox,
       };
     default:
       return routeSegmentState;
