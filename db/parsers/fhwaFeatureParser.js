@@ -142,13 +142,14 @@ const getPropertyFields = (properties, fieldNames) => {
  * @param {string} stateIdentifier - The FHWA identifier of the US state the features belong to.
  * @param {string} stateTitle - The name of the US state the features belong to.
  * @param {string} stateInitials - The state's initials.
+ * @param {number[]} bbox - The bounding box GeoJSON value.
  * @param {boolean} isShapefileData - Whether the features was processed from a shapefile.
  */
-const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, stateInitials, isShapefileData = true) => {
+const seedFeatures = async (db, emitter, features, stateIdentifier, stateTitle, stateInitials, bbox, isShapefileData = true) => {
   await db.startTransaction();
   let stateID = await db.query(
-    'INSERT INTO states (identifier, title, initials) VALUES (?, ?, ?);',
-    [stateIdentifier, stateTitle, stateInitials],
+    'INSERT INTO states (identifier, title, initials, lonMin, latMin, lonMax, latMax) VALUES (?, ?, ?, ?, ?, ?, ?);',
+    [stateIdentifier, stateTitle, stateInitials, ...bbox],
   ).then(res => res[0].insertId);
   let allData = {
     [TYPE_ENUM.INTERSTATE]: {},

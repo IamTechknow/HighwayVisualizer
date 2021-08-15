@@ -31,7 +31,9 @@ const seedData = async (db, args) => {
   const [stateIdentifier, stateTitle, stateInitials, year] = args.slice(2);
   if (args.length !== 6) {
     return getDataFromFeatureServer(db, stateIdentifier)
-      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials, false))
+      .then(({bbox, features}) => fhwaFeatureParser(
+        db, progressEmitter, features, stateIdentifier, stateTitle, stateInitials, bbox, false,
+      ))
       .catch(err => console.error(err));
   }
 
@@ -46,15 +48,19 @@ const seedData = async (db, args) => {
   if (filesExist) {
     console.log(`Seeding database with shapefile...`);
     return shapefile.read(fileBuffers[0], fileBuffers[1])
-      .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials))
+      .then(({bbox, features}) => fhwaFeatureParser(
+        db, progressEmitter, features, stateIdentifier, stateTitle, stateInitials, bbox,
+      ))
       .catch(err => console.error(err));
   }
   return getDataFromFeatureServer(db, stateIdentifier, year)
-    .then(collection => fhwaFeatureParser(db, progressEmitter, collection.features, stateIdentifier, stateTitle, stateInitials, false))
+    .then(({bbox, features}) => fhwaFeatureParser(
+      db, progressEmitter, features, stateIdentifier, stateTitle, stateInitials, bbox, false,
+    ))
     .catch(err => console.error(err));
 };
 
-const getDataFromFeatureServer = async (db, stateIdentifier, year = 2019) => {
+const getDataFromFeatureServer = async (db, stateIdentifier, year = '2019') => {
   console.log(`Getting 2018 feature data for ${stateIdentifier}...`);
   const serverURL = getDataSourcesForState(SOURCE_ENUM.ARCGIS_FEATURE_SERVER, stateIdentifier, year)[0];
   const layers = await ArcGISClient.queryLayers(serverURL);
@@ -100,6 +106,7 @@ const getDataFromFeatureServer = async (db, stateIdentifier, year = 2019) => {
   ];
   const conjunctions = ['(', 'OR', 'OR', ')', 'AND', 'AND'];
   const ids = await ArcGISClient.queryLayerFeatureIDs(serverURL, 0, whereClauses, conjunctions);
+  const bbox = await ArcGISClient.getLayerBBox(serverURL, 0);
   // Use field name not alias
   const outFields = [
     'begin_point',
@@ -111,7 +118,7 @@ const getDataFromFeatureServer = async (db, stateIdentifier, year = 2019) => {
     'route_name',
     'route_signing',
   ].join();
-  return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true);
+  return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true, 7, bbox);
 };
 
 if (process.argv.length < 5) {

@@ -235,7 +235,7 @@ const getBoundingBoxForLayer = (extentObj) => {
 
 // Converts from x, y to lng, lat
 // Source to convert from EPSG 3857 to 4326: https://gist.github.com/onderaltintas/6649521
-const convertFromEPSG3857To4326(x, y) {
+const convertFromEPSG3857To4326 = (x, y) => {
   const MAX_EXTENT = 20037508.34;
   return [
     x * 180 / MAX_EXTENT,

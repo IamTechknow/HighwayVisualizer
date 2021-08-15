@@ -24,10 +24,11 @@ progressEmitter.on(FOUND_MULTI_EVENT, (numFeaturesInMulti) => {
 progressEmitter.on(FEATURES_DONE_EVENT, () => progressBar.stop());
 
 const seedData = (db) => shapefile.read(CA_DATA, CA_DB)
-  .then(collection => {
-    totalFeatures = collection.features.length;
-    progressBar.start(collection.features.length, 0);
-    return caltransFeatureParser(db, progressEmitter, collection.features, 'California', 'CA');
+  .then(geoJSON => {
+    const {bbox, features} = geoJSON;
+    totalFeatures = features.length;
+    progressBar.start(features.length, 0);
+    return caltransFeatureParser(db, progressEmitter, features, 'California', 'CA', bbox);
   });
 
 module.exports = seedData;

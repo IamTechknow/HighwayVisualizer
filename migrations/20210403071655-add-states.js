@@ -36,6 +36,22 @@ exports.up = function (db) {
       notNull: true,
       type: 'char',
     },
+    latMax: {
+      notNull: true,
+      type: 'double',
+    },
+    latMin: {
+      notNull: true,
+      type: 'double',
+    },
+    lonMax: {
+      notNull: true,
+      type: 'double',
+    },
+    lonMin: {
+      notNull: true,
+      type: 'double',
+    },
   });
 };
 
