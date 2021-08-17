@@ -161,20 +161,22 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
     }
   });
 
-  // Combine conjunctions with clauses. Right parenthesis need to be treated differently
+  // Combine parenthesises with clauses, then combine conjunctions with clauses.
   const clauses = whereFilters.map((filterObj) => {
-    const {field, op, value, esriType} = filterObj;
+    const { field, op, value, esriType } = filterObj;
     validateFilter(field, op, value, esriType);
     return `${field} ${op} ${value}`;
   });
-  let rightParensSeen = 0;
   for (let i = 0; i < conjunctions.length; i += 1) {
-    if (conjunctions[i] === ')') {
-      rightParensSeen += 1;
-      clauses[i - rightParensSeen] = `${clauses[i - rightParensSeen]} ${conjunctions[i]}`;
-    } else {
-      clauses[i - rightParensSeen] = `${conjunctions[i]} ${clauses[i - rightParensSeen]}`;
+    if (conjunctions[i] === '(') {
+      clauses[i] = `${conjunctions[i]} ${clauses[i]}`;
+    } else if (conjunctions[i] === ')') {
+      clauses[i - 1] = `${clauses[i - 1]} ${conjunctions[i]}`;
     }
+  }
+  const nonParens = conjunctions.filter(str => str !== '(' && str !== ')');
+  for (let i = 0; i < nonParens.length; i += 1) {
+    clauses[i] = `${clauses[i]} ${nonParens[i]}`;
   }
   return clauses.join(' ');
 };
@@ -186,7 +188,7 @@ const validateFilter = (field, op, value, esriType) => {
   switch (op) {
     case 'IN':
     case 'NOT_IN':
-      if(value[0] !== '(' || value[value.length - 1] !== ')') {
+      if (value[0] !== '(' || value[value.length - 1] !== ')') {
         throw Error('Value for IN or NOT_IN operator not a set');
       }
       if (value === '()') {
@@ -203,7 +205,7 @@ const validateFilter = (field, op, value, esriType) => {
     default:
       throw Error(`${op} is not a valid operator`);
   }
-  if (field == null || typeof field !== 'string' || field.length === 0 ) {
+  if (field == null || typeof field !== 'string' || field.length === 0) {
     throw Error('Field cannot be undefined, null, empty, or not a string');
   }
   if (value == null || typeof value !== 'string' || value.length === 0) {
@@ -222,7 +224,7 @@ const validateFilter = (field, op, value, esriType) => {
 };
 
 const getBoundingBoxForLayer = (extentObj) => {
-  const {xmin, ymin, xmax, ymax, spatialReference} = extentObj;
+  const { xmin, ymin, xmax, ymax, spatialReference } = extentObj;
   const epsg = spatialReference.latestWkid;
   if (epsg !== 3857 && epsg !== 4326) {
     throw Error('Only EPSG 3857 and 4326 are supported for calculating the bbox');
