@@ -83,8 +83,53 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '
       type: 'FeatureCollection',
     };
   }
+  const ids = await ArcGISClient.queryLayerFeatureIDs(
+    serverURL,
+    0,
+    getFiltersForState(stateIdentifier, stateInitials, year),
+    getConjunctionsForState(stateIdentifier, stateInitials, year),
+  );
+  const bbox = await ArcGISClient.getLayerBBox(serverURL, 0);
+  // Use field name not alias
+  const outFields = [
+    'begin_point',
+    'f_system',
+    'facility_type',
+    'state_code',
+    'route_id',
+    'route_number',
+    'route_name',
+    'route_signing',
+  ].join();
+  return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true, 7, bbox);
+};
 
-  const whereClauses = [
+const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
+  if (stateInitials === 'AK' && year === '2019') {
+    return [
+      {
+        field: 'ROUTE_SIGNING',
+        op: '=',
+        value: `${TYPE_ENUM.NOT_SIGNED}`,
+        esriType: 'esriFieldTypeInteger',
+      },
+      {
+        field: 'ROUTE_NUMBER',
+        op: 'IS NOT',
+        value: 'null',
+        esriType: 'esriFieldTypeInteger',
+      },
+      {
+        field: 'FACILITY_TYPE',
+        op: 'IS NOT',
+        value: 'null',
+        esriType: 'esriFieldTypeInteger',
+      },
+    ];
+  }
+
+  // Default case for FHWA ArcGIS servers
+  return [
     {
       field: 'ROUTE_SIGNING',
       op: '=',
@@ -116,21 +161,14 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '
       esriType: 'esriFieldTypeInteger',
     },
   ];
-  const conjunctions = ['(', 'OR', 'OR', ')', 'AND', 'AND'];
-  const ids = await ArcGISClient.queryLayerFeatureIDs(serverURL, 0, whereClauses, conjunctions);
-  const bbox = await ArcGISClient.getLayerBBox(serverURL, 0);
-  // Use field name not alias
-  const outFields = [
-    'begin_point',
-    'f_system',
-    'facility_type',
-    'state_code',
-    'route_id',
-    'route_number',
-    'route_name',
-    'route_signing',
-  ].join();
-  return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true, 7, bbox);
+};
+
+const getConjunctionsForState = (_stateIdentifier, stateInitials, year) => {
+  if (stateInitials === 'AK' && year === '2019') {
+    return ['AND', 'AND'];
+  }
+  // Default case for FHWA ArcGIS servers
+  return ['(', 'OR', 'OR', ')', 'AND', 'AND'];
 };
 
 if (process.argv.length < 5) {

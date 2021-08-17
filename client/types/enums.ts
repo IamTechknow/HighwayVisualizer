@@ -1,5 +1,6 @@
 // Route sign types defined in FHWA HPMS manual
 export enum RouteSignType {
+  NOT_SIGNED = 1,
   INTERSTATE = 2,
   US_HIGHWAY = 3,
   STATE = 4,

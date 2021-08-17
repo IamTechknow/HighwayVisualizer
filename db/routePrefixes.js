@@ -10,6 +10,10 @@
 const TYPE_ENUM = require('./routeEnum.js');
 
 /** @constant {object} */
+const Alaska = {};
+['1', '2', '3', '4'].forEach(ele => { Alaska[ele] = TYPE_ENUM.INTERSTATE; });
+
+/** @constant {object} */
 const California = {};
 ['5', '8', '10', '15', '40', '80', '105', '110', '205', '210', '215', '238', '280', '380', '405',
 '505', '580', '605', '680', '710', '780', '805', '880', '980'].forEach(ele => { California[ele] = TYPE_ENUM.INTERSTATE; });
@@ -36,6 +40,7 @@ const Nevada = {};
 
 /** @module routePrefixes */
 module.exports = {
+  Alaska,
   California,
   District,
   Hawaii,
