@@ -10,9 +10,6 @@
  */
 const Utils = require('./Utils.js');
 
-// Module level caches
-const stateCache = {};
-
 /** Static methods for database interactions */
 class Models {
   /**
@@ -306,22 +303,18 @@ class Models {
     let stats = [];
 
     for (let travelSeg of travelSegments) {
+      const routeSegment = await db.execute('SELECT * FROM segments WHERE id = ?', [travelSeg.routeSegmentId]).then((result) => result[0][0]);
+      const { len_m, state_key, route_num, segment_num } = routeSegment;
+      const state = await db.execute('SELECT * FROM states WHERE id = ?', [state_key]).then((result) => result[0][0].initials);
+      let total = len_m;
       let metersTraveled = Utils.calcSegmentDistance(travelSeg.points);
-      let routeSegment = await db.execute('SELECT * FROM segments WHERE id = ?', [travelSeg.routeSegmentId]).then((result) => result[0][0]);
-      let total = routeSegment.len_m;
-
-      const stateKey = routeSegment.state_key;
-      if (!stateCache[stateKey]) {
-        stateCache[stateKey] = await db.execute('SELECT * FROM states WHERE id = ?', [stateKey]).then((result) => result[0][0].initials);
-      }
-      const state = stateCache[stateKey];
 
       // Truncate to two decimal points
       metersTraveled = ~~(metersTraveled * 100) / 100;
       total = ~~(total * 100) / 100;
       const percentage = ~~((metersTraveled / total) * 10000) / 100
 
-      stats.push({ state, route: routeSegment.route_num, routeSegment: routeSegment.segment_num + 1, traveled: metersTraveled, total, percentage });
+      stats.push({ state, route: route_num, routeSegment: segment_num + 1, traveled: metersTraveled, total, percentage });
     }
 
     return stats;
