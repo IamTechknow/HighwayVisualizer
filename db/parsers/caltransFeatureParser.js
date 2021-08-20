@@ -49,26 +49,20 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
     const routeNum = properties.ROUTE;
     const dir = properties.DIR;
     const type = routePrefixes['California'][routeNum] || TYPE_ENUM.STATE;
-    const insertStatement = 'INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?);';
-    // The curve is either in a single array or multiple arrays
-    if (geometry.type !== 'LineString') {
+    if (geometry.type === 'MultiLineString') {
       const numFeatures = geometry.coordinates.length;
       emitter.emit(FOUND_MULTI_EVENT, numFeatures);
       for (let i = 0; i < numFeatures; i += 1) {
-        const len = geometry.coordinates[i].length;
-        const queryArgs = [routeNum, type, i, dir, stateID, len, basePointID];
-        const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-        await Utils.insertSegment(db, routeSegmentID, geometry.coordinates[i]);
+        basePointID += await Utils.insertSegment(
+          db, geometry.coordinates[i], routeNum, type, dir, stateID, basePointID, i,
+        );
         emitter.emit(INSERTED_FEATURE_EVENT);
-        basePointID += len;
       }
     } else {
-      const len = geometry.coordinates.length;
-      const queryArgs = [routeNum, type, 0, dir, stateID, len, basePointID];
-      const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-      await Utils.insertSegment(db, routeSegmentID, geometry.coordinates);
+      basePointID += await Utils.insertSegment(
+        db, geometry.coordinates, routeNum, type, dir, stateID, basePointID,
+      );
       emitter.emit(INSERTED_FEATURE_EVENT);
-      basePointID += len;
     }
   }
   emitter.emit(FEATURES_DONE_EVENT);

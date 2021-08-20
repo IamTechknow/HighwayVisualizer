@@ -242,16 +242,15 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
       });
 
       const { dir } = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
-      const routeNum = `${route}`, oppositeDir = dir === 'E' ? 'W' : 'S';
+      const oppositeDir = dir === 'E' ? 'W' : 'S';
       for (let i = 0; i < finalArray.length; i += 1) {
         const routeDir = finalArray[i][0].properties[facilityTypeKey] === NON_INVENTORY_FACILITY_CODE
           ? `${oppositeDir}`
           : `${dir}`;
         const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
-        const queryArgs = [routeNum, type, i, routeDir, stateID, coords.length, basePointID];
-        const routeSegmentID = await db.query('INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?, ?, ?, ?, ?, ?, ?);', queryArgs).then(res => res[0].insertId);
-        await Utils.insertSegment(db, routeSegmentID, coords);
-        basePointID += coords.length;
+        basePointID += await Utils.insertSegment(
+          db, coords, `${route}`, type, routeDir, stateID, basePointID, i,
+        );
       }
       emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);
     }

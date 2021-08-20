@@ -12,6 +12,9 @@ const FACTOR = Math.PI / 180;
 /** @constant {number} */
 const POINTS_BINSEARCH_ITERATIONS = 2;
 
+/** @constant {string} */
+const INSERTSTMT = 'INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, len_m, base) VALUES (?);';
+
 /** Utility class used to calculate or insert data */
 class Utils {
   /**
@@ -64,21 +67,30 @@ class Utils {
   }
 
   /**
-   * Inserts a polyline into a MySQL database by creating records of a route segment's coordinates
-   * and updating the route segment's record with the calculated route segment's distance
-   * in meters.
+   * Inserts a polyline into a MySQL database by creating records of a route segment
+   * and its coordinates.
    *
    * @async
    * @param {object} db - A database client that can perform queries from the mysql2 module.
-   * @param {number} routeSegmentID - Row ID of the route segment to insert.
    * @param {Array[]} coords - An array containing geographical points represented by arrays.
    *        Each subarray contains the longitude and latitude of a point, in that order.
+   * @param {string} routeNum - Number of the route the segment is a part of.
+   * @param {number} type - A routeEnum value of the HPMS route signing type.
+   * @param {string} dir - The direction of the route, either 'N', 'E', 'S', or 'W'.
+   * @param {number} stateID - The state ID for the route number.
+   * @param {number} baseID - The ID in the points table of the first point for this segment.
+   * @param {number} seq - A number that determines the ordering of the segment within the route.
+   * @return {Promise<number>} Returns a promise that resolves to the number of coordinates inserted 
+   *         that make up the segment.
    */
-  static insertSegment = async (db, routeSegmentID, coords) => {
-    const items = coords.map(tup => [routeSegmentID, tup[1], tup[0]]);
+  static insertSegment = async (db, coords, routeNum, type, dir, stateID, baseID, seq = 0) => {
+    const numPoints = coords.length;
     const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
-    await db.query('UPDATE segments SET len_m = ? WHERE id = ?;', [lenInMeters, routeSegmentID]);
+    const queryArgs = [routeNum, type, seq, dir, stateID, numPoints, lenInMeters, baseID];
+    const routeSegmentID = await db.query(INSERTSTMT, [queryArgs]).then(res => res[0].insertId);
+    const items = coords.map(tup => [routeSegmentID, tup[1], tup[0]]);
     await db.query('INSERT INTO points (segment_key, lat, lon) VALUES ?;', [items]);
+    return numPoints;
   }
 
   /**
