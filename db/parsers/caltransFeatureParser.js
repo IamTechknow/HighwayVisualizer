@@ -49,21 +49,21 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
     const routeNum = properties.ROUTE;
     const dir = properties.DIR;
     const type = routePrefixes['California'][routeNum] || TYPE_ENUM.STATE;
-    if (geometry.type === 'MultiLineString') {
+    const isMulti = geometry.type === 'MultiLineString';
+    if (isMulti) {
       const numFeatures = geometry.coordinates.length;
       emitter.emit(FOUND_MULTI_EVENT, numFeatures);
       for (let i = 0; i < numFeatures; i += 1) {
         basePointID += await Utils.insertSegment(
           db, geometry.coordinates[i], routeNum, type, dir, stateID, basePointID, i,
         );
-        emitter.emit(INSERTED_FEATURE_EVENT);
       }
     } else {
       basePointID += await Utils.insertSegment(
         db, geometry.coordinates, routeNum, type, dir, stateID, basePointID,
       );
-      emitter.emit(INSERTED_FEATURE_EVENT);
     }
+    emitter.emit(INSERTED_FEATURE_EVENT, isMulti ? geometry.coordinates.length : 1);
   }
   emitter.emit(FEATURES_DONE_EVENT);
   console.log('Creating concurrencies...');
