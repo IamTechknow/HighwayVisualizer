@@ -24,6 +24,7 @@ id | integer | Unique ID representing a state and its highway system
 identifier | string | Identifier of a state used internally, only contains upper or lower case letters
 title | string | Title of a state that is displayed to the user, may contain spaces
 initials | string | Initials of a state that is displayed to the user
+boundingBox | Number[][] | Bounding box in LatLng format for the state
 
 ### Segment
 
