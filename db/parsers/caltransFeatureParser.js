@@ -45,27 +45,28 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
 
   // Can't use Promise.all as we need to insert synchronously
   for (let feature of features) {
-    const routeNum = feature.properties.ROUTE;
-    const dir = feature.properties.DIR;
-    const type = routePrefixes['California'][feature.properties.ROUTE] || TYPE_ENUM.STATE;
+    const { geometry, properties } = feature;
+    const routeNum = properties.ROUTE;
+    const dir = properties.DIR;
+    const type = routePrefixes['California'][routeNum] || TYPE_ENUM.STATE;
     const insertStatement = 'INSERT INTO segments (route_num, type, segment_num, direction, state_key, len, base) VALUES (?);';
     // The curve is either in a single array or multiple arrays
-    if (feature.geometry.type !== 'LineString') {
-      const numFeatures = feature.geometry.coordinates.length;
+    if (geometry.type !== 'LineString') {
+      const numFeatures = geometry.coordinates.length;
       emitter.emit(FOUND_MULTI_EVENT, numFeatures);
       for (let i = 0; i < numFeatures; i += 1) {
-        const len = feature.geometry.coordinates[i].length;
+        const len = geometry.coordinates[i].length;
         const queryArgs = [routeNum, type, i, dir, stateID, len, basePointID];
         const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-        await Utils.insertSegment(db, routeSegmentID, feature.geometry.coordinates[i]);
+        await Utils.insertSegment(db, routeSegmentID, geometry.coordinates[i]);
         emitter.emit(INSERTED_FEATURE_EVENT);
         basePointID += len;
       }
     } else {
-      const len = feature.geometry.coordinates.length;
+      const len = geometry.coordinates.length;
       const queryArgs = [routeNum, type, 0, dir, stateID, len, basePointID];
       const routeSegmentID = await db.query(insertStatement, [queryArgs]).then(res => res[0].insertId);
-      await Utils.insertSegment(db, routeSegmentID, feature.geometry.coordinates);
+      await Utils.insertSegment(db, routeSegmentID, geometry.coordinates);
       emitter.emit(INSERTED_FEATURE_EVENT);
       basePointID += len;
     }

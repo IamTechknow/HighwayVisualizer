@@ -173,22 +173,23 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
   }
   const skippedRoutes = [];
   for (let feature of filteredFeatures) {
-    // HACK: Be wary if a multi line feature occurs. There is one in the DC shapefile even though it shouldn't be there. Sanitize it
-    if (feature.geometry.type === 'MultiLineString') {
+    const { geometry, properties } = feature;
+    // HACK: Be wary if a multi line feature occurs. Sanitize it
+    if (geometry.type === 'MultiLineString') {
       console.log('Found multi line string, sanitizing...');
-      feature.geometry.coordinates = feature.geometry.coordinates[0];
+      geometry.coordinates = geometry.coordinates[0];
     }
 
     const [Route_Name, Route_Numb, Route_Sign] = getPropertyFields(
-      feature.properties,
+      properties,
       isShapefileData ? ['Route_Name', 'Route_Numb', 'Route_Sign'] : ['route_name', 'route_number', 'route_signing'],
     );
     const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
       ? Number(Route_Name.substring(2))
       : Route_Numb;
-    const type = Route_Sign > 1 ?
-      Route_Sign :
-      getTypeWithProperties(feature.properties, stateIdentifier);
+    const type = Route_Sign > 1
+      ? Route_Sign
+      : getTypeWithProperties(properties, stateIdentifier);
 
     if (allData[type][routeNum]) {
       allData[type][routeNum].push(feature);
