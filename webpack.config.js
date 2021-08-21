@@ -8,10 +8,12 @@ module.exports = {
   mode: 'development',
   devtool: 'source-map',
   devServer: {
-    contentBase: ['./public'],
     historyApiFallback: true,
     hot: true,
     open: true,
+    static: {
+      directory: path.join(__dirname, "/public"),
+    },
   },
   output: {
     filename: 'bundle.js',
