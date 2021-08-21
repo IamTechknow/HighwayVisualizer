@@ -34,7 +34,7 @@ const RouteDrawer = ({
   userData,
   userDataCallbackMap,
 }: Props): React.ReactElement<Props> => {
-  const { currRouteSegmentsIdx, routeSegments, stateId } = routeData;
+  const { routeSegments, stateId } = routeData;
   return (
     <Sidebar>
       <SidebarTab

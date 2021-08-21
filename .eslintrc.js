@@ -3,7 +3,10 @@ module.exports = {
     browser: true,
     node: true,
   },
-  extends: ['airbnb-typescript'],
+  extends: [
+    'airbnb',
+    'airbnb-typescript',
+  ],
   globals: {
     __API__: true,
   },
