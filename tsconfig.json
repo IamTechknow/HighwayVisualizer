@@ -41,7 +41,9 @@
     ],
     "include": [
         "./.eslintrc.js",
-        "client/**/*"
+        "client/**/*",
+        "db/**/*",
+        "server/**/*"
     ],
     "exclude": [
         "node_modules",
