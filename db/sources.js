@@ -18,35 +18,35 @@ const SOURCE_ENUM = Object.freeze({
 });
 
 /** @constant {string[]} */
-const STATES = ["Alabama", "Alaska", "Arizona", "Arkansas", "California", "Colorado", "Connecticut", "Delaware", "District", "Florida", "Georgia", "Hawaii", "Idaho", "Illinois", "Indiana", "Iowa", "Kansas", "Kentucky", "Louisiana", "Maine", "Maryland", "Massachusetts", "Michigan", "Minnesota", "Mississippi", "Missouri", "Montana", "Nebraska", "Nevada", "NewHampshire", "NewJersey", "NewMexico", "NewYork", "NorthCarolina", "NorthDakota", "Ohio", "Oklahoma", "Oregon", "Pennsylvania", "PuertoRico", "RhodeIsland", "SouthCarolina", "SouthDakota", "Tennessee", "Texas", "Utah", "Vermont", "Virginia", "Washington", "WestVirginia", "Wisconsin", "Wyoming"];
+const STATES = ['Alabama', 'Alaska', 'Arizona', 'Arkansas', 'California', 'Colorado', 'Connecticut', 'Delaware', 'District', 'Florida', 'Georgia', 'Hawaii', 'Idaho', 'Illinois', 'Indiana', 'Iowa', 'Kansas', 'Kentucky', 'Louisiana', 'Maine', 'Maryland', 'Massachusetts', 'Michigan', 'Minnesota', 'Mississippi', 'Missouri', 'Montana', 'Nebraska', 'Nevada', 'NewHampshire', 'NewJersey', 'NewMexico', 'NewYork', 'NorthCarolina', 'NorthDakota', 'Ohio', 'Oklahoma', 'Oregon', 'Pennsylvania', 'PuertoRico', 'RhodeIsland', 'SouthCarolina', 'SouthDakota', 'Tennessee', 'Texas', 'Utah', 'Vermont', 'Virginia', 'Washington', 'WestVirginia', 'Wisconsin', 'Wyoming'];
 
 // Texas and Virginia do not have 2019 ArcGIS servers
-const INITIALS = ["AK", "AL", "AR", "AS", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA", "HI", "IA", "ID", "IL", "IN", "KS", "KY", "LA", "MA", "MD", "ME", "MI", "MN", "MO", "MS", "MT", "NC", "ND", "NE", "NH", "NJ", "NM", "NV", "NY", "OH", "OK", "OR", "PA", "PR", "RI", "SC", "SD", "TN", "UT", "VT", "WA", "WI", "WV", "WY"];
+const INITIALS = ['AK', 'AL', 'AR', 'AS', 'AZ', 'CA', 'CO', 'CT', 'DC', 'DE', 'FL', 'GA', 'HI', 'IA', 'ID', 'IL', 'IN', 'KS', 'KY', 'LA', 'MA', 'MD', 'ME', 'MI', 'MN', 'MO', 'MS', 'MT', 'NC', 'ND', 'NE', 'NH', 'NJ', 'NM', 'NV', 'NY', 'OH', 'OK', 'OR', 'PA', 'PR', 'RI', 'SC', 'SD', 'TN', 'UT', 'VT', 'WA', 'WI', 'WV', 'WY'];
 
 // Find more at opendata.arcgis.com
 /** @constant {object} */
 const shapefileURLs = {
-  'California': ['https://opendata.arcgis.com/datasets/77f2d7ba94e040a78bfbe36feb6279da_0.zip?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D'],
+  California: ['https://opendata.arcgis.com/datasets/77f2d7ba94e040a78bfbe36feb6279da_0.zip?outSR=%7B%22latestWkid%22%3A3857%2C%22wkid%22%3A102100%7D'],
 };
 
 /** @constant {object} */
 const otherArcgisServerURLs = {
-  'California': ['https://gisdata.dot.ca.gov/arcgis/rest/services/Highway/SHN_Lines/MapServer/'],
+  California: ['https://gisdata.dot.ca.gov/arcgis/rest/services/Highway/SHN_Lines/MapServer/'],
 };
 
 /** @constant {object} */
 const fhwaShapefileURLs = STATES.reduce(
-  (accum, state) => { return { ...accum, [state]: `https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles/${state.toLowerCase().split(' ').join('')}2017.zip` }; }, {}
+  (accum, state) => ({ ...accum, [state]: `https://www.fhwa.dot.gov/policyinformation/hpms/shapefiles/${state.toLowerCase().split(' ').join('')}2017.zip` }), {},
 );
 
 /** @constant {object} */
 const fhwaArcgisServers = STATES.reduce(
-  (accum, state) => { return { ...accum, [state]: `https://geo.dot.gov/server/rest/services/Hosted/${state}_2018_PR/FeatureServer` }; }, {}
+  (accum, state) => ({ ...accum, [state]: `https://geo.dot.gov/server/rest/services/Hosted/${state}_2018_PR/FeatureServer` }), {},
 );
 
 /** @constant {object} */
 const fhwaArcgisServers2019 = INITIALS.reduce(
-  (accum, initial) => { return { ...accum, [initial]: `https://geo.dot.gov/server/rest/services/Hosted/HPMS_Full_${initial}_2019/FeatureServer` }; }, {}
+  (accum, initial) => ({ ...accum, [initial]: `https://geo.dot.gov/server/rest/services/Hosted/HPMS_Full_${initial}_2019/FeatureServer` }), {},
 );
 
 /**
@@ -75,7 +75,7 @@ const getDataSourcesForState = (sourceType, stateIdentifier, stateInitial, year 
       : [fhwaArcgisServers[stateIdentifier]];
     return fhwaServers.concat(otherArcgisServerURLs[stateIdentifier] || []);
   }
-  throw new Error('Invalid data source type for ' + stateIdentifier);
+  throw new Error(`Invalid data source type for ${stateIdentifier}`);
 };
 
 /** @module sources */

@@ -8,9 +8,9 @@
  * @requires /db/Utils.js:Utils
  */
 
-const TYPE_ENUM = require('../routeEnum.js');
-const routePrefixes = require('../routePrefixes.js');
-const Utils = require('../Utils.js');
+const TYPE_ENUM = require('../routeEnum');
+const routePrefixes = require('../routePrefixes');
+const Utils = require('../Utils');
 
 // Codes defined in Chapter 4 of the HPMS Field Manual
 /** @constant {number} */
@@ -25,7 +25,11 @@ const FILTERED_FEATURES_EVENT = 'filteredFeatures';
 /** @constant {string} */
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
 
+// Field names are shortened in shapefiles, so grab and destructure to common format
+const getPropertyFields = (properties, fieldNames) => fieldNames.map((field) => properties[field]);
+
 const isNonMainlineInterstate = (feature, isShapefileData) => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   const [Route_Name, Route_Numb, F_System, Facility_T] = getPropertyFields(
     feature.properties,
     isShapefileData
@@ -39,8 +43,10 @@ const isNonMainlineInterstate = (feature, isShapefileData) => {
 };
 
 const filterOutFeature = (feature) => {
-  const { Facility_T, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code } = feature.properties;
-
+  const {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    Facility_T, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code,
+  } = feature.properties;
   if (
     Route_Sign !== TYPE_ENUM.INTERSTATE &&
     Route_Sign !== TYPE_ENUM.US_HIGHWAY &&
@@ -48,42 +54,42 @@ const filterOutFeature = (feature) => {
   ) {
     return true;
   }
-
   // Exclude features in DC that with route IDs ending in A
   if (State_Code === DC_STATE_CODE && Route_ID[Route_ID.length - 1] === 'A') {
     return true;
   }
-
   // Exclude route names that end with a letter
   if (State_Code === MARYLAND_STATE_CODE) {
     if (!Route_Name || Route_Name[Route_Name.length - 1] > '9') {
       return true;
     }
   }
-
   // Allow Interstate routes that are non-mainline facilities
   if (isNonMainlineInterstate(feature)) {
     return false;
   }
-
   // Exclude features with no points, local roads, ramps
-  return feature.geometry.coordinates.length === 0
-    || Route_Numb === 0 || Facility_T === RAMP_FACILITY_CODE;
+  return feature.geometry.coordinates.length === 0 ||
+    Route_Numb === 0 || Facility_T === RAMP_FACILITY_CODE;
 };
 
 const calcDir = (left, right) => {
-  let pLeftFirst = left.geometry.coordinates[0], pRightLast = right.geometry.coordinates[0];
+  const pLeftFirst = left.geometry.coordinates[0], pRightLast = right.geometry.coordinates[0];
 
   // Determine whether to compare north or east based on whether the x_delta or y_delta is bigger.
   // Data has not been processed fully, remember that coordinates come as LngLat
-  let xDelta = pLeftFirst[1] - pRightLast[1], yDelta = pLeftFirst[0] - pRightLast[0];
+  const xDelta = pLeftFirst[1] - pRightLast[1], yDelta = pLeftFirst[0] - pRightLast[0];
 
-  // return whether the left element should be closer to the south/west, should be if delta is negative.
-  return Math.abs(xDelta) > Math.abs(yDelta) ? { delta: xDelta, dir: 'E' } : { delta: yDelta, dir: 'N' };
+  // return whether the left element should be closer to the south/west,
+  // should be if delta is negative.
+  return Math.abs(xDelta) > Math.abs(yDelta)
+    ? { delta: xDelta, dir: 'E' }
+    : { delta: yDelta, dir: 'N' };
 };
 
 // Account for features with Route_Sign = 1 (unsigned)
 const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
   const [F_System, Route_Name, Route_Numb] = getPropertyFields(
     properties,
     isShapefileData
@@ -95,15 +101,10 @@ const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => 
 
   if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
     return TYPE_ENUM.STATE;
-  } else if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === TYPE_ENUM.US_HIGHWAY) {
+  } if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === TYPE_ENUM.US_HIGHWAY) {
     return TYPE_ENUM.STATE;
   }
   return typeEnum || TYPE_ENUM.STATE;
-};
-
-// Field names are shortened in shapefiles, so grab and destructure to common format
-const getPropertyFields = (properties, fieldNames) => {
-  return fieldNames.map(field => properties[field]);
 };
 
 /**
@@ -118,8 +119,8 @@ const getPropertyFields = (properties, fieldNames) => {
  * The general algorithm to process all features is:
  *
  * For all features
- * 	 Decide whether to filter out
- * 	 Push feature object into an array which is a value with route number as key
+ *   Decide whether to filter out
+ *   Push feature object into an array which is a value with route number as key
  *
  * For each key in the object
  *   Sort array by begin_poin then route_id with comparator.
@@ -137,52 +138,64 @@ const getPropertyFields = (properties, fieldNames) => {
  * @async
  * @param {object} db - A database client that can perform queries from the mysql2 module.
  * @param {object} emitter - An EventEmitter object to emit feature insertion events.
- * @param {object[]} featureCollection - The feature collection GeoJSON object with an array with all
-          GeoJSON features to process into database records. May contain an error message.
+ * @param {object[]} featureCollection - The feature collection GeoJSON object with an array with
+           all GeoJSON features to process into database records. May contain an error message.
  * @param {string} stateIdentifier - The FHWA identifier of the US state the features belong to.
  * @param {string} stateTitle - The name of the US state the features belong to.
  * @param {string} stateInitials - The state's initials.
  * @param {boolean} isShapefileData - Whether the features was processed from a shapefile.
  */
-const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, stateTitle, stateInitials, isShapefileData = true) => {
+const seedFeatures = async (
+  db,
+  emitter,
+  featureCollection,
+  stateIdentifier,
+  stateTitle,
+  stateInitials,
+  isShapefileData = true,
+) => {
   const { bbox, error, features } = featureCollection;
   if (error) {
     console.log(error);
     return;
   }
   await db.startTransaction();
-  let stateID = await db.query(
+  const stateID = await db.query(
     'INSERT INTO states (identifier, title, initials, lonMin, latMin, lonMax, latMax) VALUES (?, ?, ?, ?, ?, ?, ?);',
     [stateIdentifier, stateTitle, stateInitials, ...bbox],
-  ).then(res => res[0].insertId);
-  let allData = {
+  ).then((res) => res[0].insertId);
+  const allData = {
     [TYPE_ENUM.INTERSTATE]: {},
     [TYPE_ENUM.US_HIGHWAY]: {},
-    [TYPE_ENUM.STATE]: {}
+    [TYPE_ENUM.STATE]: {},
   };
   // Due to autoincrement of id, this is fastest way to get row count, assuming there are rows
   let basePointID = await db.query('SELECT max(id) - min(id) + 1 FROM points;')
-    .then(res => res[0][0]['max(id) - min(id) + 1']) ?? 0;
+    .then((res) => res[0][0]['max(id) - min(id) + 1']) ?? 0;
   const filteredFeatures = isShapefileData
-    ? features.filter(feature => !filterOutFeature(feature))
-    : features.filter(feature => feature.geometry);
+    ? features.filter((feature) => !filterOutFeature(feature))
+    : features.filter((feature) => feature.geometry);
   if (filteredFeatures.length === 0) {
     console.error('No features filtered in. Please validate parameters. Exiting...');
     await db.endTransaction();
     return;
   }
   const skippedRoutes = [];
-  for (let feature of filteredFeatures) {
+  for (const feature of filteredFeatures) {
     const { geometry, properties } = feature;
     // HACK: Be wary if a multi line feature occurs. Sanitize it
     if (geometry.type === 'MultiLineString') {
       console.log('Found multi line string, sanitizing...');
-      geometry.coordinates = geometry.coordinates[0];
+      const [firstFeature] = geometry.coordinates;
+      geometry.coordinates = firstFeature;
     }
 
+    // eslint-disable-next-line @typescript-eslint/naming-convention
     const [Route_Name, Route_Numb, Route_Sign] = getPropertyFields(
       properties,
-      isShapefileData ? ['Route_Name', 'Route_Numb', 'Route_Sign'] : ['route_name', 'route_number', 'route_signing'],
+      isShapefileData
+        ? ['Route_Name', 'Route_Numb', 'Route_Sign']
+        : ['route_name', 'route_number', 'route_signing'],
     );
     const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
       ? Number(Route_Name.substring(2))
@@ -201,13 +214,13 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
   // Sort first by Route ID, then to make it stable, sort by route ID and then begin_poin
   // The Route ID can be a number string, in other cases it is alphanumeric
   emitter.emit(FILTERED_FEATURES_EVENT, filteredFeatures.length);
-  for (let type in allData) {
-    const segmentsByType = allData[type];
+  const routeTypePairs = Object.entries(allData);
+  for (const [type, segmentsByType] of routeTypePairs) {
     const routeIDKey = isShapefileData ? 'Route_ID' : 'route_id';
     const beginKey = isShapefileData ? 'Begin_Poin' : 'begin_point';
     const facilityTypeKey = isShapefileData ? 'Facility_T' : 'facility_type';
-
-    for (let route in segmentsByType) {
+    const segmentPairs = Object.entries(segmentsByType);
+    for (const [route, segments] of segmentPairs) {
       // HACK: Skip large number routes like Arizona state route 893984
       if (route.length > 4) {
         skippedRoutes.push(route);
@@ -215,11 +228,9 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
         continue;
       }
 
-      segmentsByType[route] = segmentsByType[route].sort((left, right) => {
-        return left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]);
-      });
-
-      segmentsByType[route] = segmentsByType[route].sort((left, right) => {
+      const sortedSegments = segments.sort(
+        (left, right) => left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]),
+      ).sort((left, right) => {
         if (left.properties[routeIDKey] === right.properties[routeIDKey]) {
           return left.properties[beginKey] - right.properties[beginKey];
         }
@@ -227,8 +238,8 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
       });
 
       // Put all the route IDs into a new object. Then sort them
-      let routeIds = {};
-      for (let feature of segmentsByType[route]) {
+      const routeIds = {};
+      for (const feature of sortedSegments) {
         const routeID = feature.properties[routeIDKey];
         if (routeIds[routeID]) {
           routeIds[routeID].push(feature);
@@ -237,17 +248,18 @@ const seedFeatures = async (db, emitter, featureCollection, stateIdentifier, sta
         }
       }
 
-      let finalArray = Object.values(routeIds).sort((left, right) => {
-        return calcDir(left[0], right[right.length - 1]).delta;
-      });
+      const finalArray = Object.values(routeIds).sort(
+        (left, right) => calcDir(left[0], right[right.length - 1]).delta,
+      );
 
       const { dir } = calcDir(finalArray[0][0], finalArray[finalArray.length - 1][0]);
       const oppositeDir = dir === 'E' ? 'W' : 'S';
       for (let i = 0; i < finalArray.length; i += 1) {
-        const routeDir = finalArray[i][0].properties[facilityTypeKey] === NON_INVENTORY_FACILITY_CODE
-          ? `${oppositeDir}`
-          : `${dir}`;
-        const coords = finalArray[i].map(feature => feature.geometry.coordinates).flat();
+        const routeDir =
+          finalArray[i][0].properties[facilityTypeKey] === NON_INVENTORY_FACILITY_CODE
+            ? `${oppositeDir}`
+            : `${dir}`;
+        const coords = finalArray[i].map((feature) => feature.geometry.coordinates).flat();
         basePointID += await Utils.insertSegment(
           db, coords, `${route}`, type, routeDir, stateID, basePointID, i,
         );

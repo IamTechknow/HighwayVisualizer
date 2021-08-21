@@ -45,7 +45,7 @@ const getDB = () => mysql.createConnection({
   host: 'localhost',
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
-  multipleStatements: true
+  multipleStatements: true,
 }).then((db) => {
   if (process.env.NODE_ENV === 'development') {
     console.log(`Connected to ${DATABASE} database as ID ${db.threadId}`);

@@ -26,8 +26,29 @@ module.exports = {
   ],
   plugins: ['@typescript-eslint'],
   rules: {
+    'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     'linebreak-style': 'off',
+    'no-await-in-loop': 'off',
+    'no-bitwise': 'off',
+    'no-console': 'off',
+    'no-continue': 'off',
     'no-param-reassign': ['error', { ignorePropertyModificationsFor: ['accum'] }],
+    // Allow for-of loops
+    'no-restricted-syntax': [
+      'error',
+      {
+        selector: 'ForInStatement',
+        message: 'for..in loops iterate over the entire prototype chain, which is virtually never what you want. Use Object.{keys,values,entries}, and iterate over the resulting array.',
+      },
+      {
+        selector: 'LabeledStatement',
+        message: 'Labels are a form of GOTO; using them makes code confusing and hard to maintain and understand.',
+      },
+      {
+        selector: 'WithStatement',
+        message: '`with` is disallowed in strict mode because it makes code impossible to predict and optimize.',
+      },
+    ],
     'no-underscore-dangle': 'off',
     'no-use-before-define': 'off',
     'one-var': 'off',

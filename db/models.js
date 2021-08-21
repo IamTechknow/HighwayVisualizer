@@ -8,7 +8,7 @@
  *
  * @requires /db/Utils.js:Utils
  */
-const Utils = require('./Utils.js');
+const Utils = require('./Utils');
 
 /** Static methods for database interactions */
 class Models {
@@ -52,7 +52,7 @@ class Models {
    * @return {Promise} Returns a promise that resolves with an array of coodinate objects.
    */
   static getPointsForRouteSegment(db, routeSegmentId) {
-    const query = 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + routeSegmentId;
+    const query = `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ${routeSegmentId}`;
     return Models.processPointQueries(db, [query, ''], [{ id: routeSegmentId }]);
   }
 
@@ -79,11 +79,10 @@ class Models {
     if (keys.length === 0) {
       return [];
     }
-
-    const routeSegments = keys.map(key => {
-      return dir !== undefined ? { id: key.id } : { dir: key.dir, id: key.id };
-    });
-    const combinedQuery = keys.map(key => 'SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ' + key.id);
+    const routeSegments = keys.map(
+      (key) => (dir !== undefined ? { id: key.id } : { dir: key.dir, id: key.id }),
+    );
+    const combinedQuery = keys.map((key) => `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points WHERE segment_key = ${key.id}`);
     return Models.processPointQueries(db, [...combinedQuery, ''], routeSegments);
   }
 
@@ -101,29 +100,26 @@ class Models {
    */
   static async getPointsForConcurrencies(db, stateId, routeNum, dir) {
     const routeSegmentQuery = 'SELECT id FROM segments WHERE route_num = ? AND state_key = ? AND direction = ?';
-    const rte1_segments = await db.execute(routeSegmentQuery, [routeNum, stateId, dir])
+    const rte1Segments = await db.execute(routeSegmentQuery, [routeNum, stateId, dir])
       .then((result) => result[0].map((routeSeg) => routeSeg.id));
-    if (rte1_segments.length === 0) {
+    if (rte1Segments.length === 0) {
       return [];
     }
-    const concurrencies = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1_segments])
+    const concurrencies = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?)', [rte1Segments])
       .then((result) => result[0]);
     if (concurrencies.length === 0) {
       return [];
     }
-
-    const rte2_segments = await db.query('SELECT id, base FROM segments WHERE id IN (?)', [concurrencies.map((con) => con.rte2_seg)])
+    const rte2Segments = await db.query('SELECT id, base FROM segments WHERE id IN (?)', [concurrencies.map((con) => con.rte2_seg)])
       .then((result) => result[0]);
     const routeSegmentBaseMap = {};
-    rte2_segments.forEach((routeSeg) => {
+    rte2Segments.forEach((routeSeg) => {
       routeSegmentBaseMap[routeSeg.id] = routeSeg.base;
     });
-    const routeSegments = concurrencies.map((con) => { return { id: con.rte2_seg }; });
-    const combinedQuery = concurrencies.map((con) =>
-      `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points
+    const routeSegments = concurrencies.map((con) => ({ id: con.rte2_seg }));
+    const combinedQuery = concurrencies.map((con) => `SELECT TRUNCATE(lat, 7) as lat, TRUNCATE(lon, 7) as lon FROM points
        WHERE segment_key = ${con.rte2_seg} AND id >= ${routeSegmentBaseMap[con.rte2_seg] + con.start_pt}
-       AND id <= ${routeSegmentBaseMap[con.rte2_seg] + con.end_pt}`
-    );
+       AND id <= ${routeSegmentBaseMap[con.rte2_seg] + con.end_pt}`);
     return Models.processPointQueries(db, combinedQuery, routeSegments);
   }
 
@@ -158,13 +154,11 @@ class Models {
               if (travelSegmentData.length < 0) {
                 return [];
               }
-              return Models.getPointsByUser(db, travelSegmentData.map(travelSeg => {
-                return {
-                  ...travelSeg,
-                  clinched: travelSeg.clinched === 1,
-                };
-              }));
-            }
+              return Models.getPointsByUser(db, travelSegmentData.map((travelSeg) => ({
+                ...travelSeg,
+                clinched: travelSeg.clinched === 1,
+              })));
+            },
           );
       })
       .catch((err) => { console.error(err); });
@@ -185,7 +179,7 @@ class Models {
           return { success: false, userId: result[0][0].id };
         }
         return db.query('INSERT INTO users (user) VALUES (?);', [username])
-          .then((result) => { return { success: true, userId: result[0].insertId }; });
+          .then((insertResult) => ({ success: true, userId: insertResult[0].insertId }));
       })
       .catch((err) => { console.error(err); });
   }
@@ -202,18 +196,26 @@ class Models {
              the number of travel segments inserted.
    */
   static async createTravelSegment(db, userId, travelSegments) {
-    const travelSegArgs = travelSegments.map(travelSeg => [userId, travelSeg.routeSegmentId, travelSeg.clinched ? 1 : 0, travelSeg.startId, travelSeg.endId]);
-    const travelSegmentMap = travelSegments.reduce((accum, travelSeg) => { return { ...accum, [travelSeg.routeSegmentId]: travelSeg }; }, {});
+    const travelSegArgs = travelSegments.map(
+      (travelSeg) => [
+        userId,
+        travelSeg.routeSegmentId,
+        travelSeg.clinched ? 1 : 0,
+        travelSeg.startId,
+        travelSeg.endId,
+      ],
+    );
+    const travelSegmentMap = travelSegments.reduce(
+      (accum, travelSeg) => ({ ...accum, [travelSeg.routeSegmentId]: travelSeg }),
+      {},
+    );
     const routeSegmentDataMap = await db.query('SELECT * FROM segments WHERE id IN (?);', [Object.keys(travelSegmentMap)])
-      .then(result => result[0])
-      .then(data =>
-        data.reduce((accum, curr) => { return { ...accum, [curr.id]: curr }; }, {})
-      );
+      .then((result) => result[0])
+      .then((data) => data.reduce((accum, curr) => ({ ...accum, [curr.id]: curr }), {}));
     const concurrencyData = await db.query('SELECT * FROM concurrencies WHERE first_seg IN (?);', [Object.keys(travelSegmentMap)])
-      .then(result => result[0]);
-
+      .then((result) => result[0]);
     const additionalTravelSegments = [];
-    for (let concurrency of concurrencyData) {
+    for (const concurrency of concurrencyData) {
       const isMainlineWithMainline = concurrency.first_seg < concurrency.last_seg;
       const routeSegmentId = isMainlineWithMainline ? concurrency.first_seg : concurrency.last_seg;
       const secondId = isMainlineWithMainline ? concurrency.last_seg : concurrency.first_seg;
@@ -221,7 +223,9 @@ class Models {
         travelSegmentMap[routeSegmentId].endId === routeSegmentDataMap[routeSegmentId].len &&
         travelSegmentMap[secondId] && travelSegmentMap[secondId].startId === 0
       ) {
-        additionalTravelSegments.push([userId, concurrency.rte2_seg, 0, concurrency.start_pt, concurrency.end_pt]);
+        additionalTravelSegments.push(
+          [userId, concurrency.rte2_seg, 0, concurrency.start_pt, concurrency.end_pt],
+        );
       }
     }
     return db.query('INSERT INTO user_segments (user_id, segment_id, clinched, start_id, end_id) VALUES ?;', [travelSegArgs.concat(additionalTravelSegments)])
@@ -241,21 +245,18 @@ class Models {
    *         the data and an array of coordinates for each route segment.
    */
   static async processPointQueries(db, queries, routeSegments) {
-    let result = await db.query(queries.join('; '))
+    const pointArrays = await db.query(queries.join('; '))
       .then((result) => result[0])
       .then((result) => {
         if (Array.isArray(result[0])) { // Data Packet or array?
-          return result.map(arr => arr.map(point => [point.lat, point.lon]));
-        } else {
-          return [result.map(point => [point.lat, point.lon])]; // Always treat result as 2D array
+          return result.map((arr) => arr.map((point) => [point.lat, point.lon]));
         }
+        return [result.map((point) => [point.lat, point.lon])]; // Always treat result as 2D array
       })
       .catch((err) => { console.error(err); });
-
-    for (var i = 0; i < result.length; i++) {
-      routeSegments[i].points = result[i];
+    for (let i = 0; i < pointArrays.length; i += 1) {
+      routeSegments[i].points = pointArrays[i];
     }
-
     return routeSegments;
   }
 
@@ -275,15 +276,14 @@ class Models {
       };
     }
     const queries = [];
-
-    for (let obj of travelSegData) {
+    for (const obj of travelSegData) {
       // Get the base point ID for the route segment, then calculate the start and end IDs
       const { endId, routeSegmentId, startId } = obj;
       const base = await db.execute('SELECT base FROM segments WHERE id = ?;', [routeSegmentId]).then((result) => result[0][0].base);
       const pointStartID = base + startId;
       const pointEndID = base + endId;
-      const queryBase = 'SELECT lat, lon FROM points WHERE segment_key = ' + routeSegmentId;
-      queries.push(queryBase + ` AND id >= ${pointStartID} AND id <= ${pointEndID}`);
+      const queryBase = `SELECT lat, lon FROM points WHERE segment_key = ${routeSegmentId}`;
+      queries.push(`${queryBase} AND id >= ${pointStartID} AND id <= ${pointEndID}`);
     }
     const travelSegments = await Models.processPointQueries(db, [...queries, ''], travelSegData);
     const travelStats = await Models.calcStats(db, travelSegments);
@@ -300,11 +300,13 @@ class Models {
    *         travel statistics.
    */
   static async calcStats(db, travelSegments) {
-    let stats = [];
-
-    for (let travelSeg of travelSegments) {
+    const stats = [];
+    for (const travelSeg of travelSegments) {
       const routeSegment = await db.execute('SELECT * FROM segments WHERE id = ?', [travelSeg.routeSegmentId]).then((result) => result[0][0]);
-      const { len_m, state_key, route_num, segment_num } = routeSegment;
+      const {
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        len_m, state_key, route_num, segment_num,
+      } = routeSegment;
       const state = await db.execute('SELECT * FROM states WHERE id = ?', [state_key]).then((result) => result[0][0].initials);
       let total = len_m;
       let metersTraveled = Utils.calcSegmentDistance(travelSeg.points);
@@ -312,11 +314,17 @@ class Models {
       // Truncate to two decimal points
       metersTraveled = ~~(metersTraveled * 100) / 100;
       total = ~~(total * 100) / 100;
-      const percentage = ~~((metersTraveled / total) * 10000) / 100
+      const percentage = ~~((metersTraveled / total) * 10000) / 100;
 
-      stats.push({ state, route: route_num, routeSegment: segment_num + 1, traveled: metersTraveled, total, percentage });
+      stats.push({
+        state,
+        route: route_num,
+        routeSegment: segment_num + 1,
+        traveled: metersTraveled,
+        total,
+        percentage,
+      });
     }
-
     return stats;
   }
 }

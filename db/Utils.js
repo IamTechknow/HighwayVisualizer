@@ -1,6 +1,6 @@
 /**
- * @fileOverview Contains utility methods to work with points and route segments in the form of a static
- *               class. These methods may be used in other modules and classes.
+ * @fileOverview Contains utility methods to work with points and route segments in the form of a
+ *               static class. These methods may be used in other modules and classes.
  */
 
 /** @constant {number} */
@@ -44,9 +44,9 @@ class Utils {
     const sinOfDeltaLat = Math.sin(deltaLat / 2);
     const sinOfDeltaLng = Math.sin(deltaLng / 2);
 
-    const a = sinOfDeltaLat * sinOfDeltaLat
-      + Math.cos(radX1) * Math.cos(radX2)
-      * sinOfDeltaLng * sinOfDeltaLng;
+    const a = sinOfDeltaLat * sinOfDeltaLat +
+      Math.cos(radX1) * Math.cos(radX2) *
+      sinOfDeltaLng * sinOfDeltaLng;
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -61,7 +61,8 @@ class Utils {
     let metersTraveled = 0;
     for (let i = 0; i < routeSeg.length - 1; i += 1) {
       const [lat2, lng2] = routeSeg[i + 1];
-      metersTraveled += Utils.calcHavensine(routeSeg[i], Utils.toRadians(lat2), Utils.toRadians(lng2));
+      metersTraveled +=
+        Utils.calcHavensine(routeSeg[i], Utils.toRadians(lat2), Utils.toRadians(lng2));
     }
     return metersTraveled;
   }
@@ -80,18 +81,18 @@ class Utils {
    * @param {number} stateID - The state ID for the route number.
    * @param {number} baseID - The ID in the points table of the first point for this segment.
    * @param {number} seq - A number that determines the ordering of the segment within the route.
-   * @return {Promise<number>} Returns a promise that resolves to the number of coordinates inserted 
+   * @return {Promise<number>} Returns a promise that resolves to the number of coordinates inserted
    *         that make up the segment.
    */
   static insertSegment = async (db, coords, routeNum, type, dir, stateID, baseID, seq = 0) => {
     const numPoints = coords.length;
-    const lenInMeters = Utils.calcSegmentDistance(coords.map(tup => [tup[1], tup[0]]));
+    const lenInMeters = Utils.calcSegmentDistance(coords.map((tup) => [tup[1], tup[0]]));
     const queryArgs = [routeNum, type, seq, dir, stateID, numPoints, lenInMeters, baseID];
-    const routeSegmentID = await db.query(INSERTSTMT, [queryArgs]).then(res => res[0].insertId);
-    const items = coords.map(tup => [routeSegmentID, tup[1], tup[0]]);
+    const routeSegmentID = await db.query(INSERTSTMT, [queryArgs]).then((res) => res[0].insertId);
+    const items = coords.map((tup) => [routeSegmentID, tup[1], tup[0]]);
     await db.query('INSERT INTO points (segment_key, lat, lon) VALUES ?;', [items]);
     return numPoints;
-  }
+  };
 
   /**
    * Given a route segment and a origin coordinate of comparsion, calculate the point on the
@@ -130,7 +131,9 @@ class Utils {
       ) {
         hi = mid;
       } else if (
-        midDistance <= startDistance && midDistance <= endDistance && startDistance >= startToMidDist
+        midDistance <= startDistance &&
+        midDistance <= endDistance &&
+        startDistance >= startToMidDist
       ) {
         lo = mid;
       } else {

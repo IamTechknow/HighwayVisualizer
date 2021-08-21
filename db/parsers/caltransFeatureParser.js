@@ -7,10 +7,10 @@
  * @requires /db/Utils.js:Utils
  */
 
-const { getRouteConcurrenciesForState } = require('../routeConcurrencies.js');
-const TYPE_ENUM = require('../routeEnum.js');
-const routePrefixes = require('../routePrefixes.js');
-const Utils = require('../Utils.js');
+const { getRouteConcurrenciesForState } = require('../routeConcurrencies');
+const TYPE_ENUM = require('../routeEnum');
+const routePrefixes = require('../routePrefixes');
+const Utils = require('../Utils');
 
 /** @constant {string} */
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
@@ -31,7 +31,8 @@ const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMult
  * @param {object} emitter - An EventEmitter object to emit feature insertion events.
  * @param {object[]} features - An array with all GeoJSON features to process into database
           records.
- * @param {string} stateName - The name of the US state the features belong to, presumably California.
+ * @param {string} stateName - The name of the US state the features belong to
+          , presumably California.
  * @param {string} stateInitials - The state's initials, presumably CA.
  * @param {number[]} bbox - The bounding box GeoJSON value.
  */
@@ -41,14 +42,15 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
   const stateID = await db.query(
     'INSERT INTO states (identifier, title, initials, lonMin, latMin, lonMax, latMax) VALUES (?, ?, ?, ?, ?, ?, ?);',
     [stateName, stateName, stateInitials, ...bbox],
-  ).then(res => res[0].insertId);
+  ).then((res) => res[0].insertId);
 
   // Can't use Promise.all as we need to insert synchronously
-  for (let feature of features) {
+  // eslint-disable-next-line no-restricted-syntax
+  for (const feature of features) {
     const { geometry, properties } = feature;
     const routeNum = properties.ROUTE;
     const dir = properties.DIR;
-    const type = routePrefixes['California'][routeNum] || TYPE_ENUM.STATE;
+    const type = routePrefixes.California[routeNum] || TYPE_ENUM.STATE;
     const isMulti = geometry.type === 'MultiLineString';
     if (isMulti) {
       const numFeatures = geometry.coordinates.length;
@@ -68,8 +70,10 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
   emitter.emit(FEATURES_DONE_EVENT);
   console.log('Creating concurrencies...');
   const concurrencyArrays = await getRouteConcurrenciesForState(db, 'California')
-    .then((concurrencies) => concurrencies.filter(obj => obj.success).map(data => {
-      const { route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end } = data;
+    .then((concurrencies) => concurrencies.filter((obj) => obj.success).map((data) => {
+      const {
+        route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end,
+      } = data;
       return [route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end];
     }));
   await db.query(
