@@ -32,19 +32,17 @@ const headerMiddleware = (req, res, next) => {
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-const getRedisMiddleware = (redisClient) => {
-  return (req, res, next) => {
-    const keySuffix = req.originalUrl || req.url;
-    redisClient.get('__express__' + keySuffix, (err, reply) => {
-      if (reply) {
-        redisClient.get('__express_status__' + keySuffix, (err, code) => {
-          res.status(Number(code)).type('application/json').send(reply);
-        });
-      } else {
-        next();
-      }
-    });
-  };
+const getRedisMiddleware = (redisClient) => (req, res, next) => {
+  const keySuffix = req.originalUrl || req.url;
+  redisClient.get(`__express__${keySuffix}`, (_err, reply) => {
+    if (reply) {
+      redisClient.get(`__express_status__${keySuffix}`, (_status_err, code) => {
+        res.status(Number(code)).type('application/json').send(reply);
+      });
+    } else {
+      next();
+    }
+  });
 };
 
 module.exports = { getRedisMiddleware, headerMiddleware };

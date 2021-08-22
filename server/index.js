@@ -16,7 +16,7 @@ const { createServer } = require('./server');
 
 const _getRedisClient = () => {
   const redisClient = redis.createClient();
-  redisClient.on("error", (error) => {
+  redisClient.on('error', (error) => {
     if (error.code === 'ECONNREFUSED') {
       console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
       process.exit(1);
@@ -27,14 +27,12 @@ const _getRedisClient = () => {
   return redisClient;
 };
 
-const _getShutdownHandler = (db, httpServer, redisClient) => {
-  return () => {
-    if (db != null) {
-      db.end();
-    }
-    httpServer.close();
-    redisClient.quit();
-  };
+const _getShutdownHandler = (db, httpServer, redisClient) => () => {
+  if (db != null) {
+    db.end();
+  }
+  httpServer.close();
+  redisClient.quit();
 };
 
 const runServer = async (redisOnly) => {
@@ -52,7 +50,7 @@ const runServer = async (redisOnly) => {
   } catch (err) {
     DB.logMySQLError(err);
     console.warn(
-      'Server could not communicate with DB, use --redis-only switch to run server in read-only mode'
+      'Server could not communicate with DB, use --redis-only switch to run server in read-only mode',
     );
   }
 };

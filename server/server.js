@@ -23,7 +23,7 @@ const path = require('path');
 
 const Middleware = require('./middleware');
 const Routes = require('./routes');
-const TYPE_ENUM = require('../db/routeEnum.js');
+const TYPE_ENUM = require('../db/routeEnum');
 
 /** @constant {number} */
 const PORT = 3000;
@@ -43,6 +43,21 @@ const USER_LENGTH_SPEC = {
   max: 16,
 };
 
+const getGTZeroValidator = (field) => check(field).isInt({ gt: 0 });
+
+const routeNumValidator = (routeNum) => {
+  if (!Number.isNaN(routeNum)) {
+    return true;
+  }
+  if (routeNum.length <= 1) {
+    return false;
+  }
+  const lastChar = routeNum[routeNum.length - 1];
+  const secToLastChar = routeNum[routeNum.length - 2];
+  // English letters will return true below
+  return (lastChar.toLowerCase() !== lastChar.toUpperCase()) && !Number.isNaN(secToLastChar);
+};
+
 /**
  * Create the application server. This allows dependency injection
  * of the DB and redis client for normal use or mocking during tests.
@@ -53,7 +68,7 @@ const USER_LENGTH_SPEC = {
  * @return {Server} The application server
  */
 const createServer = (db, redisClient) => {
-  let app = express();
+  const app = express();
   app.disable('x-powered-by');
   app.use(compression({ threshold: 8192 }));
   app.use(express.static(path.resolve(__dirname, '../public')));
@@ -67,20 +82,19 @@ const createServer = (db, redisClient) => {
   app.get('/users/:user', Routes.userPageRouter);
   app.get('/api/states',
     Middleware.getRedisMiddleware(redisClient),
-    Routes.statesAPIRouter(db, redisClient),
-  );
+    Routes.statesAPIRouter(db, redisClient));
   app.get('/api/users', Routes.usersAPIRouter(db, redisClient));
   app.get(
     '/api/route_segments/:stateId',
     Middleware.getRedisMiddleware(redisClient),
     getGTZeroValidator('stateId'),
-    Routes.routeSegmentsPerStateAPIRouter(db, redisClient)
+    Routes.routeSegmentsPerStateAPIRouter(db, redisClient),
   );
   app.get(
     '/api/points/:routeSegmentId',
     Middleware.getRedisMiddleware(redisClient),
     getGTZeroValidator('routeSegmentId'),
-    Routes.pointsPerRouteSegmentAPIRouter(db, redisClient)
+    Routes.pointsPerRouteSegmentAPIRouter(db, redisClient),
   );
   app.get(
     '/api/points/:type/:routeNum',
@@ -110,21 +124,6 @@ const createServer = (db, redisClient) => {
   app.post('/api/newUser', Routes.newUserAPIRouter(db, redisClient));
   app.post('/api/travel_segments/new', Routes.newTravelSegmentAPIRouter(db, redisClient));
   return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
-};
-
-const getGTZeroValidator = (field) => check(field).isInt({ gt: 0 });
-
-const routeNumValidator = (routeNum) => {
-  if (!isNaN(routeNum)) {
-    return true;
-  }
-  if (routeNum.length <= 1) {
-    return false;
-  }
-  const lastChar = routeNum[routeNum.length - 1];
-  const secToLastChar = routeNum[routeNum.length - 2];
-  // English letters will return true below
-  return (lastChar.toLowerCase() !== lastChar.toUpperCase()) && !isNaN(secToLastChar);
 };
 
 module.exports = { createServer };
