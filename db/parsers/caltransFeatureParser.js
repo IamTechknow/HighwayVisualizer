@@ -45,7 +45,6 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
   ).then((res) => res[0].insertId);
 
   // Can't use Promise.all as we need to insert synchronously
-  // eslint-disable-next-line no-restricted-syntax
   for (const feature of features) {
     const { geometry, properties } = feature;
     const routeNum = properties.ROUTE;
@@ -80,6 +79,7 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
     'INSERT INTO concurrencies (route_num1, route_num2, first_seg, last_seg, rte2_seg, start_pt, end_pt) VALUES ?;',
     [concurrencyArrays],
   );
+  console.log(`Seeded ${concurrencyArrays.length} concurrencies`);
   return db.endTransaction();
 };
 
