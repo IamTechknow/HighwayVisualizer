@@ -70,7 +70,11 @@ const validateFilter = (field, op, value, esriType) => {
     throw Error('Invalid string value, not surrounded by single quotes');
   }
   if (
-    (esriType === 'esriFieldTypeInteger' || esriType === 'esriFieldTypeOID') &&
+    (
+      esriType === 'esriFieldTypeInteger' ||
+      esriType === 'esriFieldTypeSmallInteger' ||
+      esriType === 'esriFieldTypeOID'
+    ) &&
     value !== 'null' &&
     Number.isNaN(parseInt(value, 10))
   ) {
@@ -107,7 +111,6 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
     }
   });
 
-  // Combine parenthesises with clauses, then combine conjunctions with clauses.
   const clauses = whereFilters.map((filterObj) => {
     const {
       field, op, value, esriType,
@@ -115,18 +118,26 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
     validateFilter(field, op, value, esriType);
     return `${field} ${op} ${value}`;
   });
+  // Combine parenthesises with clauses. We need to add the first clause before iterating in
+  // case there's a left parenthesises to be able to pop the clause and append it.
+  let clauseIdx = 0;
+  const clausesStack = [clauses[clauseIdx]];
   for (let i = 0; i < conjunctions.length; i += 1) {
     if (conjunctions[i] === '(') {
-      clauses[i] = `${conjunctions[i]} ${clauses[i]}`;
+      clausesStack.push(`( ${clausesStack.pop()}`);
     } else if (conjunctions[i] === ')') {
-      clauses[i - 1] = `${clauses[i - 1]} ${conjunctions[i]}`;
+      clausesStack.push(`${clausesStack.pop()} )`);
+    } else {
+      clauseIdx += 1;
+      clausesStack.push(clauses[clauseIdx]);
     }
   }
+  // Combine conjunctions with clauses
   const nonParens = conjunctions.filter((str) => str !== '(' && str !== ')');
   for (let i = 0; i < nonParens.length; i += 1) {
-    clauses[i] = `${clauses[i]} ${nonParens[i]}`;
+    clausesStack[i] = `${clausesStack[i]} ${nonParens[i]}`;
   }
-  return clauses.join(' ');
+  return clausesStack.join(' ');
 };
 
 /**
