@@ -180,7 +180,9 @@ const seedFeatures = async (
     await db.endTransaction();
     return;
   }
-  const skippedRoutes = [];
+  const skippedRoutes = {};
+  const skippedRouteNames = [];
+  let numFiltered = filteredFeatures.length;
   for (const feature of filteredFeatures) {
     const { geometry, properties } = feature;
     // HACK: Be wary if a multi line feature occurs. Sanitize it
@@ -200,6 +202,13 @@ const seedFeatures = async (
     const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
       ? Number(Route_Name.substring(2))
       : Route_Numb;
+    // Sometimes despite filtering via API, can still get invalid feature for seeding
+    if (Number.isNaN(routeNum) || routeNum === 0 || routeNum > 10000) {
+      skippedRoutes[routeNum] = true;
+      skippedRouteNames.push(Route_Name);
+      numFiltered -= 1;
+      continue;
+    }
     const type = Route_Sign > 1
       ? Route_Sign
       : getTypeWithProperties(properties, stateIdentifier);
@@ -213,7 +222,7 @@ const seedFeatures = async (
 
   // Sort first by Route ID, then to make it stable, sort by route ID and then begin_poin
   // The Route ID can be a number string, in other cases it is alphanumeric
-  emitter.emit(FILTERED_FEATURES_EVENT, filteredFeatures.length);
+  emitter.emit(FILTERED_FEATURES_EVENT, numFiltered);
   const routeTypePairs = Object.entries(allData);
   for (const [type, segmentsByType] of routeTypePairs) {
     const routeIDKey = isShapefileData ? 'Route_ID' : 'route_id';
@@ -221,13 +230,6 @@ const seedFeatures = async (
     const facilityTypeKey = isShapefileData ? 'Facility_T' : 'facility_type';
     const segmentPairs = Object.entries(segmentsByType);
     for (const [route, segments] of segmentPairs) {
-      // HACK: Skip large number routes like Arizona state route 893984
-      if (route.length > 4) {
-        skippedRoutes.push(route);
-        emitter.emit(INSERTED_FEATURE_EVENT, segmentsByType[route].length);
-        continue;
-      }
-
       const sortedSegments = segments.sort(
         (left, right) => left.properties[routeIDKey].localeCompare(right.properties[routeIDKey]),
       ).sort((left, right) => {
@@ -269,8 +271,10 @@ const seedFeatures = async (
   }
   emitter.emit(FEATURES_DONE_EVENT);
   await db.endTransaction();
-  if (skippedRoutes.length > 0) {
-    console.log('Skipped routes with > 4 characters:', skippedRoutes.join());
+  const skippedRouteKeys = Object.keys(skippedRoutes);
+  if (skippedRouteKeys.length > 0) {
+    console.log('Skipped routes with > 4 characters:', skippedRouteKeys.join());
+    console.log('Skipped route names:', skippedRouteNames.join());
   }
 };
 

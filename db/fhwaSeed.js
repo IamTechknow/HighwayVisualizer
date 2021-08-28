@@ -65,6 +65,12 @@ const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
       value: 'null',
       esriType: 'esriFieldTypeInteger',
     },
+    {
+      field: 'FACILITY_TYPE',
+      op: '<>',
+      value: '4',
+      esriType: 'esriFieldTypeInteger',
+    },
   ];
 };
 
@@ -73,7 +79,7 @@ const getConjunctionsForState = (_stateIdentifier, stateInitials, year) => {
     return ['AND', 'AND'];
   }
   // Default case for FHWA ArcGIS servers
-  return ['(', 'OR', 'OR', ')', 'AND', 'AND'];
+  return ['(', 'OR', 'OR', ')', 'AND', 'AND', 'AND'];
 };
 
 const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '2019') => {
