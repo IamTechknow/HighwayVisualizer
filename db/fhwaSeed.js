@@ -54,6 +54,18 @@ const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
       esriType: 'esriFieldTypeInteger',
     },
     {
+      field: 'ROUTE_ID',
+      op: 'LIKE',
+      value: "'%MD00%'",
+      esriType: 'esriFieldTypeString',
+    },
+    {
+      field: 'STATE_CODE',
+      op: '=',
+      value: '24',
+      esriType: 'esriFieldTypeSmallInteger',
+    },
+    {
       field: 'ROUTE_NUMBER',
       op: 'IS NOT',
       value: 'null',
@@ -79,7 +91,7 @@ const getConjunctionsForState = (_stateIdentifier, stateInitials, year) => {
     return ['AND', 'AND'];
   }
   // Default case for FHWA ArcGIS servers
-  return ['(', 'OR', 'OR', ')', 'AND', 'AND', 'AND'];
+  return ['(', 'OR', 'OR', ')', 'OR', '(', 'AND', ')', 'AND', 'AND', 'AND'];
 };
 
 const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '2019') => {

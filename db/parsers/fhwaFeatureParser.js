@@ -107,6 +107,26 @@ const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => 
   return typeEnum || TYPE_ENUM.STATE;
 };
 
+// Attempt to get route number on a case-by-case basis
+const getRouteNumberFromName = (feature, isShapefileData) => {
+  // eslint-disable-next-line @typescript-eslint/naming-convention
+  const [Route_ID, Route_Name, State_Code] = getPropertyFields(
+    feature.properties,
+    isShapefileData
+      ? ['Route_ID', 'Route_Name', 'State_Code']
+      : ['route_id', 'route_name', 'state_code'],
+  );
+  if (isNonMainlineInterstate(feature)) {
+    return Number(Route_Name.substring(2));
+  }
+  if (State_Code === MARYLAND_STATE_CODE) {
+    // expected format: 02000MD00258--1-----
+    return Number(Route_ID.substring(Route_ID.indexOf('MD') + 2, Route_ID.indexOf('-')));
+  }
+  // Catch all case for now
+  return Number(Route_Name.substring(2));
+};
+
 /**
  * Seeds the GeoJSON features to the MySQL database, creating records for the state,
  * all segments, and all coordinate points. Does not return anything, rather it will
@@ -199,8 +219,8 @@ const seedFeatures = async (
         ? ['Route_Name', 'Route_Numb', 'Route_Sign']
         : ['route_name', 'route_number', 'route_signing'],
     );
-    const routeNum = isNonMainlineInterstate(feature) && Route_Numb === 0
-      ? Number(Route_Name.substring(2))
+    const routeNum = Route_Numb === 0
+      ? getRouteNumberFromName(feature, isShapefileData)
       : Route_Numb;
     // Sometimes despite filtering via API, can still get invalid feature for seeding
     if (Number.isNaN(routeNum) || routeNum === 0 || routeNum > 10000) {
