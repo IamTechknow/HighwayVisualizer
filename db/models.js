@@ -13,12 +13,12 @@ const Utils = require('./Utils');
 /** Static methods for database interactions */
 class Models {
   /**
-   * Queries the database for all states and their initials.
+   * Queries the database for all states in sorted order.
    * @param {object} db - A database client that can perform queries from the mysql2 module.
    * @return {Promise} Returns a promise that resolves with an array of rows from the states table.
    */
   static getStates(db) {
-    return db.execute('SELECT * FROM states;')
+    return db.execute('SELECT * FROM states ORDER BY title;')
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
