@@ -6,6 +6,7 @@
  * @requires NPM:node-fetch
  */
 
+const https = require('https');
 const fetch = require('node-fetch');
 
 // Converts from x, y to lng, lat
@@ -140,6 +141,16 @@ const stringifyWhereFilters = (whereFilters, conjunctions) => {
   return clausesStack.join(' ');
 };
 
+// From: https://dev.to/karataev/handling-a-lot-of-requests-in-javascript-with-promises-1kbb
+const processPromiseChunks = (items, cb) => {
+  const result = [];
+  return items.reduce((accum, curr) => {
+    const accumResult = accum.then(() => cb(curr).then((res) => result.push(res)));
+    return accumResult;
+  }, Promise.resolve())
+    .then(() => result);
+};
+
 /**
  * Retrieves layer information from the layers endpoint of an ArcGIS feature server URL.
  * @param {string} serviceURL - The ArcGIS feature server URL.
@@ -214,6 +225,8 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
  *        Defaults to 7 digits for balanced accuracy and output size.
  * @param {number[]} bbox - A 4-tuple representing the bbox value for the GeoJSON feature collection
  *        from a call to getLayerBBox().
+ * @param {number} chunkSize - Concurrency limit for the number of network requests. Lower the
+ *        chunk size if encountering connection timeouts.
  * @return {Promise} Returns a Promise that resolves with a GeoJSON feature collection object
  *         that contains all features represented by the ids array parameter.
  *         If any errors were encountered from a GeoJSON chunk, the error field will be non-null.
@@ -227,15 +240,13 @@ const queryLayerFeaturesWithIDs = (
   requestGeoJSON = false,
   geometryPrecision = 7,
   bbox = null,
+  chunkSize = 100,
 ) => {
   const idSubsets = [];
   for (let i = 0; i < ids.length; i += 100) {
-    idSubsets.push(
-      ids.length - i > 100 ? ids.slice(i, i + 100) : ids.slice(i, ids.length),
-    );
+    idSubsets.push(ids.slice(i, i + 100));
   }
-
-  const promises = idSubsets.map((idSubset) => {
+  const urls = idSubsets.map((idSubset) => {
     const queryParams = {
       objectIds: idSubset.join(','),
       geometryPrecision,
@@ -244,20 +255,37 @@ const queryLayerFeaturesWithIDs = (
       f: requestGeoJSON ? 'geojson' : 'json',
     };
     const queryStr = stringifyQuery(queryParams);
-    const url = `${serviceURL}/${layerId}/query/?${queryStr}`;
-    return fetch(url).then((res) => res.json());
+    return `${serviceURL}/${layerId}/query/?${queryStr}`;
   });
-  return Promise.all(promises).then((chunks) => {
-    const anyErrors = chunks.filter((chunk) => chunk.error);
-    const allFeatures = chunks.filter((chunk) => chunk.features)
-      .reduce((accum, chunk) => accum.concat(chunk.features), []);
-    return {
-      bbox,
-      error: anyErrors.length > 0 ? anyErrors[0].error : null,
-      features: allFeatures,
-      type: 'FeatureCollection',
-    };
-  });
+  const urlChunks = [];
+  for (let i = 0; i < urls.length; i += chunkSize) {
+    urlChunks.push(urls.slice(i, i + chunkSize));
+  }
+  let jsonChunks = [];
+  const fetchOptions = {
+    agent: new https.Agent({ keepAlive: true }),
+    timeout: 10000,
+  };
+  return processPromiseChunks(
+    urlChunks,
+    (urlChunk) => Promise.all(
+      urlChunk.map((url) => fetch(url, fetchOptions).then((res) => res.json())),
+    )
+      .then((res) => {
+        jsonChunks = jsonChunks.concat(res);
+      }),
+  )
+    .then(() => {
+      const anyErrors = jsonChunks.filter((chunk) => chunk.error);
+      const allFeatures = jsonChunks.filter((chunk) => chunk.features)
+        .reduce((accum, chunk) => accum.concat(chunk.features), []);
+      return {
+        bbox,
+        error: anyErrors.length > 0 ? anyErrors[0].error : null,
+        features: allFeatures,
+        type: 'FeatureCollection',
+      };
+    });
 };
 
 /** @module ArcGISClient */
