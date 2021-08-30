@@ -2,6 +2,7 @@ const cliProgress = require('cli-progress');
 const EventEmitter = require('events');
 const fs = require('fs').promises;
 const shapefile = require('shapefile');
+const yargs = require('yargs/yargs');
 
 const ArcGISClient = require('./ArcGISClient');
 const DB = require('.');
@@ -94,7 +95,7 @@ const getConjunctionsForState = (_stateIdentifier, stateInitials, year) => {
   return ['(', 'OR', 'OR', ')', 'OR', '(', 'AND', ')', 'AND', 'AND', 'AND'];
 };
 
-const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '2019') => {
+const getDataFromFeatureServer = async (stateIdentifier, stateInitials, chunkSize, year = '2019') => {
   console.log(`Getting ${year} feature data for ${stateIdentifier}...`);
   const serverURL = getDataSourcesForState(
     SOURCE_ENUM.ARCGIS_FEATURE_SERVER,
@@ -135,10 +136,10 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, year = '
     'route_name',
     'route_signing',
   ].join();
-  return ArcGISClient.queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true, 7, bbox);
+  return ArcGISClient.queryLayerFeaturesWithIDs(
+    serverURL, 0, ids, outFields, true, 7, bbox, chunkSize,
+  );
 };
-
-const printUsage = () => console.log('Usage: node <script path>/fhwaSeed.js stateIdentifier "stateTitle" stateInitials [yearStarting2000]');
 
 const FILTERED_FEATURES_EVENT = 'filteredFeatures';
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
@@ -158,9 +159,10 @@ progressEmitter.on(FILTERED_FEATURES_EVENT, (numFeatures) => {
 progressEmitter.on(FEATURES_DONE_EVENT, () => progressBar.stop());
 
 const seedData = async (db, args) => {
-  const [stateIdentifier, stateTitle, stateInitials, year] = args.slice(2);
-  if (args.length !== 6) {
-    return getDataFromFeatureServer(stateIdentifier, stateInitials)
+  const [stateIdentifier, stateTitle, stateInitials] = args._;
+  const { year, chunkSize } = args;
+  if (year === null) {
+    return getDataFromFeatureServer(stateIdentifier, stateInitials, chunkSize)
       .then((featureCollection) => fhwaFeatureParser(
         db, progressEmitter, featureCollection, stateIdentifier, stateTitle, stateInitials, false,
       ))
@@ -183,21 +185,31 @@ const seedData = async (db, args) => {
       ))
       .catch((err) => console.error(err));
   }
-  return getDataFromFeatureServer(stateIdentifier, stateInitials, year)
+  return getDataFromFeatureServer(stateIdentifier, stateInitials, chunkSize, year)
     .then((featureCollection) => fhwaFeatureParser(
       db, progressEmitter, featureCollection, stateIdentifier, stateTitle, stateInitials, false,
     ))
     .catch((err) => console.error(err));
 };
 
-if (process.argv.length < 5) {
-  console.log('State identifier, state title, state initials are required.');
-  printUsage();
-  return;
-}
+const args = yargs(process.argv.slice(2))
+  .usage('Usage: node $0 stateIdentifier "stateTitle" stateInitials [year] [chunk-size]')
+  .demandCommand(3)
+  .option('chunkSize', {
+    default: 100,
+    describe: 'Max requests when downloading ArcGIS features',
+    type: 'number',
+  })
+  .option('year', {
+    default: null,
+    describe: 'Year for ArcGIS data starting 2000, 2018 and 2019 are supported',
+    type: 'string',
+  })
+  .example('node db/fhwaSeed.js District "Washington DC" DC --year 2019 --chunk-size 100')
+  .argv;
 
 DB.getDB()
-  .then((client) => seedData(client, process.argv).then(() => client)
+  .then((client) => seedData(client, args).then(() => client)
     .catch((err) => {
       console.error(err);
       client.end();

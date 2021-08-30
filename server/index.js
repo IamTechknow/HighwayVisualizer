@@ -56,7 +56,7 @@ const runServer = async (redisOnly) => {
 };
 
 const args = yargs(process.argv.slice(2))
-  .options('redisOnly', {
+  .option('redisOnly', {
     default: false,
     describe: 'Allow server to run in read-only mode',
     type: 'boolean',
