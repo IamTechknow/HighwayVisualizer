@@ -8,9 +8,9 @@
  * @requires /db/Utils.js:Utils
  */
 
-const TYPE_ENUM = require('../routeEnum');
-const routePrefixes = require('../routePrefixes');
-const Utils = require('../Utils');
+import { INTERSTATE, US_HIGHWAY, STATE } from '../routeEnum.js';
+import routePrefixes from '../routePrefixes.js';
+import Utils from '../Utils.js';
 
 // Codes defined in Chapter 4 of the HPMS Field Manual
 /** @constant {number} */
@@ -48,9 +48,9 @@ const filterOutFeature = (feature) => {
     Facility_T, Route_ID, Route_Name, Route_Numb, Route_Sign, State_Code,
   } = feature.properties;
   if (
-    Route_Sign !== TYPE_ENUM.INTERSTATE &&
-    Route_Sign !== TYPE_ENUM.US_HIGHWAY &&
-    Route_Sign !== TYPE_ENUM.STATE
+    Route_Sign !== INTERSTATE &&
+    Route_Sign !== US_HIGHWAY &&
+    Route_Sign !== STATE
   ) {
     return true;
   }
@@ -99,12 +99,12 @@ const getTypeWithProperties = (properties, stateIdentifier, isShapefileData) => 
   const routeNum = Route_Numb !== 0 ? Route_Numb : Number(Route_Name.substring(2));
   const typeEnum = routePrefixes[stateIdentifier][routeNum];
 
-  if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === TYPE_ENUM.INTERSTATE) {
-    return TYPE_ENUM.STATE;
-  } if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === TYPE_ENUM.US_HIGHWAY) {
-    return TYPE_ENUM.STATE;
+  if (F_System !== INTERSTATE_FACILITY_SYSTEM && typeEnum === INTERSTATE) {
+    return STATE;
+  } if (Route_Name !== null && !Route_Name.startsWith('US') && typeEnum === US_HIGHWAY) {
+    return STATE;
   }
-  return typeEnum || TYPE_ENUM.STATE;
+  return typeEnum || STATE;
 };
 
 // Attempt to get route number on a case-by-case basis
@@ -185,9 +185,9 @@ const seedFeatures = async (
     [stateIdentifier, stateTitle, stateInitials, ...bbox],
   ).then((res) => res[0].insertId);
   const allData = {
-    [TYPE_ENUM.INTERSTATE]: {},
-    [TYPE_ENUM.US_HIGHWAY]: {},
-    [TYPE_ENUM.STATE]: {},
+    [INTERSTATE]: {},
+    [US_HIGHWAY]: {},
+    [STATE]: {},
   };
   // Due to autoincrement of id, this is fastest way to get row count, assuming there are rows
   let basePointID = await db.query('SELECT max(id) - min(id) + 1 FROM points;')
@@ -299,4 +299,4 @@ const seedFeatures = async (
 };
 
 /** @module fhwaFeatureParser */
-module.exports = seedFeatures;
+export default seedFeatures;

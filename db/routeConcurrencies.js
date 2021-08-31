@@ -10,10 +10,10 @@
  * @requires /db/Models.js:highwayDAO
  */
 
-const Models = require('./models');
-const TYPE_ENUM = require('./routeEnum');
-const routePrefixes = require('./routePrefixes');
-const Utils = require('./Utils');
+import Models from './models.js';
+import { STATE } from './routeEnum.js';
+import routePrefixes from './routePrefixes.js';
+import Utils from './Utils.js';
 
 /** @constant {number} */
 const CONCURRENCY_THRESHOLD = 500; // in meters
@@ -145,12 +145,12 @@ const processConcurrencyMap = async (
   const pairs = Object.entries(concurrencyMap[identifier]);
   for (const [route, routeTwos] of pairs) {
     // Need the segments to come in increasing order of ID
-    const route1Type = routePrefixes[identifier][route] || TYPE_ENUM.STATE;
+    const route1Type = routePrefixes[identifier][route] || STATE;
     const route1Segs = await Models.getPointsForRoute(db, stateID, route1Type, route)
       .then((segments) => segments.sort((left, right) => left.id - right.id));
 
     for (const routeTwo of routeTwos) {
-      const route2Type = routePrefixes[identifier][routeTwo] || TYPE_ENUM.STATE;
+      const route2Type = routePrefixes[identifier][routeTwo] || STATE;
       const route2Segs = await Models.getPointsForRoute(db, stateID, route2Type, routeTwo)
         .then((segments) => segments.sort((left, right) => left.id - right.id));
       for (const route2Seg of route2Segs) {
@@ -206,6 +206,4 @@ const getRouteConcurrenciesForState = async (db, identifier) => {
 };
 
 /** @module routeConcurrencies */
-module.exports = {
-  getRouteConcurrenciesForState,
-};
+export default getRouteConcurrenciesForState;

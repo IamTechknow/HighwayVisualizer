@@ -1,18 +1,18 @@
-const cliProgress = require('cli-progress');
-const EventEmitter = require('events');
-const shapefile = require('shapefile');
+import { SingleBar, Presets } from 'cli-progress';
+import EventEmitter from 'events';
+import { read } from 'shapefile';
 
-const DB = require('.');
-const caltransFeatureParser = require('./parsers/caltransFeatureParser');
+import { getDB } from './index.js';
+import caltransFeatureParser from './parsers/caltransFeatureParser.js';
 
 const CA_DATA = 'db/SHN_Lines.shp', CA_DB = 'db/SHN_Lines.dbf';
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
   FEATURES_DONE_EVENT = 'featuresDone';
 
 let featuresInsertedCount = 0, totalFeatures = 0;
-const progressBar = new cliProgress.SingleBar({
+const progressBar = new SingleBar({
   format: ' {bar} {percentage}% | ETA: {eta}s | {value}/{total} features',
-}, cliProgress.Presets.shades_classic);
+}, Presets.shades_classic);
 const progressEmitter = new EventEmitter();
 progressEmitter.on(INSERTED_FEATURE_EVENT, (numFeaturesInRoute) => {
   featuresInsertedCount += numFeaturesInRoute;
@@ -24,7 +24,7 @@ progressEmitter.on(FOUND_MULTI_EVENT, (numFeaturesInMulti) => {
 });
 progressEmitter.on(FEATURES_DONE_EVENT, () => progressBar.stop());
 
-const seedData = (db) => shapefile.read(CA_DATA, CA_DB)
+const seedData = (db) => read(CA_DATA, CA_DB)
   .then((geoJSON) => {
     const { bbox, features } = geoJSON;
     totalFeatures = features.length;
@@ -33,7 +33,7 @@ const seedData = (db) => shapefile.read(CA_DATA, CA_DB)
   });
 
 console.log('Seeding database...');
-DB.getDB()
+getDB()
   .then((db) => seedData(db).then(() => db)
     .catch((err) => {
       console.error(err);

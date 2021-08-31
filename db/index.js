@@ -4,7 +4,7 @@
  * @requires NPM:mysql2
  */
 
-const mysql = require('mysql2/promise');
+import mysql from 'mysql2/promise';
 
 /** @constant {string} */
 const DATABASE = 'highways';
@@ -17,7 +17,7 @@ const AUTHENTICATION_FIX = 'https://stackoverflow.com/questions/50093144/mysql-8
  * For a few codes, a helpful message will be printed, otherwise the entire object is logged.
  * This may be exported to the server logic to better handle the error.
  */
-const logMySQLError = (err) => {
+export const logMySQLError = (err) => {
   if (err.code === 'ER_BAD_DB_ERROR') {
     console.error('highways DB not found. Did you run "npm run reset/seed" yet?');
   } else if (err.code === 'ER_NOT_SUPPORTED_AUTH_MODE') {
@@ -41,7 +41,7 @@ const logMySQLError = (err) => {
  *         connected to the highways database and contains helper methods to start and stop
  *         a transaction meant for inserting data in bulk.
  */
-const getDB = () => mysql.createConnection({
+export const getDB = () => mysql.createConnection({
   host: 'localhost',
   user: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
@@ -57,6 +57,3 @@ const getDB = () => mysql.createConnection({
   return db.query(`CREATE DATABASE IF NOT EXISTS ${DATABASE}; use ${DATABASE};`)
     .then(() => db);
 });
-
-/** @module DB */
-module.exports = { getDB, logMySQLError };

@@ -40,7 +40,9 @@
         "./node_modules/typescript/lib/lib.es6.d.ts"
     ],
     "include": [
-        "./.eslintrc.js",
+        "./.eslintrc.cjs",
+        "./jest.config.js",
+        "./webpack.config.js",
         "client/**/*",
         "db/**/*",
         "server/**/*"

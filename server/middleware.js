@@ -12,7 +12,7 @@
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-const headerMiddleware = (req, res, next) => {
+export const headerMiddleware = (req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
   if (process.env.NODE_ENV === 'production') {
@@ -32,7 +32,7 @@ const headerMiddleware = (req, res, next) => {
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-const getRedisMiddleware = (redisClient) => (req, res, next) => {
+export const getRedisMiddleware = (redisClient) => (req, res, next) => {
   const keySuffix = req.originalUrl || req.url;
   redisClient.get(`__express__${keySuffix}`, (_err, reply) => {
     if (reply) {
@@ -44,5 +44,3 @@ const getRedisMiddleware = (redisClient) => (req, res, next) => {
     }
   });
 };
-
-module.exports = { getRedisMiddleware, headerMiddleware };

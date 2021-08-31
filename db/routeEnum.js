@@ -12,9 +12,11 @@
  * @module routeEnum
  * @see {@link https://www.fhwa.dot.gov/policyinformation/hpms/fieldmanual/page05.cfm#toc249159702 HPMS Reference}
  */
-module.exports = Object.freeze({
-  NOT_SIGNED: 1,
-  INTERSTATE: 2,
-  US_HIGHWAY: 3,
-  STATE: 4,
-});
+
+export const NOT_SIGNED = 1;
+
+export const INTERSTATE = 2;
+
+export const US_HIGHWAY = 3;
+
+export const STATE = 4;

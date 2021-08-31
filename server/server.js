@@ -15,15 +15,26 @@
  * @requires /db/routeEnum.js:highwayvisualizer/routeEnum
  */
 
-const compression = require('compression');
-const express = require('express');
-const { check } = require('express-validator');
-const morgan = require('morgan');
-const path = require('path');
+import compression from 'compression';
+import express, { static as expressStatic, json, urlencoded } from 'express';
+import { check } from 'express-validator';
+import morgan from 'morgan';
+import { resolve } from 'path';
 
-const Middleware = require('./middleware');
-const Routes = require('./routes');
-const TYPE_ENUM = require('../db/routeEnum');
+import { headerMiddleware, getRedisMiddleware } from './middleware.js';
+import {
+  userPageRouter,
+  statesAPIRouter,
+  usersAPIRouter,
+  routeSegmentsPerStateAPIRouter,
+  pointsPerRouteSegmentAPIRouter,
+  pointsPerRouteAPIRouter,
+  concurrenciesPerRouteAPIRouter,
+  travelSegmentsAPIRouter,
+  newUserAPIRouter,
+  newTravelSegmentAPIRouter,
+} from './routes.js';
+import { INTERSTATE, STATE } from '../db/routeEnum.js';
 
 /** @constant {number} */
 const PORT = 3000;
@@ -71,59 +82,59 @@ const createServer = (db, redisClient) => {
   const app = express();
   app.disable('x-powered-by');
   app.use(compression({ threshold: 8192 }));
-  app.use(express.static(path.resolve(__dirname, '../public')));
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  app.use(expressStatic(resolve('../public')));
+  app.use(json());
+  app.use(urlencoded({ extended: true }));
   if (process.env.NODE_ENV === 'development') {
     app.use(morgan('dev'));
   }
 
-  app.use(Middleware.headerMiddleware);
-  app.get('/users/:user', Routes.userPageRouter);
+  app.use(headerMiddleware);
+  app.get('/users/:user', userPageRouter);
   app.get('/api/states',
-    Middleware.getRedisMiddleware(redisClient),
-    Routes.statesAPIRouter(db, redisClient));
-  app.get('/api/users', Routes.usersAPIRouter(db, redisClient));
+    getRedisMiddleware(redisClient),
+    statesAPIRouter(db, redisClient));
+  app.get('/api/users', usersAPIRouter(db, redisClient));
   app.get(
     '/api/route_segments/:stateId',
-    Middleware.getRedisMiddleware(redisClient),
+    getRedisMiddleware(redisClient),
     getGTZeroValidator('stateId'),
-    Routes.routeSegmentsPerStateAPIRouter(db, redisClient),
+    routeSegmentsPerStateAPIRouter(db, redisClient),
   );
   app.get(
     '/api/points/:routeSegmentId',
-    Middleware.getRedisMiddleware(redisClient),
+    getRedisMiddleware(redisClient),
     getGTZeroValidator('routeSegmentId'),
-    Routes.pointsPerRouteSegmentAPIRouter(db, redisClient),
+    pointsPerRouteSegmentAPIRouter(db, redisClient),
   );
   app.get(
     '/api/points/:type/:routeNum',
-    Middleware.getRedisMiddleware(redisClient),
+    getRedisMiddleware(redisClient),
     getGTZeroValidator('stateId'),
     check('type').isInt({
-      min: TYPE_ENUM.INTERSTATE,
-      max: TYPE_ENUM.STATE,
+      min: INTERSTATE,
+      max: STATE,
     }),
     check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC).custom(routeNumValidator),
     check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
-    Routes.pointsPerRouteAPIRouter(db, redisClient),
+    pointsPerRouteAPIRouter(db, redisClient),
   );
   app.get(
     '/api/concurrencies/:routeNum',
-    Middleware.getRedisMiddleware(redisClient),
+    getRedisMiddleware(redisClient),
     getGTZeroValidator('stateId'),
     check('routeNum').isString().isLength(ROUTE_NUM_LENGTH_SPEC).custom(routeNumValidator),
     check('dir').isString().isLength(ROUTE_DIR_LENGTH_SPEC),
-    Routes.concurrenciesPerRouteAPIRouter(db, redisClient),
+    concurrenciesPerRouteAPIRouter(db, redisClient),
   );
   app.get(
     '/api/travel_segments/:user',
     check('user').isString().isLength(USER_LENGTH_SPEC),
-    Routes.travelSegmentsAPIRouter(db, redisClient),
+    travelSegmentsAPIRouter(db, redisClient),
   );
-  app.post('/api/newUser', Routes.newUserAPIRouter(db, redisClient));
-  app.post('/api/travel_segments/new', Routes.newTravelSegmentAPIRouter(db, redisClient));
+  app.post('/api/newUser', newUserAPIRouter(db, redisClient));
+  app.post('/api/travel_segments/new', newTravelSegmentAPIRouter(db, redisClient));
   return app.listen(PORT, () => console.log(`Listening at Port ${PORT}`));
 };
 
-module.exports = { createServer };
+export default createServer;

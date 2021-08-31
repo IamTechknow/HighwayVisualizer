@@ -1,14 +1,18 @@
-const cliProgress = require('cli-progress');
-const EventEmitter = require('events');
-const fs = require('fs').promises;
-const shapefile = require('shapefile');
-const yargs = require('yargs/yargs');
+import { SingleBar, Presets } from 'cli-progress';
+import EventEmitter from 'events';
+import { promises as fs } from 'fs';
+import { read } from 'shapefile';
+import yargs from 'yargs';
 
-const ArcGISClient = require('./ArcGISClient');
-const DB = require('.');
-const fhwaFeatureParser = require('./parsers/fhwaFeatureParser');
-const TYPE_ENUM = require('./routeEnum');
-const { SOURCE_ENUM, getDataSourcesForState } = require('./sources');
+import {
+  getLayerBBox, queryLayers, queryLayerFeatureIDs, queryLayerFeaturesWithIDs,
+} from './ArcGISClient.js';
+import { getDB } from './index.js';
+import fhwaFeatureParser from './parsers/fhwaFeatureParser.js';
+import {
+  NOT_SIGNED, INTERSTATE, US_HIGHWAY, STATE,
+} from './routeEnum.js';
+import { SOURCE_ENUM, getDataSourcesForState } from './sources.js';
 
 const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
   if (stateInitials === 'AK' && year === '2019') {
@@ -16,7 +20,7 @@ const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
       {
         field: 'ROUTE_SIGNING',
         op: '=',
-        value: `${TYPE_ENUM.NOT_SIGNED}`,
+        value: `${NOT_SIGNED}`,
         esriType: 'esriFieldTypeInteger',
       },
       {
@@ -39,19 +43,19 @@ const getFiltersForState = (_stateIdentifier, stateInitials, year) => {
     {
       field: 'ROUTE_SIGNING',
       op: '=',
-      value: `${TYPE_ENUM.INTERSTATE}`,
+      value: `${INTERSTATE}`,
       esriType: 'esriFieldTypeInteger',
     },
     {
       field: 'ROUTE_SIGNING',
       op: '=',
-      value: `${TYPE_ENUM.US_HIGHWAY}`,
+      value: `${US_HIGHWAY}`,
       esriType: 'esriFieldTypeInteger',
     },
     {
       field: 'ROUTE_SIGNING',
       op: '=',
-      value: `${TYPE_ENUM.STATE}`,
+      value: `${STATE}`,
       esriType: 'esriFieldTypeInteger',
     },
     {
@@ -110,7 +114,7 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, chunkSiz
       type: 'FeatureCollection',
     };
   }
-  const layers = await ArcGISClient.queryLayers(serverURL);
+  const layers = await queryLayers(serverURL);
   if (!layers || layers.length < 1) {
     return {
       error: 'No layers found in feature server, aborting',
@@ -118,13 +122,13 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, chunkSiz
       type: 'FeatureCollection',
     };
   }
-  const ids = await ArcGISClient.queryLayerFeatureIDs(
+  const ids = await queryLayerFeatureIDs(
     serverURL,
     0,
     getFiltersForState(stateIdentifier, stateInitials, year),
     getConjunctionsForState(stateIdentifier, stateInitials, year),
   );
-  const bbox = await ArcGISClient.getLayerBBox(serverURL, 0);
+  const bbox = await getLayerBBox(serverURL, 0);
   // Use field name not alias
   const outFields = [
     'begin_point',
@@ -136,7 +140,7 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, chunkSiz
     'route_name',
     'route_signing',
   ].join();
-  return ArcGISClient.queryLayerFeaturesWithIDs(
+  return queryLayerFeaturesWithIDs(
     serverURL, 0, ids, outFields, true, 7, bbox, chunkSize,
   );
 };
@@ -145,9 +149,9 @@ const FILTERED_FEATURES_EVENT = 'filteredFeatures';
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FEATURES_DONE_EVENT = 'featuresDone';
 
 let featuresInsertedCount = 0;
-const progressBar = new cliProgress.SingleBar({
+const progressBar = new SingleBar({
   format: ' {bar} {percentage}% | ETA: {eta}s | {value}/{total} features',
-}, cliProgress.Presets.shades_classic);
+}, Presets.shades_classic);
 const progressEmitter = new EventEmitter();
 progressEmitter.on(INSERTED_FEATURE_EVENT, (numFeaturesInRoute) => {
   featuresInsertedCount += numFeaturesInRoute;
@@ -179,7 +183,7 @@ const seedData = async (db, args) => {
   }
   if (filesExist) {
     console.log('Seeding database with shapefile...');
-    return shapefile.read(fileBuffers[0], fileBuffers[1])
+    return read(fileBuffers[0], fileBuffers[1])
       .then((featureCollection) => fhwaFeatureParser(
         db, progressEmitter, featureCollection, stateIdentifier, stateTitle, stateInitials,
       ))
@@ -208,7 +212,7 @@ const args = yargs(process.argv.slice(2))
   .example('node db/fhwaSeed.js District "Washington DC" DC --year 2019 --chunk-size 100')
   .argv;
 
-DB.getDB()
+getDB()
   .then((client) => seedData(client, args).then(() => client)
     .catch((err) => {
       console.error(err);

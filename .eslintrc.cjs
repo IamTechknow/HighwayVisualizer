@@ -13,6 +13,7 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 2020,
+    extraFileExtensions: ['.cjs'],
     project: './tsconfig.json',
     sourceType: 'module',
   },
@@ -26,6 +27,8 @@ module.exports = {
   ],
   plugins: ['@typescript-eslint'],
   rules: {
+    // node.js does not search for extensions outside node_modules
+    'import/extensions': 'off',
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],
     'linebreak-style': 'off',
     'no-await-in-loop': 'off',

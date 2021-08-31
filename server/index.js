@@ -8,14 +8,14 @@
  * @requires /server/server.js
  */
 
-const redis = require('redis');
-const yargs = require('yargs/yargs');
+import { createClient } from 'redis';
+import yargs from 'yargs';
 
-const DB = require('../db');
-const { createServer } = require('./server');
+import { getDB, logMySQLError } from '../db/index.js';
+import createServer from './server.js';
 
 const _getRedisClient = () => {
-  const redisClient = redis.createClient();
+  const redisClient = createClient();
   redisClient.on('error', (error) => {
     if (error.code === 'ECONNREFUSED') {
       console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
@@ -43,12 +43,12 @@ const runServer = async (redisOnly) => {
   try {
     const redisClient = _getRedisClient();
     if (!redisOnly) {
-      db = await DB.getDB();
+      db = await getDB();
     }
     const server = createServer(db, redisClient);
     process.on('SIGINT', _getShutdownHandler(db, server, redisClient));
   } catch (err) {
-    DB.logMySQLError(err);
+    logMySQLError(err);
     console.warn(
       'Server could not communicate with DB, use --redis-only switch to run server in read-only mode',
     );

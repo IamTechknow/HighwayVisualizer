@@ -12,7 +12,7 @@
  * @enum {number}
  * @module sourceEnum
  */
-const SOURCE_ENUM = Object.freeze({
+export const SOURCE_ENUM = Object.freeze({
   SHAPEFILE: 0,
   ARCGIS_FEATURE_SERVER: 1,
 });
@@ -62,7 +62,7 @@ const fhwaArcgisServers2019 = INITIALS.reduce(
  * @return {string[]} Returns an array with URLs for the state, or an empty array
  *         for an unknown state or if no sources are available for the given type.
  */
-const getDataSourcesForState = (sourceType, stateIdentifier, stateInitial, year = '2019') => {
+export const getDataSourcesForState = (sourceType, stateIdentifier, stateInitial, year = '2019') => {
   if (sourceType === SOURCE_ENUM.SHAPEFILE) {
     return [fhwaShapefileURLs[stateIdentifier]].concat(shapefileURLs[stateIdentifier] || []);
   }
@@ -76,10 +76,4 @@ const getDataSourcesForState = (sourceType, stateIdentifier, stateInitial, year 
     return fhwaServers.concat(otherArcgisServerURLs[stateIdentifier] || []);
   }
   throw new Error(`Invalid data source type for ${stateIdentifier}`);
-};
-
-/** @module sources */
-module.exports = {
-  SOURCE_ENUM,
-  getDataSourcesForState,
 };

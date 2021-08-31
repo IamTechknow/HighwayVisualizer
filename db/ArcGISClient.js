@@ -6,8 +6,8 @@
  * @requires NPM:node-fetch
  */
 
-const https = require('https');
-const fetch = require('node-fetch');
+import { Agent } from 'https';
+import fetch from 'node-fetch';
 
 // Converts from x, y to lng, lat
 // Source to convert from EPSG 3857 to 4326: https://gist.github.com/onderaltintas/6649521
@@ -157,7 +157,7 @@ const processPromiseChunks = (items, cb) => {
  * @return {Promise} Returns a Promise that resolves with an array of layer objects,
  *         each descripting fields, capabilities, and metadata.
  */
-const queryLayers = (serviceURL) => fetch(`${serviceURL}/layers?f=json`)
+export const queryLayers = (serviceURL) => fetch(`${serviceURL}/layers?f=json`)
   .then((res) => res.json())
   .then((root) => root.layers);
 
@@ -170,7 +170,7 @@ const queryLayers = (serviceURL) => fetch(`${serviceURL}/layers?f=json`)
  * @param {number} layerId - The integer ID of a layer starting at zero.
  * @return {Promise} Returns a Promise that resolves with a 4-tuple array bbox value.
  */
-const getLayerBBox = (serviceURL, layerId) => queryLayers(serviceURL)
+export const getLayerBBox = (serviceURL, layerId) => queryLayers(serviceURL)
   .then((layerArray) => getBoundingBoxForLayer(layerArray[layerId].extent));
 
 /**
@@ -180,7 +180,7 @@ const getLayerBBox = (serviceURL, layerId) => queryLayers(serviceURL)
  * @return {Promise} Returns a Promise that resolves with an array of field objects,
  *         each describing the field name, alias, and type.
  */
-const queryLayerFields = (serviceURL, layerId) => queryLayers(serviceURL)
+export const queryLayerFields = (serviceURL, layerId) => queryLayers(serviceURL)
   .then((layerArray) => layerArray[layerId].fields);
 
 /**
@@ -198,7 +198,7 @@ const queryLayerFields = (serviceURL, layerId) => queryLayers(serviceURL)
  * @param {string[]} conjunctions - Array containing modifiers to the where clause.
  * @return {Promise} Returns a Promise that resolves with an array of feature IDs for the layer.
  */
-const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) => {
+export const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) => {
   const queryParams = {
     where: stringifyWhereFilters(whereFilters, conjunctions),
     returnIdsOnly: true,
@@ -232,7 +232,7 @@ const queryLayerFeatureIDs = (serviceURL, layerId, whereFilters, conjunctions) =
  *         If any errors were encountered from a GeoJSON chunk, the error field will be non-null.
  *         The bbox field is optional.
  */
-const queryLayerFeaturesWithIDs = (
+export const queryLayerFeaturesWithIDs = (
   serviceURL,
   layerId,
   ids,
@@ -263,7 +263,7 @@ const queryLayerFeaturesWithIDs = (
   }
   let jsonChunks = [];
   const fetchOptions = {
-    agent: new https.Agent({ keepAlive: true }),
+    agent: new Agent({ keepAlive: true }),
     timeout: 10000,
   };
   return processPromiseChunks(
@@ -286,13 +286,4 @@ const queryLayerFeaturesWithIDs = (
         type: 'FeatureCollection',
       };
     });
-};
-
-/** @module ArcGISClient */
-module.exports = {
-  getLayerBBox,
-  queryLayers,
-  queryLayerFields,
-  queryLayerFeatureIDs,
-  queryLayerFeaturesWithIDs,
 };

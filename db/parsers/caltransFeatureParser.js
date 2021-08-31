@@ -7,10 +7,10 @@
  * @requires /db/Utils.js:Utils
  */
 
-const { getRouteConcurrenciesForState } = require('../routeConcurrencies');
-const TYPE_ENUM = require('../routeEnum');
-const routePrefixes = require('../routePrefixes');
-const Utils = require('../Utils');
+import getRouteConcurrenciesForState from '../routeConcurrencies.js';
+import { STATE } from '../routeEnum.js';
+import { California } from '../routePrefixes.js';
+import Utils from '../Utils.js';
 
 /** @constant {string} */
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
@@ -49,7 +49,7 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
     const { geometry, properties } = feature;
     const routeNum = properties.ROUTE;
     const dir = properties.DIR;
-    const type = routePrefixes.California[routeNum] || TYPE_ENUM.STATE;
+    const type = California[routeNum] || STATE;
     const isMulti = geometry.type === 'MultiLineString';
     if (isMulti) {
       const numFeatures = geometry.coordinates.length;
@@ -84,4 +84,4 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
 };
 
 /** @module caltransFeatureParser */
-module.exports = seedFeatures;
+export default seedFeatures;

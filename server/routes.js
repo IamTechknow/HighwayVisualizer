@@ -8,10 +8,10 @@
  * @requires /db/models.js:highwayDAO
  * @requires /db/routeEnum.js:highwayDAO
  */
-const { validationResult } = require('express-validator');
-const path = require('path');
+import { validationResult } from 'express-validator';
+import path from 'path';
 
-const Models = require('../db/models');
+import Models from '../db/models.js';
 
 /**
  * Middleware function which directs users to the index page. Client sided routing renders the
@@ -21,7 +21,7 @@ const Models = require('../db/models');
  * @param {express.Request} req
  * @param {express.Response} res
  */
-const userPageRouter = (_req, res) => res.sendFile(path.join(__dirname, '../public/index.html'));
+export const userPageRouter = (_req, res) => res.sendFile(path.join(__dirname, '../public/index.html'));
 
 const _cacheResponse = (redisClient, obj, req, code) => {
   const keySuffix = req.originalUrl || req.url;
@@ -56,7 +56,7 @@ const _catchError = (err, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const statesAPIRouter = (db, redisClient) => (req, res) => Models.getStates(db)
+export const statesAPIRouter = (db, redisClient) => (req, res) => Models.getStates(db)
   .then((result) => {
     const apiResults = result.map((record) => {
       const {
@@ -81,7 +81,7 @@ const statesAPIRouter = (db, redisClient) => (req, res) => Models.getStates(db)
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const usersAPIRouter = (db, redisClient) => (req, res) => Models.getUsers(db)
+export const usersAPIRouter = (db, redisClient) => (req, res) => Models.getUsers(db)
   .then((result) => _sendOkJSON(redisClient, result, req, res))
   .catch((err) => _catchError(err, res));
 
@@ -92,7 +92,7 @@ const usersAPIRouter = (db, redisClient) => (req, res) => Models.getUsers(db)
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const routeSegmentsPerStateAPIRouter = (db, redisClient) => (req, res) => {
+export const routeSegmentsPerStateAPIRouter = (db, redisClient) => (req, res) => {
   Models.getRouteSegmentsBy(db, req.params.stateId)
     .then((result) => _sendOkJSON(redisClient, result, req, res))
     .catch((err) => _catchError(err, res));
@@ -105,7 +105,7 @@ const routeSegmentsPerStateAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const pointsPerRouteSegmentAPIRouter = (db, redisClient) => (req, res) => {
+export const pointsPerRouteSegmentAPIRouter = (db, redisClient) => (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -123,7 +123,7 @@ const pointsPerRouteSegmentAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const pointsPerRouteAPIRouter = (db, redisClient) => (req, res) => {
+export const pointsPerRouteAPIRouter = (db, redisClient) => (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -148,7 +148,7 @@ const pointsPerRouteAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const concurrenciesPerRouteAPIRouter = (db, redisClient) => (req, res) => {
+export const concurrenciesPerRouteAPIRouter = (db, redisClient) => (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
@@ -167,7 +167,7 @@ const concurrenciesPerRouteAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const travelSegmentsAPIRouter = (db, redisClient) => (req, res) => {
+export const travelSegmentsAPIRouter = (db, redisClient) => (req, res) => {
   Models.getTravelSegmentsBy(db, req.params.user)
     .then((result) => {
       const retval = { loaded: true, notFound: result === false };
@@ -185,7 +185,7 @@ const travelSegmentsAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const newUserAPIRouter = (db, redisClient) => (req, res) => {
+export const newUserAPIRouter = (db, redisClient) => (req, res) => {
   const username = req.body.user;
   if (!username.match(/^[a-z0-9_-]{3,16}$/ig)) {
     const payload = { success: false, message: `${username} is not a valid username` };
@@ -214,7 +214,7 @@ const newUserAPIRouter = (db, redisClient) => (req, res) => {
  * @param {redis.RedisClient} redisClient
  * @returns {function} function with DB and redis client to handle the response.
  */
-const newTravelSegmentAPIRouter = (db, redisClient) => (req, res) => {
+export const newTravelSegmentAPIRouter = (db, redisClient) => (req, res) => {
   const { userId } = req.body;
   if (userId <= 0) {
     _sendErrorJSON(redisClient, 'No user was provided, please ensure a user was selected.', req, res);
@@ -229,17 +229,4 @@ const newTravelSegmentAPIRouter = (db, redisClient) => (req, res) => {
       };
       _sendOkJSON(redisClient, payload, req, res, 201);
     }).catch((err) => _catchError(err, res));
-};
-
-module.exports = {
-  concurrenciesPerRouteAPIRouter,
-  newTravelSegmentAPIRouter,
-  newUserAPIRouter,
-  pointsPerRouteAPIRouter,
-  pointsPerRouteSegmentAPIRouter,
-  routeSegmentsPerStateAPIRouter,
-  statesAPIRouter,
-  travelSegmentsAPIRouter,
-  usersAPIRouter,
-  userPageRouter,
 };

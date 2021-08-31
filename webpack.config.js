@@ -1,9 +1,12 @@
-const path = require('path');
-const webpack = require('webpack');
+import { join, resolve } from 'path';
+import webpack from 'webpack';
+import autoprefixer from 'autoprefixer';
 
-const SRC_DIR = path.join(__dirname, '/client');
+// eslint-disable-next-line @typescript-eslint/naming-convention
+const __dirname = resolve();
+const SRC_DIR = join(__dirname, '/client');
 
-module.exports = {
+export default {
   entry: `${SRC_DIR}/index.tsx`,
   mode: 'development',
   devtool: 'source-map',
@@ -12,13 +15,13 @@ module.exports = {
     hot: true,
     open: true,
     static: {
-      directory: path.join(__dirname, "/public"),
+      directory: join(__dirname, '/public'),
     },
   },
   output: {
     filename: 'bundle.js',
     module: true,
-    path: path.join(__dirname, '/public/dist'),
+    path: join(__dirname, '/public/dist'),
     publicPath: '/dist/',
   },
   experiments: {
@@ -49,14 +52,14 @@ module.exports = {
             loader: 'postcss-loader',
             options: {
               postcssOptions: {
-                plugins: [require('autoprefixer')],
+                plugins: [autoprefixer],
               },
             },
           },
         ],
         include: [
           SRC_DIR,
-          path.resolve(__dirname, 'node_modules/leaflet'),
+          resolve(__dirname, 'node_modules/leaflet'),
         ],
       },
       {

@@ -8,7 +8,7 @@
  *
  * @requires /db/Utils.js:Utils
  */
-const Utils = require('./Utils');
+import Utils from './Utils.js';
 
 /** Static methods for database interactions */
 class Models {
@@ -330,4 +330,4 @@ class Models {
 }
 
 /** @module highwayDAO */
-module.exports = Models;
+export default Models;
