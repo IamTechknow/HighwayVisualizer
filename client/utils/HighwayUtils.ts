@@ -7,13 +7,13 @@ import type {
 const R = 6371e3; // Mean radius of Earth in meters
 const FACTOR = Math.PI / 180;
 const POINTS_BINSEARCH_ITERATIONS = 2;
-const ROUTE_NAMES = {
+const ROUTE_NAMES: { [signType: number]: string } = {
   [RouteSignType.INTERSTATE]: 'Interstate',
   [RouteSignType.US_HIGHWAY]: 'US Highway',
   [RouteSignType.STATE]: 'State Route',
 };
 
-const ROUTE_ABBREVIATIONS = {
+const ROUTE_ABBREVIATIONS: { [signType: number]: string } = {
   [RouteSignType.INTERSTATE]: 'I-',
   [RouteSignType.US_HIGHWAY]: 'US ',
   [RouteSignType.STATE]: '',

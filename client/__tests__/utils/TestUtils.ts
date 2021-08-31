@@ -144,11 +144,17 @@ export const getTestStateData = (): Array<State> => [
     title: 'California',
     identifier: 'California',
     initials: 'CA',
+    boundingBox: [
+      [32.54430676692835, -124.2648724848089], [42.005476933924854, -114.29830844383291],
+    ],
   },
   {
     id: 2,
     title: 'Washington DC',
     identifier: 'District',
     initials: 'DC',
+    boundingBox: [
+      [38.793219410999995, -77.116633422], [38.99524796399999, -76.90953115399998],
+    ],
   },
 ];
