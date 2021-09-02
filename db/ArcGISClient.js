@@ -264,7 +264,6 @@ export const queryLayerFeaturesWithIDs = (
   let jsonChunks = [];
   const fetchOptions = {
     agent: new Agent({ keepAlive: true }),
-    timeout: 10000,
   };
   return processPromiseChunks(
     urlChunks,
