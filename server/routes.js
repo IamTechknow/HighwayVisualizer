@@ -109,6 +109,7 @@ export const pointsPerRouteSegmentAPIRouter = (db, redisClient) => (req, res) =>
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
+    return;
   }
   const routeSegmentId = Number.parseInt(req.params.routeSegmentId, 10);
   Models.getPointsForRouteSegment(db, routeSegmentId)
@@ -127,6 +128,7 @@ export const pointsPerRouteAPIRouter = (db, redisClient) => (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
+    return;
   }
   const stateId = Number.parseInt(req.query.stateId, 10);
   const type = Number.parseInt(req.params.type, 10);
@@ -152,6 +154,7 @@ export const concurrenciesPerRouteAPIRouter = (db, redisClient) => (req, res) =>
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     res.status(400).json({ errors: errors.array() });
+    return;
   }
   const stateId = Number.parseInt(req.query.stateId, 10);
   const { routeNum } = req.params;
