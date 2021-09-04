@@ -82,7 +82,7 @@ const createServer = (db, redisClient) => {
   const app = express();
   app.disable('x-powered-by');
   app.use(compression({ threshold: 8192 }));
-  app.use(expressStatic(resolve('../public')));
+  app.use('/', expressStatic(resolve('./public')));
   app.use(json());
   app.use(urlencoded({ extended: true }));
   if (process.env.NODE_ENV === 'development') {
