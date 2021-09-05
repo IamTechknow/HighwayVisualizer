@@ -28,6 +28,7 @@ class Models {
    *
    * For longer column names, a shortened name is used to reduce bandwidth or for camel casing.
    * The queried rows are also sorted by the route number and ID, in that order.
+   * Length in meters are queried to be from 15 to 3 decimal digits.
    *
    * @param {object} db - A database client that can perform queries from the mysql2 module.
    * @param {number} stateId - The ID of the state to query route segments from.
@@ -36,7 +37,9 @@ class Models {
    *         number of points, and total distance.
    */
   static getRouteSegmentsBy(db, stateId) {
-    return db.execute('SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len, len_m FROM segments WHERE state_key = ? ORDER BY CAST(route_num as unsigned), id;', [stateId])
+    const query = `SELECT id, route_num as routeNum, type, segment_num AS segNum, direction AS dir, len,
+      TRUNCATE(len_m, 3) as len_m FROM segments WHERE state_key = ? ORDER BY route_num, id;`;
+    return db.execute(query, [stateId])
       .then((result) => result[0])
       .catch((err) => { console.error(err); });
   }
