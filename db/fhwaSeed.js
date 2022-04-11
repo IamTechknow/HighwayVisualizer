@@ -140,9 +140,7 @@ const getDataFromFeatureServer = async (stateIdentifier, stateInitials, chunkSiz
     'route_name',
     'route_signing',
   ].join();
-  return queryLayerFeaturesWithIDs(
-    serverURL, 0, ids, outFields, true, 7, bbox, chunkSize,
-  );
+  return queryLayerFeaturesWithIDs(serverURL, 0, ids, outFields, true, 7, bbox, chunkSize);
 };
 
 const FILTERED_FEATURES_EVENT = 'filteredFeatures';

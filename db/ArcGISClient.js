@@ -7,7 +7,6 @@
  */
 
 import { Agent } from 'https';
-import fetch from 'node-fetch';
 
 // Converts from x, y to lng, lat
 // Source to convert from EPSG 3857 to 4326: https://gist.github.com/onderaltintas/6649521
