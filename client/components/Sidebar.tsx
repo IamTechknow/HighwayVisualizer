@@ -12,6 +12,65 @@ interface Props {
   children: ReactElement<SidebarTabProps> | ReactElement<SidebarTabProps>[],
 }
 
+const _renderTabRoute = (
+  tab: ReactElement<SidebarTabProps>,
+  onClose: () => void,
+): ReactElement<typeof Route> => {
+  const { props } = tab;
+  const {
+    children: tabChildren, header, path,
+  } = props;
+  return (
+    <Route
+      key={path}
+      path={path}
+      element={
+        (
+          <div className="leaflet-sidebar-pane active">
+            <h1 className="leaflet-sidebar-header">
+              {header}
+              <div
+                className="leaflet-sidebar-close leaflet-sidebar-close-offset"
+                onClick={onClose}
+                onKeyDown={onClose}
+                role="button"
+                tabIndex={-1}
+              >
+                <ArrowLeft />
+              </div>
+            </h1>
+            {tabChildren}
+          </div>
+        )
+      }
+    />
+  );
+};
+
+const _renderTab = (
+  tab: ReactElement<SidebarTabProps>,
+  pathname: string,
+  onToggle: (activePath: string) => void,
+): ReactElement<HTMLLIElement> => {
+  const { props } = tab;
+  const { icon, path } = props;
+  return (
+    <li
+      className={pathname === `/${path}` ? 'active' : ''}
+      key={path}
+      onClick={() => onToggle(path)}
+      onKeyDown={(event: React.KeyboardEvent) => {
+        if (event.key === KEY_ENTER) {
+          onToggle(path);
+        }
+      }}
+      role="tab"
+    >
+      <Link to={path}>{icon}</Link>
+    </li>
+  );
+};
+
 // Sidebar implementation for leaflet-sidebar-v2 with react-router-dom
 // Renders HTML with defined CSS classes, does not use Sidebar JS modules
 const Sidebar = ({
@@ -33,71 +92,25 @@ const Sidebar = ({
     }
   };
 
-  const _renderTabRoute = (tab: ReactElement<SidebarTabProps>): ReactElement<typeof Route> => {
-    const { props } = tab;
-    const {
-      children: tabChildren, header, path,
-    } = props;
-    return (
-      <Route
-        key={path}
-        path={path}
-        element={
-          (
-            <div className="leaflet-sidebar-pane active">
-              <h1 className="leaflet-sidebar-header">
-                {header}
-                <div
-                  className="leaflet-sidebar-close leaflet-sidebar-close-offset"
-                  onClick={_onClose}
-                  onKeyDown={_onClose}
-                  role="button"
-                  tabIndex={-1}
-                >
-                  <ArrowLeft />
-                </div>
-              </h1>
-              {tabChildren}
-            </div>
-          )
-        }
-      />
-    );
-  };
-
-  const _renderTab = (
-    tab: ReactElement<SidebarTabProps>,
-  ): ReactElement<HTMLLIElement> => {
-    const { props } = tab;
-    const { icon, path } = props;
-    return (
-      <li
-        className={pathname === `/${path}` ? 'active' : ''}
-        key={path}
-        onClick={() => _onToggle(path)}
-        onKeyDown={(event: React.KeyboardEvent) => {
-          if (event.key === KEY_ENTER) {
-            _onToggle(path);
-          }
-        }}
-        role="tab"
-      >
-        <Link to={path}>{icon}</Link>
-      </li>
-    );
-  };
-
   const collapsedClass = isCollapsed ? ' collapsed' : '';
 
   return (
     <div className={`leaflet-sidebar leaflet-touch leaflet-sidebar-left${collapsedClass}`}>
       <div className="leaflet-sidebar-tabs">
         <ul role="tablist">
-          {React.Children.map(children, _renderTab)}
+          {Array.isArray(children)
+            ? children.map((
+              tab: ReactElement<SidebarTabProps>,
+            ) => _renderTab(tab, pathname, _onToggle))
+            : _renderTab(children, pathname, _onToggle)}
         </ul>
       </div>
       <div className="leaflet-sidebar-content">
-        <Routes>{React.Children.map(children, _renderTabRoute)}</Routes>
+        <Routes>
+          {Array.isArray(children)
+            ? children.map((tab: ReactElement<SidebarTabProps>) => _renderTabRoute(tab, _onClose))
+            : _renderTabRoute(children, _onClose)}
+        </Routes>
       </div>
     </div>
   );
