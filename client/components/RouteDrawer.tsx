@@ -11,6 +11,7 @@ import type {
 } from '../types/types';
 
 import AboutContent from './AboutContent';
+import { PATH_FOR_ROOT_COMPONENT_ROUTE } from '../utils/Constants';
 import SearchResults from './SearchResults';
 import RouteSegmentContent from './RouteSegmentContent';
 import Sidebar from './Sidebar';
@@ -51,7 +52,7 @@ const RouteDrawer = ({
       <SidebarTab
         header="Route Segments"
         icon={<Map size={ICON_SIZE} />}
-        path=""
+        path={PATH_FOR_ROOT_COMPONENT_ROUTE}
       >
         <RouteSegmentContent
           highwayData={highwayData}

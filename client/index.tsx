@@ -14,7 +14,7 @@ ReactDOM.render(
     <BrowserRouter>
       <Routes>
         <Route path="/*" element={<CreateApp />} />
-        <Route path="/users/:user" element={<UserApp />} />
+        <Route path="/users/:user/*" element={<UserApp />} />
       </Routes>
     </BrowserRouter>
   ), document.getElementById('app'),

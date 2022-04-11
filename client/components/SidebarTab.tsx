@@ -5,6 +5,9 @@ export interface Props {
   children: React.ReactElement,
   header: string,
   icon: React.ReactElement<Icon>,
+  // Path override for link and route paths
+  linkPath?: string | null,
+  // Path for link, route, and to determine current tab color and toggle
   path: string,
 }
 

@@ -18,12 +18,12 @@ const _renderTabRoute = (
 ): ReactElement<typeof Route> => {
   const { props } = tab;
   const {
-    children: tabChildren, header, path,
+    children: tabChildren, header, linkPath, path,
   } = props;
   return (
     <Route
-      key={path}
-      path={path}
+      key={linkPath ?? path}
+      path={linkPath ?? path}
       element={
         (
           <div className="leaflet-sidebar-pane active">
@@ -53,7 +53,7 @@ const _renderTab = (
   onToggle: (activePath: string) => void,
 ): ReactElement<HTMLLIElement> => {
   const { props } = tab;
-  const { icon, path } = props;
+  const { icon, linkPath, path } = props;
   return (
     <li
       className={pathname === `/${path}` ? 'active' : ''}
@@ -66,7 +66,7 @@ const _renderTab = (
       }}
       role="tab"
     >
-      <Link to={path}>{icon}</Link>
+      <Link to={linkPath ?? path}>{icon}</Link>
     </li>
   );
 };

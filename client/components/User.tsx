@@ -10,6 +10,7 @@ import type {
 } from '../types/types';
 
 import APIClient from './APIClient';
+import { PATH_FOR_ROOT_COMPONENT_ROUTE } from '../utils/Constants';
 import { stringifyTravelSegment } from '../utils/HighwayUtils';
 import Sidebar from './Sidebar';
 import SidebarTab from './SidebarTab';
@@ -125,7 +126,8 @@ const UserApp = (): React.ReactElement => {
         <SidebarTab
           header="Travel Stats"
           icon={<User size={16} />}
-          path="/"
+          linkPath={PATH_FOR_ROOT_COMPONENT_ROUTE}
+          path={`users/${user}`}
         >
           {renderTravelStats(travelStats)}
         </SidebarTab>
