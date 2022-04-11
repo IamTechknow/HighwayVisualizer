@@ -14,25 +14,23 @@ import yargs from 'yargs';
 import { getDB, logMySQLError } from '../db/index.js';
 import createServer from './server.js';
 
-const _getRedisClient = () => {
-  const redisClient = createClient();
-  redisClient.on('error', (error) => {
-    if (error.code === 'ECONNREFUSED') {
-      console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
-      process.exit(1);
-    } else {
-      console.error(error);
-    }
-  });
-  return redisClient;
-};
+const _getRedisClient = () => createClient({
+  socket: { family: 4 },
+}).on('error', (error) => {
+  if (error.code === 'ECONNREFUSED') {
+    console.error(`Failed to connect to Redis at ${error.address}, exiting...`);
+    process.exit(1);
+  } else {
+    console.error(error);
+  }
+});
 
-const _getShutdownHandler = (db, httpServer, redisClient) => () => {
+const _getShutdownHandler = (db, httpServer, redisClient) => async () => {
   if (db != null) {
     db.end();
   }
   httpServer.close();
-  redisClient.quit();
+  await redisClient.quit();
 };
 
 const runServer = async (redisOnly) => {
@@ -45,6 +43,7 @@ const runServer = async (redisOnly) => {
     if (!redisOnly) {
       db = await getDB();
     }
+    await redisClient.connect();
     const server = createServer(db, redisClient);
     process.on('SIGINT', _getShutdownHandler(db, server, redisClient));
   } catch (err) {

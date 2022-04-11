@@ -34,13 +34,16 @@ export const headerMiddleware = (req, res, next) => {
  */
 export const getRedisMiddleware = (redisClient) => (req, res, next) => {
   const keySuffix = req.originalUrl || req.url;
-  redisClient.get(`__express__${keySuffix}`, (_err, reply) => {
-    if (reply) {
-      redisClient.get(`__express_status__${keySuffix}`, (_status_err, code) => {
-        res.status(Number(code)).type('application/json').send(reply);
-      });
-    } else {
-      next();
-    }
-  });
+  Promise.all([
+    redisClient.get(`__express__${keySuffix}`),
+    redisClient.get(`__express_status__${keySuffix}`),
+  ])
+    .then((values) => {
+      const [data, code] = values;
+      if (data == null) {
+        next();
+      } else {
+        res.status(Number(code)).type('application/json').send(data);
+      }
+    });
 };

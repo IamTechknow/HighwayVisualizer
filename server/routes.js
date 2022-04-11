@@ -26,8 +26,10 @@ export const userPageRouter = (_req, res) => res.sendFile(path.join(__dirname, '
 const _cacheResponse = (redisClient, obj, req, code) => {
   const keySuffix = req.originalUrl || req.url;
   const resJson = JSON.stringify(obj);
-  redisClient.set(`__express__${keySuffix}`, resJson);
-  redisClient.set(`__express_status__${keySuffix}`, code);
+  Promise.all([
+    redisClient.set(`__express__${keySuffix}`, resJson),
+    redisClient.set(`__express_status__${keySuffix}`, code),
+  ]);
   return resJson;
 };
 

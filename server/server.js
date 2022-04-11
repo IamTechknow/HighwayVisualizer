@@ -91,9 +91,11 @@ const createServer = (db, redisClient) => {
 
   app.use(headerMiddleware);
   app.get('/users/:user', userPageRouter);
-  app.get('/api/states',
+  app.get(
+    '/api/states',
     getRedisMiddleware(redisClient),
-    statesAPIRouter(db, redisClient));
+    statesAPIRouter(db, redisClient),
+  );
   app.get('/api/users', usersAPIRouter(db, redisClient));
   app.get(
     '/api/route_segments/:stateId',
