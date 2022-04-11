@@ -38,10 +38,9 @@ const RouteDrawer = ({
   return (
     <Sidebar>
       <SidebarTab
-        activeHash="#travel_segments"
         header="User Settings"
         icon={<User size={ICON_SIZE} />}
-        path="/travel_segments"
+        path="travel_segments"
       >
         <TravelSegmentContent
           highwayData={highwayData}
@@ -50,11 +49,9 @@ const RouteDrawer = ({
         />
       </SidebarTab>
       <SidebarTab
-        activeHash=""
-        exact
         header="Route Segments"
         icon={<Map size={ICON_SIZE} />}
-        path="/"
+        path=""
       >
         <RouteSegmentContent
           highwayData={highwayData}
@@ -63,10 +60,9 @@ const RouteDrawer = ({
         />
       </SidebarTab>
       <SidebarTab
-        activeHash="#search"
         header="Search"
         icon={<Search size={ICON_SIZE} />}
-        path="/search"
+        path="search"
       >
         <SearchResults
           onRouteItemClick={routeDataCallbackMap.onRouteItemClick}
@@ -75,10 +71,9 @@ const RouteDrawer = ({
         />
       </SidebarTab>
       <SidebarTab
-        activeHash="#about"
         header="About HighwayVisualizer"
         icon={<Info size={ICON_SIZE} />}
-        path="/about"
+        path="about"
       >
         <AboutContent />
       </SidebarTab>

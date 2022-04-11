@@ -58,6 +58,7 @@ module.exports = {
     'one-var-declaration-per-line': 'off',
     // eslint default
     'operator-linebreak': ['error', 'after', { overrides: { '?': 'before', ':': 'before' } }],
+    'react/function-component-definition': [2, { namedComponents: 'arrow-function' }],
     'react/no-array-index-key': 'off',
     // default parameters are used, also defaultProps will be decrepated eventually
     'react/require-default-props': 'off',

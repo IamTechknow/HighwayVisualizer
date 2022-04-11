@@ -4,7 +4,7 @@ import {
   MapContainer, TileLayer, Polyline, PolylineProps,
 } from 'react-leaflet';
 
-import { RouteComponentProps } from 'react-router';
+import { useParams } from 'react-router';
 import type {
   UserProps, TravelStatSegment, TravelStatsAPIPayload, TravelStat,
 } from '../types/types';
@@ -17,7 +17,8 @@ import SidebarTab from './SidebarTab';
 const METERS = 1.000, KM = 1000.000, MILES = 1609.344;
 const SEGMENT_WEIGHT = 6;
 
-const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement => {
+const UserApp = (): React.ReactElement => {
+  const { user } = useParams<UserProps>() as UserProps;
   const [scale, setScale] = useState(MILES);
   const [userTravelStats, setUserTravelStats] = useState<TravelStatsAPIPayload | undefined>();
 
@@ -34,7 +35,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
 
   const renderTravelStats = (travelStats: TravelStat[]): JSX.Element => (
     <div id="tabContent">
-      <h3>{`${match.params.user}'s travel statistics`}</h3>
+      <h3>{`${user}'s travel statistics`}</h3>
 
       <p>Unit conversion</p>
       <select value={scale} onChange={_onSetScale}>
@@ -76,7 +77,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
   );
 
   useEffect((): void => {
-    APIClient.getTravelStats(match.params.user)
+    APIClient.getTravelStats(user)
       .then((result: TravelStatsAPIPayload): void => {
         setUserTravelStats(result);
       });
@@ -85,7 +86,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
   if (userTravelStats == null || !userTravelStats.loaded) {
     return (
       <div>
-        <h3>{`Getting ${match.params.user}'s travel segments...`}</h3>
+        <h3>{`Getting ${user}'s travel segments...`}</h3>
       </div>
     );
   }
@@ -95,7 +96,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
     return (
       <div>
         <h3>
-          {`No travel segments found for ${match.params.user}. Either create the user or submit travel segments `}
+          {`No travel segments found for ${user}. Either create the user or submit travel segments `}
           <a href="/">here.</a>
         </h3>
       </div>
@@ -109,8 +110,7 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
           attribution='&copy; <a href="https://osm.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.osm.org/{z}/{x}/{y}.png"
         />
-
-        {travelSegments && travelSegments.map(
+        {travelSegments.map(
           (travelSeg: TravelStatSegment): React.ReactElement<PolylineProps> => (
             <Polyline
               key={stringifyTravelSegment(travelSeg)}
@@ -123,7 +123,6 @@ const UserApp = ({ match }: RouteComponentProps<UserProps>): React.ReactElement 
       </MapContainer>
       <Sidebar>
         <SidebarTab
-          activeHash=""
           header="Travel Stats"
           icon={<User size={16} />}
           path="/"

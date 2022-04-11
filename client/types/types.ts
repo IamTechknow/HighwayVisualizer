@@ -116,9 +116,9 @@ export interface User {
   user: string,
 }
 
-export interface UserProps {
+export type UserProps = {
   user: string,
-}
+};
 
 export interface TravelSegment {
   routeNum: string,

@@ -2,9 +2,7 @@ import React from 'react';
 import { Icon } from 'react-feather';
 
 export interface Props {
-  activeHash: string,
   children: React.ReactElement,
-  exact?: boolean,
   header: string,
   icon: React.ReactElement<Icon>,
   path: string,
