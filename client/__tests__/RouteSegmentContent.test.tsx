@@ -1,5 +1,7 @@
 import React from 'react';
-import { mount } from 'enzyme';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import type { IHighways } from '../types/interfaces';
 import type { RouteSegment } from '../types/types';
 
@@ -34,7 +36,7 @@ const mockRouteSegmentContent = (initialStateId: number) => {
   const segmentDataByRoute = APIClient.parseRawRouteSegments(rawRouteSegmentData);
   highwayData.setStates(stateData);
   highwayData.buildStateSegmentsData(rawRouteSegmentData);
-  return mount(
+  return render(
     <RouteSegmentContent
       highwayData={highwayData}
       routeData={{
@@ -53,79 +55,74 @@ const mockRouteSegmentContent = (initialStateId: number) => {
 };
 
 describe('RouteSegmentContent component test suite', () => {
-  it('should render all available states', () => {
+  it('should render all available states', async () => {
     const comp = mockRouteSegmentContent(CAState.id);
-    const selectElement = comp.find('select');
-    const stateOptions = selectElement.first().find('option');
+    const stateOptions = comp.getAllByRole('option');
     const expectedStates = stateData.length;
     expect(stateOptions.length).toBe(expectedStates);
   });
 
-  it('should render all available routes for the selected state', () => {
+  it('should render all available routes for the selected state', async () => {
     const segmentDataByRoute = TestUtils.getTestRouteSegmentDataByStateID(CAState.id);
     const comp = mockRouteSegmentContent(CAState.id);
-    const routeTable = comp.find('.routeTable');
-    const routeRows = routeTable.first().find('.routeRow');
+    const routeRows = comp.getAllByRole('rowgroup');
     expect(routeRows.length).toBeGreaterThan(1);
-    const clickables = routeTable.first().find('.clickable');
+    const clickables = comp.getAllByRole('link');
     const expectedRoutes = segmentDataByRoute.length;
     expect(clickables.length).toBe(expectedRoutes);
   });
 
-  it('should render all available route segments for the selected route', () => {
+  it('should render all available route segments for the selected route', async () => {
     const comp = mockRouteSegmentContent(CAState.id);
-    const routeSegmentList = comp.find('ul');
-    const clickables = routeSegmentList.first().find('.clickable');
+    const clickables = comp.getAllByRole('presentation');
     const expectedSegments = TestUtils.getTestRouteSegmentDataByStateID(CAState.id)[0].length;
     expect(clickables.length).toBe(expectedSegments);
   });
 
-  it('should be able to switch data between states', () => {
+  it('should be able to switch data between states', async () => {
     const { id: initialStateID } = CAState;
-    const { id: finalStateID } = DCState;
+    const { id: finalStateID, title } = DCState;
     const comp = mockRouteSegmentContent(initialStateID);
     const finalRouteSegments = TestUtils.getTestRouteSegmentDataByStateID(finalStateID);
 
-    const selectElement = comp.find('select');
-    selectElement.simulate('change', {
-      target: {
-        value: finalStateID,
-      },
-    }).update();
-    comp.setProps({
-      routeData: {
-        currRouteSegmentsIdx: 0,
-        routeSegments: finalRouteSegments,
-        stateId: finalStateID,
-        states: stateData,
-      },
-    }).update();
+    const selectElement = comp.getByRole('combobox');
+    await userEvent.selectOptions(selectElement, String(finalStateID));
+    comp.rerender(
+      <RouteSegmentContent
+        highwayData={highwayData}
+        routeData={{
+          currRouteSegmentsIdx: 0,
+          routeSegments: finalRouteSegments,
+          stateId: finalStateID,
+          states: stateData,
+        }}
+        routeDataCallbackMap={{
+          onRouteItemClick,
+          onRouteSegmentItemClick,
+          onUpdateState,
+        }}
+      />,
+    );
 
-    const updatedSelect = comp.find('select');
-    expect(updatedSelect.props().value).toBe(finalStateID);
-    const routeTable = comp.find('.routeTable');
-    const clickables = routeTable.first().find('.clickable');
+    expect((comp.getByText(title) as HTMLOptionElement).selected).toBe(true);
+    const clickableRoutes = comp.getAllByRole('link');
     const expectedDCRoutes = finalRouteSegments.length;
-    expect(clickables.length).toBe(expectedDCRoutes);
+    expect(clickableRoutes.length).toBe(expectedDCRoutes);
   });
 
-  // TODO: simulate() is decrepated and will be removed in Enzyme 4
-  it('should be able to handle selected routes or segments', () => {
+  it('should be able to handle selected routes or segments', async () => {
     const comp = mockRouteSegmentContent(CAState.id);
-    const routeSegmentList = comp.find('ul');
-    const clickableSegments = routeSegmentList.first().find('.clickable');
-    const routeTable = comp.find('.routeTable');
-    const clickableRoutes = routeTable.first().find('.clickable');
+    const firstSegment = comp.getAllByRole('presentation')[0];
+    const firstRoute = comp.getAllByRole('link')[0];
 
-    clickableSegments.first().simulate('click');
-    clickableSegments.first().simulate('keydown', { key: 'Enter' });
-    clickableRoutes.first().simulate('click');
-    clickableRoutes.first().simulate('keydown', { key: 'Enter' });
+    await userEvent.click(firstSegment)
+      .then(() => userEvent.type(firstSegment, '{Enter}'))
+      .then(() => userEvent.click(firstRoute));
 
     const segmentDataByRoute = TestUtils.getTestRouteSegmentDataByStateID(CAState.id);
     const firstRouteSegs = segmentDataByRoute[0];
     const { id, routeNum } = firstRouteSegs[0];
-    expect(routeClickMap[routeNum]).toBe(2);
     expect(routeSegmentClickMap[id]).toBe(2);
+    expect(routeClickMap[routeNum]).toBe(1);
   });
 });

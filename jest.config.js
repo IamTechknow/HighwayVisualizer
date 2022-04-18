@@ -2,9 +2,6 @@ export default {
   roots: [
     '<rootDir>/client',
   ],
-  setupFiles: [
-    '<rootDir>/client/setupTests.js',
-  ],
   transform: {
     '^.+\\.tsx?$': 'ts-jest',
     '^.+\\.js?$': 'babel-jest',
@@ -20,6 +17,5 @@ export default {
   ],
   modulePathIgnorePatterns: ['__tests__/utils'],
   verbose: true,
-  snapshotSerializers: ['enzyme-to-json/serializer'],
   testEnvironment: 'jsdom',
 };

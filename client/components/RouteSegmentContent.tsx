@@ -91,10 +91,10 @@ const RouteSegmentContent = ({
       </Collapsible>
 
       <Collapsible title="Routes" open>
-        <div className="routeTable">
+        <div className="routeTable" role="table">
           {stateId != null ? routeMatrix.map(
             (routeSubArray: RouteSegment[][], r: number): React.ReactNode => (
-              <span key={`routeSegmentSet-${r}`} className="routeRow">
+              <span key={`routeSegmentSet-${r}`} className="routeRow" role="rowgroup">
                 {
                   routeSubArray.map((routeSegmentSet: RouteSegment[], c): React.ReactNode => {
                     const routeSegment = routeSegmentSet[0];
