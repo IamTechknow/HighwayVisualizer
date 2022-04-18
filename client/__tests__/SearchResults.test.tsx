@@ -1,5 +1,7 @@
 import React from 'react';
-import { mount, ReactWrapper } from 'enzyme';
+import { render } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import '@testing-library/jest-dom';
 import type { RouteSegment } from '../types/types';
 
 import SearchResults from '../components/SearchResults';
@@ -14,7 +16,7 @@ const onRouteItemClick = (_event: React.SyntheticEvent, segmentOfRoute: RouteSeg
   routeClickMap[segmentOfRoute.routeNum] = currVal != null ? currVal + 1 : 1;
 };
 
-const mockSearchResults = () => mount(
+const mockSearchResults = () => render(
   <SearchResults
     onRouteItemClick={onRouteItemClick}
     routeSegments={routeSegmentData}
@@ -22,44 +24,39 @@ const mockSearchResults = () => mount(
   />,
 );
 
-// TODO: simulate() is decrepated and will be removed in Enzyme 4
-const updateSearchBar = (searchBar: ReactWrapper, input: string) => {
-  searchBar.simulate('change', {
-    target: {
-      value: input,
-    },
-  }).update();
-};
+const updateSearchBar = (
+  searchBar: HTMLElement,
+  input: string,
+): Promise<void> => (input === '' ? userEvent.clear(searchBar) : userEvent.type(searchBar, input));
 
 describe('SearchResults component test suite', () => {
-  it('should show search hints when search bar is empty or gets cleared', () => {
+  it('should show search hints when search bar is empty or gets cleared', async () => {
     const comp = mockSearchResults();
-    const searchBar = comp.find('#routeSearch');
-    const bulletPoints = comp.find('li');
-    expect(searchBar.props().value).toBeFalsy();
+    const searchBar = comp.getByRole('searchbox');
+    const bulletPoints = comp.getAllByRole('listitem');
     expect(bulletPoints.length).toBe(2);
-    updateSearchBar(searchBar, '');
-    expect(searchBar.props().value).toBeFalsy();
-    expect(bulletPoints.length).toBe(2);
-  });
-
-  it('should show search hints when search yields no results', () => {
-    const comp = mockSearchResults();
-    const searchBar = comp.find('#routeSearch');
-    updateSearchBar(searchBar, 'I');
-    const searchHintHeader = comp.find('h3');
-    const bulletPoints = comp.find('li');
-    expect(searchHintHeader.length).toBe(1);
+    await updateSearchBar(searchBar, '');
+    expect(searchBar.nodeValue).toBeFalsy();
     expect(bulletPoints.length).toBe(2);
   });
 
-  it('should show search results for a valid entry', () => {
+  it('should show search hints when search yields no results', async () => {
     const comp = mockSearchResults();
-    const searchBar = comp.find('#routeSearch');
-    updateSearchBar(searchBar, 'I-5');
-    const searchHintHeader = comp.find('h3');
-    const bulletPoints = comp.find('li');
-    expect(searchHintHeader.length).toBe(0);
+    const searchBar = comp.getByRole('searchbox');
+    await updateSearchBar(searchBar, 'I');
+    const searchHintHeader = comp.getByRole('heading', { level: 3 });
+    const bulletPoints = comp.getAllByRole('listitem');
+    expect(searchHintHeader).toHaveTextContent('Search hints:');
+    expect(bulletPoints.length).toBe(2);
+  });
+
+  it('should show search results for a valid entry', async () => {
+    const comp = mockSearchResults();
+    const searchBar = comp.getByRole('searchbox');
+    await updateSearchBar(searchBar, 'I-5');
+    const searchHintHeader = comp.queryByRole('heading', { level: 3 });
+    const bulletPoints = comp.getAllByRole('presentation');
+    expect(searchHintHeader).toBeNull();
     const expectedBulletPoints = routeSegmentData
       .flat()
       .filter((routeSegment) => routeSegment.routeNum === '5')
@@ -67,16 +64,16 @@ describe('SearchResults component test suite', () => {
     expect(bulletPoints.length).toBe(expectedBulletPoints);
   });
 
-  it('should allow selected routes to be clicked', () => {
+  it('should allow selected routes to be clicked', async () => {
     const routeNum = '5'; // I-5
     const comp = mockSearchResults();
-    const searchBar = comp.find('#routeSearch');
-    updateSearchBar(searchBar, routeNum);
-    const bulletPoints = comp.find('li');
-    bulletPoints.forEach((routeBullet): void => {
-      routeBullet.simulate('click');
-      routeBullet.simulate('keydown', { key: 'Enter' });
-    });
+    const searchBar = comp.getByRole('searchbox');
+    await updateSearchBar(searchBar, routeNum);
+    // Role is override to presentation to make <li> clickable
+    const bulletPoints = comp.getAllByRole('presentation');
+    for (const routeBullet of bulletPoints) {
+      await userEvent.click(routeBullet).then(() => userEvent.type(routeBullet, '{Enter}'));
+    }
     const bulletPointsWithRoute5 = routeSegmentData
       .flat()
       .filter((routeSegment) => routeSegment.routeNum === routeNum)
