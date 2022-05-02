@@ -139,35 +139,17 @@ export const findSegmentPoint = (
   return { idx: closest, routeSegmentId, ...points[closest] };
 };
 
+// Start at 1000 meters and 14 zoom. Increase most signficant digit from
+// 1 -> 3 -> 5 -> 10 while decreasing zoom by 1.
+// NOTE: Can be decimal but the zoom WMTS URL parameter is an integer.
 export const getZoomForRouteLength = (len: number): number => {
-  if (len <= 1000) {
-    return 14.5;
+  if (len <= 300) {
+    return 16.0;
   }
-  if (len <= 3000) {
-    return 13.5;
+  if (len >= 5e5) {
+    return 6.0;
   }
-  if (len <= 5000) {
-    return 12.5;
-  }
-  if (len <= 10000) {
-    return 11.5;
-  }
-  if (len <= 30000) {
-    return 11;
-  }
-  if (len <= 50000) {
-    return 10.5;
-  }
-  if (len <= 100000) {
-    return 9.5;
-  }
-  if (len <= 300000) {
-    return 8.5;
-  }
-  if (len <= 500000) {
-    return 7.5;
-  }
-  return 6;
+  return 81.8435 - 59.8716 * (len ** 0.017957); // 81.8435-59.8716x^(0.017957)
 };
 
 export const stringifyTravelSegment = (travelSegment: TravelSegment): string => {
