@@ -27,6 +27,7 @@ module.exports = {
   ],
   plugins: ['@typescript-eslint'],
   rules: {
+    'function-paren-newline': 'off',
     // node.js does not search for extensions outside node_modules
     'import/extensions': 'off',
     'import/no-extraneous-dependencies': ['error', { devDependencies: true }],

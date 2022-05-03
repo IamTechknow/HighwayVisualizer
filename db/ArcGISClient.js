@@ -2,8 +2,6 @@
  * @fileOverview Module with functions to interact with any ArcGIS Feature Server REST API.
  *               May be used to query layer information, layer fields, feature IDs, and features.
  *               Contains some input validation for function parameters.
- *
- * @requires NPM:node-fetch
  */
 
 import { Agent } from 'https';

@@ -8,13 +8,25 @@
  */
 
 import getRouteConcurrenciesForState from '../routeConcurrencies.js';
-import { STATE } from '../routeEnum.js';
+import { INTERSTATE, STATE } from '../routeEnum.js';
 import { California } from '../routePrefixes.js';
 import Utils from '../Utils.js';
 
 /** @constant {string} */
 const INSERTED_FEATURE_EVENT = 'insertedFeature', FOUND_MULTI_EVENT = 'foundMulti',
   FEATURES_DONE_EVENT = 'featuresDone';
+
+/** @constant {string} */
+const RTE_238 = '238';
+
+// The first two segments are for the surface portions of the route
+const handleRoute238 = async (db, emitter, geometry, dir, stateID, basePointID) => {
+  const [stateCoords1, stateCoords2, iCoords] = geometry.coordinates;
+  emitter.emit(FOUND_MULTI_EVENT, 3);
+  return await Utils.insertSegment(db, stateCoords1, RTE_238, STATE, dir, stateID, basePointID) +
+    await Utils.insertSegment(db, stateCoords2, RTE_238, STATE, dir, stateID, basePointID) +
+    await Utils.insertSegment(db, iCoords, RTE_238, INTERSTATE, dir, stateID, basePointID);
+};
 
 /**
  * Seeds the GeoJSON features to the MySQL database, creating records for California,
@@ -51,7 +63,9 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
     const dir = properties.DIR;
     const type = California[routeNum] || STATE;
     const isMulti = geometry.type === 'MultiLineString';
-    if (isMulti) {
+    if (routeNum === RTE_238) {
+      basePointID += await handleRoute238(db, emitter, geometry, dir, stateID, basePointID);
+    } else if (isMulti) {
       const numFeatures = geometry.coordinates.length;
       emitter.emit(FOUND_MULTI_EVENT, numFeatures);
       for (let i = 0; i < numFeatures; i += 1) {
@@ -68,7 +82,7 @@ const seedFeatures = async (db, emitter, features, stateName, stateInitials, bbo
   }
   emitter.emit(FEATURES_DONE_EVENT);
   console.log('Creating concurrencies...');
-  const concurrencyArrays = await getRouteConcurrenciesForState(db, 'California')
+  const concurrencyArrays = await getRouteConcurrenciesForState(db, stateName)
     .then((concurrencies) => concurrencies.filter((obj) => obj.success).map((data) => {
       const {
         route1, route2, route1FirstID, route1SecondID, route2segmentID, start, end,
